@@ -1,0 +1,249 @@
+{% extends "base.html" %}
+
+{% block title %}Login History - Fin-Arc{% endblock %}
+
+{% block styles %}
+<style>
+    .history-card {
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .history-card-header {
+        padding: 1.25rem 1.5rem;
+        background-color: var(--primary-color);
+        color: white;
+    }
+    
+    .history-table th {
+        font-weight: 600;
+        background-color: rgba(0, 31, 63, 0.05);
+    }
+    
+    .status-badge {
+        padding: 0.35em 0.65em;
+        font-size: 0.75em;
+        font-weight: 700;
+        border-radius: 50rem;
+    }
+    
+    .status-success {
+        background-color: rgba(46, 204, 64, 0.15);
+        color: var(--success-color);
+    }
+    
+    .status-failure {
+        background-color: rgba(255, 65, 54, 0.15);
+        color: var(--danger-color);
+    }
+    
+    .ip-address {
+        font-family: monospace;
+        font-size: 0.9em;
+    }
+    
+    .current-device {
+        background-color: rgba(0, 31, 63, 0.05);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('auth.profile') }}">Profile</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Login History</li>
+            </ol>
+        </nav>
+        
+        <h2 class="mb-4">
+            <i class="fas fa-history text-primary me-2"></i>Login History
+        </h2>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="history-card mb-4">
+            <div class="history-card-header d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="card-title mb-0">Recent Login Activity</h5>
+                    <p class="card-subtitle mb-0 text-white-50">Showing the 10 most recent login attempts</p>
+                </div>
+                <div>
+                    <span class="badge bg-light text-dark">
+                        <i class="fas fa-shield-alt me-1"></i>Security Feature
+                    </span>
+                </div>
+            </div>
+            
+            <div class="card-body p-0">
+                {% if login_attempts %}
+                <div class="table-responsive">
+                    <table class="table history-table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Date & Time</th>
+                                <th>Status</th>
+                                <th>IP Address</th>
+                                <th>Device</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for attempt in login_attempts %}
+                            <tr {% if loop.index == 1 and attempt.success %}class="current-device"{% endif %}>
+                                <td class="format-date">{{ attempt.timestamp }}</td>
+                                <td>
+                                    {% if attempt.success %}
+                                    <span class="status-badge status-success">
+                                        <i class="fas fa-check-circle me-1"></i>Success
+                                    </span>
+                                    {% else %}
+                                    <span class="status-badge status-failure">
+                                        <i class="fas fa-times-circle me-1"></i>Failed
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="ip-address">{{ attempt.ip_address }}</span>
+                                    {% if loop.index == 1 and attempt.success %}
+                                    <span class="badge bg-primary ms-2">Current</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if 'Mobile' in attempt.user_agent %}
+                                    <i class="fas fa-mobile-alt me-1" data-bs-toggle="tooltip" title="{{ attempt.user_agent }}"></i> Mobile Device
+                                    {% elif 'Tablet' in attempt.user_agent %}
+                                    <i class="fas fa-tablet-alt me-1" data-bs-toggle="tooltip" title="{{ attempt.user_agent }}"></i> Tablet
+                                    {% else %}
+                                    <i class="fas fa-desktop me-1" data-bs-toggle="tooltip" title="{{ attempt.user_agent }}"></i> Desktop
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <div class="mb-3">
+                        <i class="fas fa-history fa-3x text-muted"></i>
+                    </div>
+                    <h5 class="text-muted">No login history available</h5>
+                    <p class="text-muted">Your recent login attempts will appear here</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card mb-4 border-0 shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-info-circle me-2"></i>About Login History
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text">Your login history helps you monitor account access and identify any unauthorized login attempts.</p>
+                
+                <h6 class="fw-bold mt-4 mb-3">What to look for:</h6>
+                <ul class="mb-0">
+                    <li>Login attempts from unfamiliar locations</li>
+                    <li>Devices you don't recognize</li>
+                    <li>Failed login attempts</li>
+                    <li>Logins at unusual times</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="card mb-4 border-0 shadow-sm">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Security Notice
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text">If you notice any suspicious activity, we recommend taking these actions:</p>
+                
+                <ol class="mb-3">
+                    <li>Change your password immediately</li>
+                    <li>Review your account settings</li>
+                    <li>Contact support if needed</li>
+                </ol>
+                
+                <a href="{{ url_for('auth.change_password') }}" class="btn btn-warning w-100">
+                    <i class="fas fa-key me-2"></i>Change Password
+                </a>
+            </div>
+        </div>
+        
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    <i class="fas fa-shield-alt text-primary me-3 fa-2x"></i>
+                    <div>
+                        <h5 class="card-title mb-0">Account Protection</h5>
+                        <p class="card-subtitle text-muted mb-0">Enhanced security features</p>
+                    </div>
+                </div>
+                
+                <p class="card-text">Fin-Arc monitors login attempts to protect your account. After 5 failed attempts, your account will be temporarily locked to prevent unauthorized access.</p>
+                
+                <div class="form-check form-switch mt-3">
+                    <input class="form-check-input" type="checkbox" id="enhancedSecuritySwitch" disabled checked>
+                    <label class="form-check-label" for="enhancedSecuritySwitch">
+                        Login attempt monitoring
+                    </label>
+                </div>
+                
+                <div class="form-check form-switch mt-2">
+                    <input class="form-check-input" type="checkbox" id="autoLockSwitch" disabled checked>
+                    <label class="form-check-label" for="autoLockSwitch">
+                        Automatic account locking
+                    </label>
+                </div>
+                
+                <p class="text-muted small mt-2">
+                    <i class="fas fa-info-circle me-1"></i>Additional security settings coming soon
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Format dates
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        });
+        
+        // Format dates
+        var dateElements = document.querySelectorAll('.format-date');
+        dateElements.forEach(function(element) {
+            var dateStr = element.textContent;
+            if (dateStr) {
+                var date = new Date(dateStr);
+                if (!isNaN(date)) {
+                    element.textContent = date.toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

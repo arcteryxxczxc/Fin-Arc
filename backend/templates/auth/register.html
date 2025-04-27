@@ -1,0 +1,368 @@
+{% extends "base.html" %}
+
+{% block title %}Register - Fin-Arc{% endblock %}
+
+{% block styles %}
+<style>
+    .register-container {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    
+    .register-card {
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .register-header {
+        background-color: var(--primary-color);
+        color: white;
+        padding: 20px;
+        text-align: center;
+    }
+    
+    .register-header h2 {
+        margin-bottom: 0;
+    }
+    
+    .register-body {
+        padding: 30px;
+    }
+    
+    .register-footer {
+        text-align: center;
+        padding: 15px;
+        background-color: #f8f9fa;
+        border-top: 1px solid #eee;
+    }
+    
+    .brand-icon {
+        font-size: 48px;
+        margin-bottom: 15px;
+        color: white;
+    }
+    
+    .form-control:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.25rem rgba(0, 31, 63, 0.25);
+    }
+    
+    .input-group-text {
+        background-color: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+    }
+    
+    .btn-register {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+        color: white;
+        font-weight: bold;
+        padding: 10px 20px;
+    }
+    
+    .btn-register:hover {
+        background-color: var(--secondary-color);
+        border-color: var(--secondary-color);
+    }
+    
+    .password-requirements {
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+    
+    .password-requirements ul {
+        padding-left: 1.5rem;
+        margin-bottom: 0;
+    }
+    
+    .password-strength {
+        height: 5px;
+        margin-top: 5px;
+        transition: all 0.3s ease;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center my-5">
+    <div class="col-md-8 register-container">
+        <div class="card register-card">
+            <div class="register-header text-center">
+                <div class="brand-icon">
+                    <i class="fas fa-user-plus"></i>
+                </div>
+                <h2 class="card-title">Create Your Account</h2>
+                <p class="card-subtitle mb-0">Join Fin-Arc and start managing your finances</p>
+            </div>
+            
+            <div class="register-body">
+                <form method="POST" action="{{ url_for('auth.register') }}" id="registrationForm">
+                    {{ form.csrf_token }}
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6 mb-3 mb-md-0">
+                            <label for="{{ form.first_name.id }}" class="form-label">First Name</label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-user"></i>
+                                </span>
+                                {{ form.first_name(class="form-control", placeholder="Enter your first name") }}
+                            </div>
+                            {% if form.first_name.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.first_name.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="{{ form.last_name.id }}" class="form-label">Last Name</label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-user"></i>
+                                </span>
+                                {{ form.last_name(class="form-control", placeholder="Enter your last name") }}
+                            </div>
+                            {% if form.last_name.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.last_name.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.username.id }}" class="form-label">Username</label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-at"></i>
+                            </span>
+                            {{ form.username(class="form-control", placeholder="Choose a username") }}
+                        </div>
+                        {% if form.username.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.username.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">
+                            Username can only contain letters, numbers, dots, and underscores.
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.email.id }}" class="form-label">Email</label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-envelope"></i>
+                            </span>
+                            {{ form.email(class="form-control", placeholder="Enter your email address", type="email") }}
+                        </div>
+                        {% if form.email.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.email.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.password.id }}" class="form-label">Password</label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-lock"></i>
+                            </span>
+                            {{ form.password(class="form-control", placeholder="Create a strong password", id="password") }}
+                            <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        {% if form.password.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.password.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        
+                        <!-- Password strength indicator -->
+                        <div class="progress password-strength" id="passwordStrength">
+                            <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                        </div>
+                        
+                        <!-- Password requirements -->
+                        <div class="password-requirements mt-2">
+                            <p class="mb-1"><i class="fas fa-info-circle me-1"></i>Password must contain:</p>
+                            <ul>
+                                <li id="length">At least 8 characters</li>
+                                <li id="uppercase">At least one uppercase letter</li>
+                                <li id="lowercase">At least one lowercase letter</li>
+                                <li id="number">At least one number</li>
+                                <li id="special">At least one special character</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="{{ form.confirm_password.id }}" class="form-label">Confirm Password</label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-lock"></i>
+                            </span>
+                            {{ form.confirm_password(class="form-control", placeholder="Confirm your password", id="confirmPassword") }}
+                        </div>
+                        {% if form.confirm_password.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.confirm_password.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text" id="passwordMatch"></div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 mb-3">
+                        {{ form.submit(class="btn btn-register btn-lg") }}
+                    </div>
+                </form>
+            </div>
+            
+            <div class="register-footer">
+                <p class="mb-0">Already have an account? 
+                    <a href="{{ url_for('auth.login') }}" class="text-decoration-none fw-bold">
+                        Login here
+                    </a>
+                </p>
+            </div>
+        </div>
+        
+        <!-- Terms Card -->
+        <div class="card mt-3">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-file-contract me-2 text-primary"></i>Important Information
+                </h5>
+                <p class="small mb-0">
+                    By creating an account, you agree to Fin-Arc's 
+                    <a href="#" class="text-decoration-none">Terms of Service</a> and 
+                    <a href="#" class="text-decoration-none">Privacy Policy</a>. 
+                    We prioritize your data security and will never share your information with third parties without consent.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Toggle password visibility
+    document.getElementById('togglePassword').addEventListener('click', function() {
+        const passwordInput = document.getElementById('password');
+        const icon = this.querySelector('i');
+        
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        } else {
+            passwordInput.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
+    });
+    
+    // Password strength checker
+    const passwordInput = document.getElementById('password');
+    const confirmPasswordInput = document.getElementById('confirmPassword');
+    const strengthBar = document.querySelector('#passwordStrength .progress-bar');
+    const lengthCheck = document.getElementById('length');
+    const uppercaseCheck = document.getElementById('uppercase');
+    const lowercaseCheck = document.getElementById('lowercase');
+    const numberCheck = document.getElementById('number');
+    const specialCheck = document.getElementById('special');
+    const passwordMatchText = document.getElementById('passwordMatch');
+    
+    passwordInput.addEventListener('input', function() {
+        const password = this.value;
+        let strength = 0;
+        
+        // Update requirement checks
+        if (password.length >= 8) {
+            lengthCheck.innerHTML = '<i class="fas fa-check text-success"></i> At least 8 characters';
+            strength += 20;
+        } else {
+            lengthCheck.innerHTML = '<i class="fas fa-times text-danger"></i> At least 8 characters';
+        }
+        
+        if (/[A-Z]/.test(password)) {
+            uppercaseCheck.innerHTML = '<i class="fas fa-check text-success"></i> At least one uppercase letter';
+            strength += 20;
+        } else {
+            uppercaseCheck.innerHTML = '<i class="fas fa-times text-danger"></i> At least one uppercase letter';
+        }
+        
+        if (/[a-z]/.test(password)) {
+            lowercaseCheck.innerHTML = '<i class="fas fa-check text-success"></i> At least one lowercase letter';
+            strength += 20;
+        } else {
+            lowercaseCheck.innerHTML = '<i class="fas fa-times text-danger"></i> At least one lowercase letter';
+        }
+        
+        if (/[0-9]/.test(password)) {
+            numberCheck.innerHTML = '<i class="fas fa-check text-success"></i> At least one number';
+            strength += 20;
+        } else {
+            numberCheck.innerHTML = '<i class="fas fa-times text-danger"></i> At least one number';
+        }
+        
+        if (/[^A-Za-z0-9]/.test(password)) {
+            specialCheck.innerHTML = '<i class="fas fa-check text-success"></i> At least one special character';
+            strength += 20;
+        } else {
+            specialCheck.innerHTML = '<i class="fas fa-times text-danger"></i> At least one special character';
+        }
+        
+        // Update strength bar
+        strengthBar.style.width = strength + '%';
+        
+        // Color code strength bar
+        if (strength <= 40) {
+            strengthBar.className = 'progress-bar bg-danger';
+        } else if (strength <= 80) {
+            strengthBar.className = 'progress-bar bg-warning';
+        } else {
+            strengthBar.className = 'progress-bar bg-success';
+        }
+        
+        // Check if passwords match
+        checkPasswordsMatch();
+    });
+    
+    confirmPasswordInput.addEventListener('input', checkPasswordsMatch);
+    
+    function checkPasswordsMatch() {
+        const password = passwordInput.value;
+        const confirmPassword = confirmPasswordInput.value;
+        
+        if (confirmPassword === '') {
+            passwordMatchText.innerHTML = '';
+            return;
+        }
+        
+        if (password === confirmPassword) {
+            passwordMatchText.innerHTML = '<i class="fas fa-check text-success"></i> Passwords match';
+        } else {
+            passwordMatchText.innerHTML = '<i class="fas fa-times text-danger"></i> Passwords do not match';
+        }
+    }
+</script>
+{% endblock %}

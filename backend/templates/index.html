@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+
+{% block title %}Fin-Arc - Personal Finance Application{% endblock %}
+
+{% block content %}
+<div class="row mb-5">
+    <div class="col-lg-7 order-lg-1 order-2">
+        <div class="card shadow-lg border-0 rounded-lg mt-4">
+            <div class="card-body p-5">
+                <h1 class="display-4 fw-bold text-primary mb-4">Take Control of Your Finances</h1>
+                <p class="lead mb-4">Fin-Arc helps you track expenses, set budgets, and achieve your financial goals.</p>
+                
+                <div class="row gy-4 mb-5">
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-start">
+                            <div class="me-3">
+                                <i class="fas fa-money-bill-wave text-primary fa-2x"></i>
+                            </div>
+                            <div>
+                                <h5 class="mb-2">Visual Reports</h5>
+                                <p class="text-muted mb-0">Understand your spending with interactive charts and graphs.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-start">
+                            <div class="me-3">
+                                <i class="fas fa-bullseye text-primary fa-2x"></i>
+                            </div>
+                            <div>
+                                <h5 class="mb-2">Budget Planning</h5>
+                                <p class="text-muted mb-0">Set budgets for different categories and track your progress.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+                    {% if current_user.is_authenticated %}
+                        <a href="#" class="btn btn-primary btn-lg px-4 me-md-2">
+                            <i class="fas fa-tachometer-alt me-2"></i>Go to Dashboard
+                        </a>
+                    {% else %}
+                        <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg px-4 me-md-2">
+                            <i class="fas fa-user-plus me-2"></i>Get Started
+                        </a>
+                        <a href="{{ url_for('auth.login') }}" class="btn btn-outline-primary btn-lg px-4">
+                            <i class="fas fa-sign-in-alt me-2"></i>Login
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-5 order-lg-2 order-1 d-flex align-items-center">
+        <img src="{{ url_for('static', filename='images/finance-app.svg') }}" alt="Finance Application" class="img-fluid" />
+    </div>
+</div>
+
+<div class="row mt-5 mb-4">
+    <div class="col-12 text-center">
+        <h2 class="text-primary">Why Choose Fin-Arc?</h2>
+        <p class="lead">A modern solution for your personal finance management</p>
+    </div>
+</div>
+
+<div class="row row-cols-1 row-cols-md-3 g-4 mb-5">
+    <div class="col">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body p-4">
+                <div class="text-center mb-3">
+                    <span class="fa-stack fa-2x">
+                        <i class="fas fa-circle fa-stack-2x text-primary opacity-25"></i>
+                        <i class="fas fa-lock fa-stack-1x text-primary"></i>
+                    </span>
+                </div>
+                <h4 class="card-title text-center mb-3">Enhanced Security</h4>
+                <p class="card-text text-muted">Your financial data is protected with advanced security measures including secure authentication and data encryption.</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body p-4">
+                <div class="text-center mb-3">
+                    <span class="fa-stack fa-2x">
+                        <i class="fas fa-circle fa-stack-2x text-primary opacity-25"></i>
+                        <i class="fas fa-mobile-alt fa-stack-1x text-primary"></i>
+                    </span>
+                </div>
+                <h4 class="card-title text-center mb-3">Cross-Platform Access</h4>
+                <p class="card-text text-muted">Access your financial information anytime, anywhere with our responsive web and mobile interfaces.</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body p-4">
+                <div class="text-center mb-3">
+                    <span class="fa-stack fa-2x">
+                        <i class="fas fa-circle fa-stack-2x text-primary opacity-25"></i>
+                        <i class="fas fa-cogs fa-stack-1x text-primary"></i>
+                    </span>
+                </div>
+                <h4 class="card-title text-center mb-3">Customizable Experience</h4>
+                <p class="card-text text-muted">Tailor the application to your needs with custom categories, budget alerts, and personalized reports.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row bg-light py-5 px-3 rounded-3 shadow-sm mb-5">
+    <div class="col-md-6">
+        <h3 class="text-primary mb-4">Start Your Financial Journey Today</h3>
+        <p class="mb-4">Fin-Arc helps you manage your finances effectively and make informed financial decisions. Our easy-to-use interface and powerful features make financial management simple.</p>
+        <p class="mb-4">Whether you're trying to save for a goal, pay off debt, or simply understand where your money goes, Fin-Arc provides the tools you need.</p>
+        
+        <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+            {% if current_user.is_authenticated %}
+                <a href="#" class="btn btn-primary px-4 me-md-2">
+                    <i class="fas fa-tachometer-alt me-2"></i>Go to Dashboard
+                </a>
+            {% else %}
+                <a href="{{ url_for('auth.register') }}" class="btn btn-primary px-4">
+                    <i class="fas fa-user-plus me-2"></i>Get Started for Free
+                </a>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="col-md-6 mt-4 mt-md-0">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-primary text-white py-3">
+                <h5 class="mb-0"><i class="fas fa-star me-2"></i>Featured Benefits</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li class="mb-3">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        <strong>Real-time tracking</strong> of your expenses and income
+                    </li>
+                    <li class="mb-3">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        <strong>Insightful visualization</strong> of your financial data
+                    </li>
+                    <li class="mb-3">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        <strong>Personalized budget</strong> recommendations based on your spending habits
+                    </li>
+                    <li class="mb-3">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        <strong>Secure storage</strong> of all your financial information
+                    </li>
+                    <li>
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        <strong>Innovative features</strong> not available in other financial apps in Uzbekistan
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Add any page-specific scripts here
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add animations or other interactive elements for the landing page
+        const featureSections = document.querySelectorAll('.col');
+        
+        // Simple animation for feature cards
+        featureSections.forEach((section, index) => {
+            setTimeout(() => {
+                section.style.opacity = '0';
+                section.style.transform = 'translateY(20px)';
+                section.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                
+                setTimeout(() => {
+                    section.style.opacity = '1';
+                    section.style.transform = 'translateY(0)';
+                }, index * 150);
+            }, 300);
+        });
+    });
+</script>
+{% endblock %}5 class="mb-2">Expense Tracking</h5>
+                                <p class="text-muted mb-0">Easily record and categorize all your expenses in one place.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-start">
+                            <div class="me-3">
+                                <i class="fas fa-tags text-primary fa-2x"></i>
+                            </div>
+                            <div>
+                                <h5 class="mb-2">Custom Categories</h5>
+                                <p class="text-muted mb-0">Create and manage your own expense categories.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-start">
+                            <div class="me-3">
+                                <i class="fas fa-chart-pie text-primary fa-2x"></i>
+                            </div>
+                            <div>
+                                <h

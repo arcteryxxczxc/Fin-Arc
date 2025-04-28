@@ -2,10 +2,10 @@
 
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
 from flask_login import login_required, current_user
-from backend.app import db
-from backend.models.category import Category
-from backend.models.expense import Expense
-from backend.forms.categories import CategoryForm, CategoryBulkActionForm, CategoryBudgetForm
+from app import db
+from models.category import Category
+from models.expense import Expense
+from forms.categories import CategoryForm, CategoryBulkActionForm, CategoryBudgetForm
 from sqlalchemy import func
 import logging
 

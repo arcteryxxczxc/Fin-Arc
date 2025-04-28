@@ -3,9 +3,9 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, current_app
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.urls import url_parse
-from backend.app import db, bcrypt
-from backend.models.user import User, LoginAttempt
-from backend.forms.auth import LoginForm, RegistrationForm, ResetPasswordRequestForm, ResetPasswordForm
+from app import db, bcrypt
+from app.models.user import User, LoginAttempt
+from app.forms.auth import LoginForm, RegistrationForm, ResetPasswordRequestForm, ResetPasswordForm
 import logging
 
 # Set up logging
@@ -195,7 +195,7 @@ def change_password():
     Change password endpoint for authenticated users
     Handles both form display and form submission
     """
-    from backend.forms.auth import ChangePasswordForm
+    from backend.app.forms.auth import ChangePasswordForm
     
     form = ChangePasswordForm()
     if form.validate_on_submit():

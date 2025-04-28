@@ -2,7 +2,7 @@
 
 from flask import Blueprint, render_template, request, jsonify, current_app
 from flask_login import login_required, current_user
-from backend.app import db
+from app import db
 from models.expense import Expense
 from models.income import Income
 from models.category import Category

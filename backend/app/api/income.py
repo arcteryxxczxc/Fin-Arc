@@ -2,10 +2,10 @@
 
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, current_app
 from flask_login import login_required, current_user
-from backend.app import db
-from backend.models.income import Income
-from backend.models.category import Category
-from backend.forms.income import IncomeForm, IncomeFilterForm, IncomeBulkActionForm, RecurringIncomeForm
+from app import db
+from models.income import Income
+from models.category import Category
+from forms.income import IncomeForm, IncomeFilterForm, IncomeBulkActionForm, RecurringIncomeForm
 from sqlalchemy import or_, and_, func
 from datetime import datetime, timedelta
 import csv

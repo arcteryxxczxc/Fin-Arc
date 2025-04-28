@@ -1,7 +1,7 @@
 # backend/models/expense.py
 
 from datetime import datetime
-from backend.app import db
+from app import db
 from sqlalchemy.sql import func
 
 class Expense(db.Model):
@@ -158,7 +158,3 @@ class Expense(db.Model):
     def __repr__(self):
         """String representation of the Expense object"""
         return f'<Expense {self.id}: {self.formatted_amount} on {self.formatted_date}>'
-
-
-# Import Category here at the bottom to avoid circular imports
-from backend.models.category import Category

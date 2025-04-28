@@ -3,9 +3,9 @@
 from flask import Blueprint, render_template, request, jsonify, current_app
 from flask_login import login_required, current_user
 from backend.app import db
-from backend.models.expense import Expense
-from backend.models.income import Income
-from backend.models.category import Category
+from models.expense import Expense
+from models.income import Income
+from models.category import Category
 from sqlalchemy import func, extract, and_
 from datetime import datetime, timedelta, date
 import calendar

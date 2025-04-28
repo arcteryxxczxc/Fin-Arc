@@ -5,6 +5,6 @@ auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
 # Import routes to register them with the blueprint
 try:
-    from backend.app.auth import routes
+    from app.auth import routes
 except ImportError:
     pass

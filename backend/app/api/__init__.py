@@ -4,48 +4,47 @@ from flask import Blueprint
 api_bp = Blueprint('api', __name__, url_prefix='/api')
 
 # Import routes to register them with the blueprint
-# Try to import each module individually to avoid failing if some are missing
 try:
-    from backend.app.api import routes
+    from app.api import routes
 except ImportError:
     pass
 
 try:
-    from backend.app.api import auth
+    from app.api import auth
 except ImportError:
     pass
 
 try:
-    from backend.app.api import categories
+    from app.api import categories
 except ImportError:
     pass
 
 try:
-    from backend.app.api import expenses
+    from app.api import expenses
 except ImportError:
     pass
 
 try:
-    from backend.app.api import incomes
+    from app.api import incomes
 except ImportError:
     pass
 
 try:
-    from backend.app.api import reports
+    from app.api import reports
 except ImportError:
     pass
 
 try:
-    from backend.app.api import currencies
+    from app.api import currencies
 except ImportError:
     pass
 
 try:
-    from backend.app.api import settings
+    from app.api import settings
 except ImportError:
     pass
 
 try:
-    from backend.app.api import notifications
+    from app.api import notifications
 except ImportError:
     pass

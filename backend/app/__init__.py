@@ -36,7 +36,7 @@ def create_app(config=None):
     # Configure the app
     if config is None:
         # Import config here to avoid circular imports
-        from backend.config import get_config
+        from config import get_config
         config = get_config()
     
     app.config.from_object(config)
@@ -57,22 +57,22 @@ def create_app(config=None):
     @login_manager.user_loader
     def load_user(user_id):
         # Import models here to avoid circular imports
-        from backend.app.models.user import User
+        from app.models.user import User
         return User.query.get(int(user_id))
 
     # Register blueprints
-    from backend.app.api import api_bp
-    from backend.app.auth import auth_bp
+    from app.api import api_bp
+    from app.auth import auth_bp
 
     app.register_blueprint(api_bp)
     app.register_blueprint(auth_bp)
 
     # Optional: Register individual route blueprints if they exist
     try:
-        from backend.app.api.expenses import expense_routes
-        from backend.app.api.categories import category_routes
-        from backend.app.api.income import income_routes
-        from backend.app.api.reports import report_routes
+        from app.api.expenses import expense_routes
+        from app.api.categories import category_routes
+        from app.api.income import income_routes
+        from app.api.reports import report_routes
         
         app.register_blueprint(expense_routes)
         app.register_blueprint(category_routes)

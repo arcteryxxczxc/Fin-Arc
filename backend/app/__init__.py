@@ -1,9 +1,13 @@
+# app/__init__.py
+
 import os
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_jwt_extended import JWTManager
 from flask_cors import CORS
+from flask_login import LoginManager
+from flask_bcrypt import Bcrypt
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -13,33 +17,67 @@ load_dotenv()
 db = SQLAlchemy()
 migrate = Migrate()
 jwt = JWTManager()
+login_manager = LoginManager()
+bcrypt = Bcrypt()
 
 def create_app(config=None):
     """Application factory function"""
     app = Flask(__name__)
     
     # Configure the app
-    app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-key-change-in-production")
-    app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
-        "DATABASE_URL", "sqlite:///finance_app.db"  # Fallback to SQLite for development
-    )
-    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-    app.config["JWT_SECRET_KEY"] = os.environ.get("JWT_SECRET_KEY", "jwt-dev-key-change-in-production")
-    app.config["JWT_ACCESS_TOKEN_EXPIRES"] = 86400  # 24 hours
-
+    if config is None:
+        # Import config here to avoid circular imports
+        from config import get_config
+        config = get_config()
+    
+    app.config.from_object(config)
+    
     # Initialize extensions with app
     db.init_app(app)
     migrate.init_app(app, db)
     jwt.init_app(app)
+    login_manager.init_app(app)
+    bcrypt.init_app(app)
     CORS(app)
 
+    # Configure login manager
+    login_manager.login_view = 'auth.login'
+    login_manager.login_message_category = 'info'
+    login_manager.session_protection = 'strong'
+
+    @login_manager.user_loader
+    def load_user(user_id):
+        # Import models here to avoid circular imports
+        from app.models.user import User
+        return User.query.get(int(user_id))
+
     # Register blueprints
-    from app.auth import auth_bp
-    from app.api import api_bp
+    from app.api.auth import auth_bp
+    from app.api.expenses import expense_routes
+    from app.api.categories import category_routes
+    from app.api.income import income_routes
+    from app.api.reports import report_routes
 
-    app.register_blueprint(auth_bp, url_prefix='/api/auth')
-    app.register_blueprint(api_bp, url_prefix='/api')
+    app.register_blueprint(auth_bp)
+    app.register_blueprint(expense_routes)
+    app.register_blueprint(category_routes)
+    app.register_blueprint(income_routes)
+    app.register_blueprint(report_routes)
 
+    # Error handlers
+    @app.errorhandler(404)
+    def page_not_found(e):
+        """Handle 404 errors"""
+        from flask import render_template
+        return render_template('errors/404.html'), 404
+
+    @app.errorhandler(500)
+    def internal_server_error(e):
+        """Handle 500 errors"""
+        from flask import render_template
+        return render_template('errors/500.html'), 500
+
+    # Route for health check
     @app.route('/health')
     def health_check():
         return {"status": "healthy"}

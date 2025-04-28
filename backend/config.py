@@ -10,7 +10,7 @@ class Config:
     
     # Database configuration
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-        'postgresql://postgres:password@localhost/fin_arc'
+        'postgresql://postgres:postgres@localhost/fin_arc'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # Security settings
@@ -43,7 +43,7 @@ class Config:
     ]
     
     # Default dark blue theme colors
-    PRIMARY_COLOR = '#001F3F'  # Dark blue like Click SuperApp
+    PRIMARY_COLOR = '#001F3F'
     SECONDARY_COLOR = '#0074D9'
     ACCENT_COLOR = '#39CCCC'
     SUCCESS_COLOR = '#2ECC40'

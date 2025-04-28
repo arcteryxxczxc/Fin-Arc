@@ -1,163 +1,138 @@
-# Fin-Arc Personal Finance Application
+# Fin-Arc - Personal Finance Application
 
-A cross-platform personal finance application for tracking expenses, managing budgets, and gaining insights into financial health.
-
-## Project Overview
-
-Fin-Arc is a comprehensive personal finance management system that provides the following features:
-
-- **Secure User Authentication**: With login attempt tracking and account lockout protection
-- **Expense Tracking**: Log and categorize expenses with detailed information
-- **Income Management**: Track various income sources with tax calculations
-- **Custom Categories**: Create personalized categories with budget limits
-- **Budget Management**: Set and monitor spending limits by category
-- **Financial Reports**: Generate insights with visualizations and analysis
-- **Responsive Design**: Works across web and mobile platforms
-
-## Technology Stack
-
-- **Backend**: Flask (Python)
-- **Database**: PostgreSQL
-- **Frontend**: HTML/CSS/JavaScript with Bootstrap 5
-- **ORM**: SQLAlchemy
-- **Authentication**: Flask-Login, Bcrypt
-- **Form Handling**: Flask-WTF
-- **Migration**: Flask-Migrate
-- **Containerization**: Docker (planned)
-
-## Installation
-
-### Prerequisites
-
-- Python 3.10+
-- PostgreSQL
-- pip
-
-### Setup Instructions
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/arcteryxxczxc/Fin-Arc.git
-   cd Fin-Arc
-   ```
-
-2. Create and activate a virtual environment:
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
-
-3. Install the required packages:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. Set up environment variables:
-   Create a `.env` file in the project root with the following variables:
-   ```
-   SECRET_KEY=your_secret_key
-   DATABASE_URL=postgresql://username:password@localhost/fin_arc
-   FLASK_ENV=development
-   ```
-
-5. Initialize the database:
-   ```bash
-   flask db init
-   flask db migrate -m "Initial migration"
-   flask db upgrade
-   ```
-
-6. Run the application:
-   ```bash
-   python run.py
-   ```
-
-7. Access the application at `http://localhost:5000`
-
-## Project Structure
-
-```
-Fin-Arc/
-├── backend/
-│   ├── app.py                      # Main Flask application
-│   ├── config.py                   # Configuration settings
-│   ├── models/                     # Database models
-│   ├── routes/                     # API endpoints
-│   ├── forms/                      # Form validation
-│   ├── utils/                      # Helper functions
-│   ├── static/                     # Static files
-│   └── templates/                  # HTML templates
-├── frontend/                       # Frontend assets
-├── migrations/                     # Database migrations
-├── tests/                          # Unit and integration tests
-├── docker/                         # Docker configuration
-├── requirements.txt                # Python dependencies
-└── README.md                       # Project documentation
-```
+Fin-Arc is a comprehensive personal finance management application that helps you track expenses, set budgets, and achieve your financial goals. The application features both a web interface (Flask) and a mobile app (Flutter).
 
 ## Features
 
-### Authentication
+- **Expense Tracking**: Record and categorize all your expenses
+- **Income Management**: Track various income sources
+- **Budget Planning**: Set budgets for different expense categories
+- **Visual Reports**: Understand your spending with interactive charts
+- **Multi-currency Support**: Handle transactions in different currencies
+- **Receipt Storage**: Upload and store receipts for your expenses
+- **Recurring Transactions**: Set up recurring income and expenses
+- **Budget Notifications**: Get alerts when approaching budget limits
+- **Secure Authentication**: Protect your financial data
 
-- User registration with strong password requirements
-- Secure login with attempt tracking
-- Account lockout after multiple failed attempts
-- Password reset functionality
+## Architecture
 
-### Expense Management
+The application consists of two main components:
 
-- Add, edit, delete, and view expenses
-- Categorize expenses
-- Filter and search expenses
-- Upload and store receipts
-- Track recurring expenses
+1. **Backend**: Python Flask REST API with PostgreSQL database
+2. **Frontend**: Flutter cross-platform mobile application and web interface
 
-### Category Management
+### Backend Tech Stack
 
-- Create custom expense categories
-- Assign colors and icons
-- Set budget limits
-- Track spending by category
+- **Flask**: Web framework
+- **SQLAlchemy**: ORM for database operations
+- **PostgreSQL**: Database
+- **JWT**: Authentication
+- **Pytest**: Testing
+- **Gunicorn**: WSGI HTTP Server
 
-### Income Tracking
+### Frontend Tech Stack
 
-- Record income from various sources
-- Track taxable and non-taxable income
-- Calculate after-tax income
-- Monitor recurring income
+- **Flutter**: Cross-platform framework
+- **Provider**: State management
+- **http/dio**: API integration
+- **fl_chart**: Interactive charts
+- **sqflite**: Local database for offline support
 
-### Reporting and Analysis
+## Getting Started
 
-- Monthly and annual summaries
-- Expense breakdown by category
-- Income vs. expense comparisons
-- Budget performance tracking
-- Cash flow analysis
+### Prerequisites
 
-## Future Enhancements
+- Python 3.9+
+- Flutter SDK
+- PostgreSQL
+- Docker (optional)
 
-- Mobile application using Flutter
-- Docker containerization
-- Bank account integration
-- Investment tracking
-- Financial goal setting
-- Debt management
-- Multi-currency support
+### Installation
+
+#### Using Docker (Recommended)
+
+```bash
+# Clone the repository
+git clone https://github.com/arcteryxxczxc/fin-arc.git
+cd fin-arc
+
+# Start the application
+docker-compose up -d
+```
+
+#### Manual Setup
+
+##### Backend Setup
+
+```bash
+# Navigate to backend directory
+cd backend
+
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Set environment variables
+export FLASK_APP=run.py
+export FLASK_ENV=development
+export DATABASE_URL=postgresql://postgres:postgres@localhost:5432/finance_app
+
+# Initialize database
+flask db upgrade
+
+# Run the application
+flask run
+```
+
+##### Frontend Setup
+
+```bash
+# Navigate to frontend directory
+cd frontend
+
+# Get Flutter dependencies
+flutter pub get
+
+# Run the application
+flutter run
+```
+
+## Database Schema
+
+The application uses the following main database models:
+
+- **User**: Authentication and user information
+- **Category**: Expense and income categories
+- **Expense**: Transaction records for expenses
+- **Income**: Transaction records for income sources
+- **UserSettings**: User preferences and settings
+
+## API Endpoints
+
+The backend provides a RESTful API with the following main endpoints:
+
+- **Auth**: `/api/auth/` - Authentication endpoints
+- **Expenses**: `/api/expenses/` - Expense management
+- **Income**: `/api/income/` - Income management
+- **Categories**: `/api/categories/` - Category management
+- **Reports**: `/api/reports/` - Financial reports and statistics
 
 ## Contributing
 
+Contributions are welcome! Please feel free to submit a Pull Request.
+
 1. Fork the repository
-2. Create a feature branch: `git checkout -b new-feature`
-3. Commit your changes: `git commit -am 'Add new feature'`
-4. Push to the branch: `git push origin new-feature`
-5. Submit a pull request
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-## Acknowledgements
-
-- University of Northampton
-- Professor [Supervisor Name]
-- [Any other acknowledgements]
+## Acknowledgments
+- Created by Albert Jidebayev

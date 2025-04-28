@@ -1,13 +1,15 @@
-# backend/forms/categories.py
-
 from flask_wtf import FlaskForm
 from wtforms import StringField, DecimalField, TextAreaField, SelectField, BooleanField, SubmitField
 from wtforms import IntegerField, HiddenField
 from wtforms.validators import DataRequired, Length, Optional, NumberRange, ValidationError
 
 class CategoryForm(FlaskForm):
-    """Form for adding or editing a category"""
+    """
+    Form for adding or editing a category
     
+    This form handles all fields related to expense/income categories
+    including name, color, icon, and budget limits.
+    """
     name = StringField('Category Name', validators=[
         DataRequired(message='Category name is required'),
         Length(min=2, max=50, message='Category name must be between 2 and 50 characters')
@@ -77,9 +79,14 @@ class CategoryForm(FlaskForm):
         except ValueError:
             raise ValidationError('Color must be a valid hex code (e.g., #FFF or #FFFFFF)')
 
+
 class CategoryBulkActionForm(FlaskForm):
-    """Form for performing bulk actions on selected categories"""
+    """
+    Form for performing bulk actions on selected categories
     
+    This form allows operations like delete, activate, or deactivate
+    on multiple selected categories at once.
+    """
     selected_categories = HiddenField('Selected Categories')
     
     action = SelectField('Action', choices=[
@@ -95,9 +102,14 @@ class CategoryBulkActionForm(FlaskForm):
     
     submit = SubmitField('Apply')
 
+
 class CategoryBudgetForm(FlaskForm):
-    """Form for quickly updating multiple category budgets"""
+    """
+    Form for quickly updating multiple category budgets
     
+    This form dynamically creates fields for each category to
+    allow updating all budget limits in a single form.
+    """
     # This will be populated dynamically with fields named 'budget_[category_id]'
     submit = SubmitField('Update Budgets')
     

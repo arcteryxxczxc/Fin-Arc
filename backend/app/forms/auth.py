@@ -1,10 +1,7 @@
-# backend/forms/auth.py
-
-from flask import current_app
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, BooleanField, SubmitField, ValidationError
-from wtforms.validators import DataRequired, Email, Length, EqualTo, Regexp
-from backend.models.user import User
+from wtforms import StringField, PasswordField, BooleanField, SubmitField
+from wtforms.validators import DataRequired, Email, Length, EqualTo, Regexp, ValidationError
+from app.models.user import User
 
 class LoginForm(FlaskForm):
     """
@@ -22,6 +19,7 @@ class LoginForm(FlaskForm):
     remember_me = BooleanField('Remember Me')
     
     submit = SubmitField('Sign In')
+
 
 class RegistrationForm(FlaskForm):
     """
@@ -80,6 +78,7 @@ class RegistrationForm(FlaskForm):
         if user is not None:
             raise ValidationError('Email already in use. Please use a different one.')
 
+
 class ResetPasswordRequestForm(FlaskForm):
     """
     Form for requesting a password reset via email
@@ -90,6 +89,7 @@ class ResetPasswordRequestForm(FlaskForm):
     ])
     
     submit = SubmitField('Request Password Reset')
+
 
 class ResetPasswordForm(FlaskForm):
     """
@@ -112,6 +112,7 @@ class ResetPasswordForm(FlaskForm):
     ])
     
     submit = SubmitField('Reset Password')
+
 
 class ChangePasswordForm(FlaskForm):
     """

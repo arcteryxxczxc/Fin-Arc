@@ -1,13 +1,15 @@
-# backend/forms/income.py
-
 from flask_wtf import FlaskForm
 from wtforms import StringField, DecimalField, DateField, SelectField, TextAreaField
 from wtforms import BooleanField, HiddenField, SubmitField, IntegerField
 from wtforms.validators import DataRequired, Length, Optional, NumberRange
 
 class IncomeForm(FlaskForm):
-    """Form for adding or editing income"""
+    """
+    Form for adding or editing income
     
+    This form handles all fields related to income entries including
+    amount, source, date, and tax information.
+    """
     amount = DecimalField('Amount', validators=[
         DataRequired(message='Amount is required'),
         NumberRange(min=0.01, message='Amount must be greater than zero')
@@ -53,9 +55,14 @@ class IncomeForm(FlaskForm):
     
     submit = SubmitField('Save Income')
 
+
 class IncomeFilterForm(FlaskForm):
-    """Form for filtering incomes in a list view"""
+    """
+    Form for filtering incomes in a list view
     
+    This form provides various filter options for the income list,
+    including date range, source, category, and amount range.
+    """
     start_date = DateField('From', validators=[Optional()], format='%Y-%m-%d')
     
     end_date = DateField('To', validators=[Optional()], format='%Y-%m-%d')
@@ -75,9 +82,14 @@ class IncomeFilterForm(FlaskForm):
     submit = SubmitField('Apply Filters')
     reset = SubmitField('Reset')
 
+
 class IncomeBulkActionForm(FlaskForm):
-    """Form for performing bulk actions on selected incomes"""
+    """
+    Form for performing bulk actions on selected incomes
     
+    This form allows operations like delete, change category, or export
+    on multiple selected incomes at once.
+    """
     selected_incomes = HiddenField('Selected Incomes')
     
     action = SelectField('Action', choices=[
@@ -95,9 +107,14 @@ class IncomeBulkActionForm(FlaskForm):
     
     submit = SubmitField('Apply')
 
+
 class RecurringIncomeForm(FlaskForm):
-    """Form specifically for recurring income with additional fields"""
+    """
+    Form specifically for recurring income with additional fields
     
+    This form extends the basic income form with additional fields
+    specific to recurring income entries, such as start/end dates.
+    """
     amount = DecimalField('Amount', validators=[
         DataRequired(message='Amount is required'),
         NumberRange(min=0.01, message='Amount must be greater than zero')

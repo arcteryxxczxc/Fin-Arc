@@ -1,5 +1,3 @@
-# backend/forms/expenses.py
-
 from flask_wtf import FlaskForm
 from wtforms import StringField, DecimalField, DateField, TimeField, SelectField, TextAreaField
 from wtforms import BooleanField, FileField, HiddenField, SubmitField
@@ -7,8 +5,12 @@ from wtforms.validators import DataRequired, Length, Optional, NumberRange
 from flask_wtf.file import FileAllowed
 
 class ExpenseForm(FlaskForm):
-    """Form for adding or editing an expense"""
+    """
+    Form for adding or editing an expense
     
+    This form handles all fields related to expense entries including
+    amount, date, category, payment method, and receipt upload.
+    """
     amount = DecimalField('Amount', validators=[
         DataRequired(message='Amount is required'),
         NumberRange(min=0.01, message='Amount must be greater than zero')
@@ -63,9 +65,14 @@ class ExpenseForm(FlaskForm):
     
     submit = SubmitField('Save Expense')
 
+
 class ExpenseFilterForm(FlaskForm):
-    """Form for filtering expenses in a list view"""
+    """
+    Form for filtering expenses in a list view
     
+    This form provides various filter options for the expenses list,
+    including date range, category, amount range, and search.
+    """
     start_date = DateField('From', validators=[Optional()], format='%Y-%m-%d')
     
     end_date = DateField('To', validators=[Optional()], format='%Y-%m-%d')
@@ -91,9 +98,14 @@ class ExpenseFilterForm(FlaskForm):
     submit = SubmitField('Apply Filters')
     reset = SubmitField('Reset')
 
+
 class ExpenseBulkActionForm(FlaskForm):
-    """Form for performing bulk actions on selected expenses"""
+    """
+    Form for performing bulk actions on selected expenses
     
+    This form allows operations like delete, change category, or export
+    on multiple selected expenses at once.
+    """
     selected_expenses = HiddenField('Selected Expenses')
     
     action = SelectField('Action', choices=[

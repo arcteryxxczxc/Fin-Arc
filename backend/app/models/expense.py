@@ -1,5 +1,3 @@
-# backend/models/expense.py
-
 from datetime import datetime
 from app import db
 from sqlalchemy.sql import func
@@ -84,6 +82,8 @@ class Expense(db.Model):
         Returns:
             List of tuples with (category_id, category_name, total_amount)
         """
+        from app.models.category import Category
+        
         query = db.session.query(
             cls.category_id,
             Category.name,
@@ -154,6 +154,16 @@ class Expense(db.Model):
             cls.date.desc(),
             cls.time.desc() if cls.time else cls.id.desc()
         ).limit(limit).all()
+    
+    def save_to_db(self):
+        """Save expense to database"""
+        db.session.add(self)
+        db.session.commit()
+        
+    def delete_from_db(self):
+        """Delete expense from database"""
+        db.session.delete(self)
+        db.session.commit()
     
     def __repr__(self):
         """String representation of the Expense object"""

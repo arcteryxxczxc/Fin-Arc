@@ -1,5 +1,7 @@
 from flask import Blueprint
 
-api_bp = Blueprint('api', __name__)
+# Create a blueprint for API routes
+api_bp = Blueprint('api', __name__, url_prefix='/api')
 
-from app.api import routes
+# Import routes to register them with the blueprint
+from app.api import routes, auth, categories, expenses, incomes, reports, currencies, settings, notifications

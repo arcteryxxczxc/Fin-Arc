@@ -1,7 +1,5 @@
-# backend/models/income.py
-
 from datetime import datetime
-from backend.app import db
+from app import db
 from sqlalchemy.sql import func
 
 class Income(db.Model):
@@ -179,6 +177,16 @@ class Income(db.Model):
         
         # Return average
         return float(total) / months
+    
+    def save_to_db(self):
+        """Save income to database"""
+        db.session.add(self)
+        db.session.commit()
+        
+    def delete_from_db(self):
+        """Delete income from database"""
+        db.session.delete(self)
+        db.session.commit()
     
     def __repr__(self):
         """String representation of the Income object"""

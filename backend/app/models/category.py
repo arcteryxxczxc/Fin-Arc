@@ -1,7 +1,5 @@
-# backend/models/category.py
-
 from datetime import datetime
-from backend.app import db
+from app import db
 from sqlalchemy.sql import func
 
 class Category(db.Model):
@@ -89,7 +87,7 @@ class Category(db.Model):
             end_date = datetime(now.year, now.month, days_in_month).date()
         
         # Query for expenses in this category within the date range
-        from backend.models.expense import Expense
+        from app.models.expense import Expense
         total = db.session.query(func.sum(Expense.amount)).filter(
             Expense.category_id == self.id,
             Expense.date >= start_date,
@@ -134,7 +132,7 @@ class Category(db.Model):
         Returns:
             List of created Category objects
         """
-        from backend.app import current_app
+        from flask import current_app
         
         # Check if user already has categories
         existing_categories = cls.query.filter_by(user_id=user_id).count()
@@ -181,6 +179,16 @@ class Category(db.Model):
             query = query.filter_by(is_income=False)
             
         return query.order_by(cls.name).all()
+    
+    def save_to_db(self):
+        """Save category to database"""
+        db.session.add(self)
+        db.session.commit()
+        
+    def delete_from_db(self):
+        """Delete category from database"""
+        db.session.delete(self)
+        db.session.commit()
     
     def __repr__(self):
         """String representation of the Category object"""

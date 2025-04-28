@@ -2,9 +2,14 @@ import requests
 import os
 from datetime import datetime, timedelta
 from app import db
-from app.models import User
 
 class ExchangeRate(db.Model):
+    """
+    Exchange rate model for storing currency conversion rates
+    
+    This model caches exchange rates to reduce API calls and
+    provide fallback when external API is unavailable.
+    """
     __tablename__ = 'exchange_rates'
     
     id = db.Column(db.Integer, primary_key=True)
@@ -14,20 +19,38 @@ class ExchangeRate(db.Model):
     last_updated = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     
     def save_to_db(self):
+        """Save exchange rate to database"""
         db.session.add(self)
         db.session.commit()
+        
+    def __repr__(self):
+        """String representation of the ExchangeRate object"""
+        return f'<ExchangeRate {self.from_currency} to {self.to_currency}: {self.rate}>'
+
 
 class CurrencyService:
-    """Service for fetching and converting currency rates with focus on UZS (Uzbekistani Som)"""
+    """
+    Service for fetching and converting currency rates
     
-    # We'll use a free API for exchange rates
-    # For this example, we'll use Open Exchange Rates (you'll need to register for a free API key)
-    # or we can use ExchangeRate-API which has a free tier
+    This service focuses on UZS (Uzbekistani Som) conversions
+    but supports any currency pair.
+    """
+    
+    # API URL for exchange rates
     API_URL = "https://open.er-api.com/v6/latest/USD"
     
     @staticmethod
     def get_exchange_rate(from_currency, to_currency):
-        """Get exchange rate between two currencies"""
+        """
+        Get exchange rate between two currencies
+        
+        Args:
+            from_currency: Source currency code (e.g., 'USD')
+            to_currency: Target currency code (e.g., 'UZS')
+            
+        Returns:
+            float: Exchange rate between the currencies
+        """
         # Check if we have a recent rate in the database
         rate = ExchangeRate.query.filter_by(
             from_currency=from_currency, 
@@ -79,7 +102,17 @@ class CurrencyService:
     
     @staticmethod
     def convert_amount(amount, from_currency, to_currency):
-        """Convert an amount from one currency to another"""
+        """
+        Convert an amount from one currency to another
+        
+        Args:
+            amount: Amount to convert
+            from_currency: Source currency code
+            to_currency: Target currency code
+            
+        Returns:
+            float: Converted amount
+        """
         if from_currency == to_currency:
             return amount
         
@@ -88,7 +121,12 @@ class CurrencyService:
     
     @staticmethod
     def get_common_currencies():
-        """Get list of common currencies with UZS first"""
+        """
+        Get list of common currencies with UZS first
+        
+        Returns:
+            list: List of currency dictionaries with code, name, and symbol
+        """
         return [
             {"code": "UZS", "name": "Uzbekistan Sшm", "symbol": "сўм"},
             {"code": "USD", "name": "US Dollar", "symbol": "$"},

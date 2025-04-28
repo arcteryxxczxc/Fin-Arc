@@ -3,15 +3,19 @@
 
 import os
 from app import create_app
-from app.models.user import User
 from app.models.category import Category
+from flask_login import current_user
 
 app = create_app()
 
 # Add before request handler to check for default categories
 @app.before_request
 def check_default_categories():
-    """Create default categories for new user if needed"""
+    """Create default categories for new user if needed
+    
+    This middleware checks if the current authenticated user has any categories.
+    If not, it creates the default categories defined in the application config.
+    """
     from flask_login import current_user
     from app import db
     
@@ -26,7 +30,10 @@ def check_default_categories():
 # Home route
 @app.route('/')
 def index():
-    """Home page route"""
+    """Home page route
+    
+    Renders the main landing page for the application.
+    """
     from flask import render_template
     return render_template('index.html')
 

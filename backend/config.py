@@ -1,5 +1,3 @@
-# backend/config.py
-
 import os
 from datetime import timedelta
 
@@ -12,6 +10,10 @@ class Config:
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
         'postgresql://postgres:postgres@localhost/fin_arc'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    
+    # JWT settings
+    JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY') or 'jwt-secret-key-change-in-production'
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=1)
     
     # Security settings
     SESSION_COOKIE_SECURE = True  # Only send cookies over HTTPS
@@ -28,6 +30,10 @@ class Config:
     # Login security
     MAX_LOGIN_ATTEMPTS = 5  # Maximum number of failed login attempts
     LOGIN_ATTEMPT_TIMEOUT = 15 * 60  # Lockout period in seconds (15 minutes)
+    
+    # Upload settings
+    UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uploads')
+    MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16 MB max upload size
     
     # Application defaults
     DEFAULT_CATEGORIES = [
@@ -51,12 +57,18 @@ class Config:
     WARNING_COLOR = '#FFDC00'
     INFO_COLOR = '#7FDBFF'
 
+
 class DevelopmentConfig(Config):
     """Development configuration"""
     DEBUG = True
     TESTING = False
     SESSION_COOKIE_SECURE = False  # Allow HTTP in development
     
+    # Override database URI for development
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
+        'postgresql://postgres:postgres@localhost/fin_arc_dev'
+    
+
 class TestingConfig(Config):
     """Testing configuration"""
     TESTING = True
@@ -65,6 +77,7 @@ class TestingConfig(Config):
     WTF_CSRF_ENABLED = False  # Disable CSRF during tests
     SESSION_COOKIE_SECURE = False
     
+
 class ProductionConfig(Config):
     """Production configuration"""
     DEBUG = False
@@ -72,11 +85,13 @@ class ProductionConfig(Config):
     
     # In production, ensure these are set as environment variables
     SECRET_KEY = os.environ.get('SECRET_KEY')
+    JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY')
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
     
     # Enhanced security for production
     SESSION_COOKIE_SECURE = True
     PERMANENT_SESSION_LIFETIME = timedelta(days=7)  # Shorter session in production
+
 
 # Set active configuration
 config = {
@@ -86,7 +101,13 @@ config = {
     'default': DevelopmentConfig
 }
 
+
 def get_config():
-    """Get the current configuration based on environment"""
+    """
+    Get the current configuration based on environment
+    
+    Returns:
+        Config object based on FLASK_ENV environment variable
+    """
     env = os.environ.get('FLASK_ENV', 'default')
     return config.get(env, config['default'])

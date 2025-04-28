@@ -1,10 +1,8 @@
-# backend/models/user.py
-
 from datetime import datetime, timedelta
 from flask import current_app
 from flask_login import UserMixin
 from sqlalchemy.sql import func
-from backend.app import db, bcrypt
+from app import db, bcrypt
 
 class User(db.Model, UserMixin):
     """
@@ -30,13 +28,13 @@ class User(db.Model, UserMixin):
     # Security related fields
     last_login = db.Column(db.DateTime)
     account_locked = db.Column(db.Boolean, default=False)
-    lock_until = db.Column(db.DateTime)
+    locked_until = db.Column(db.DateTime)
     password_reset_token = db.Column(db.String(100), unique=True)
     password_reset_expires = db.Column(db.DateTime)
     
     # Relationships
     login_attempts = db.relationship('LoginAttempt', backref='user', lazy='dynamic', cascade='all, delete-orphan')
-    # Will add relationships to other models (expenses, categories, income) later
+    # Other relationships will be defined in their respective models with backref
     
     @property
     def password(self):
@@ -72,16 +70,16 @@ class User(db.Model, UserMixin):
         
         # Set account as locked and calculate lock expiration time
         self.account_locked = True
-        self.lock_until = datetime.utcnow() + timedelta(seconds=timeout)
+        self.locked_until = datetime.utcnow() + timedelta(seconds=timeout)
         db.session.commit()
     
     def unlock_account(self):
         """Unlock account"""
         self.account_locked = False
-        self.lock_until = None
+        self.locked_until = None
         db.session.commit()
     
-    def check_account_lock_status(self):
+    def is_account_locked(self):
         """
         Check if account is currently locked
         
@@ -92,30 +90,50 @@ class User(db.Model, UserMixin):
             return False
         
         # If lock period has expired, unlock account
-        if self.lock_until and datetime.utcnow() > self.lock_until:
+        if self.locked_until and datetime.utcnow() > self.locked_until:
             self.unlock_account()
             return False
             
         return self.account_locked
     
-    def has_reached_max_login_attempts(self):
+    def update_login_attempts(self, successful=False):
         """
-        Check if user has reached maximum login attempts
+        Update login attempts and handle account locking if needed
         
-        Returns:
-            bool: True if max attempts reached, False otherwise
+        Args:
+            successful: Whether the login attempt was successful
         """
-        max_attempts = current_app.config.get('MAX_LOGIN_ATTEMPTS', 5)
+        # Record the login attempt
+        attempt = LoginAttempt(
+            user_id=self.id,
+            ip_address=None,  # Would be set from request in route
+            user_agent=None,  # Would be set from request in route
+            success=successful
+        )
+        db.session.add(attempt)
         
-        # Count failed attempts in the last hour
-        one_hour_ago = datetime.utcnow() - timedelta(hours=1)
-        recent_failed_attempts = LoginAttempt.query.filter(
-            LoginAttempt.user_id == self.id,
-            LoginAttempt.success == False,
-            LoginAttempt.timestamp > one_hour_ago
-        ).count()
-        
-        return recent_failed_attempts >= max_attempts
+        if successful:
+            # Reset failed attempts counter by clearing old records
+            # This approach keeps the history but no longer counts old attempts
+            self.update_last_login()
+        else:
+            # Check for max attempts
+            max_attempts = current_app.config.get('MAX_LOGIN_ATTEMPTS', 5)
+            
+            # Count recent failed attempts (last hour)
+            one_hour_ago = datetime.utcnow() - timedelta(hours=1)
+            recent_failed_attempts = LoginAttempt.query.filter(
+                LoginAttempt.user_id == self.id,
+                LoginAttempt.success == False,
+                LoginAttempt.timestamp > one_hour_ago
+            ).count()
+            
+            # Lock account if max attempts reached
+            if recent_failed_attempts >= max_attempts:
+                self.lock_account()
+            else:
+                # Ensure any changes are saved
+                db.session.commit()
     
     def generate_reset_token(self, expiration=3600):
         """
@@ -163,38 +181,30 @@ class User(db.Model, UserMixin):
         self.password_reset_expires = None
         db.session.commit()
     
-    def __repr__(self):
-        """String representation of the User object"""
-        return f'<User {self.username}>'
-    
-    
-
-# Calculate user statistics
+    # Financial statistics methods
     @property
     def total_expenses_current_month(self):
         """Calculate total expenses for current month"""
-        from backend.models.expense import Expense
-        from datetime import datetime
+        from app.models.expense import Expense
         import calendar
     
-    now = datetime.utcnow()
-    _, days_in_month = calendar.monthrange(now.year, now.month)
-    start_date = datetime(now.year, now.month, 1).date()
-    end_date = datetime(now.year, now.month, days_in_month).date()
+        now = datetime.utcnow()
+        _, days_in_month = calendar.monthrange(now.year, now.month)
+        start_date = datetime(now.year, now.month, 1).date()
+        end_date = datetime(now.year, now.month, days_in_month).date()
     
-    total = db.session.query(func.sum(Expense.amount)).filter(
-        Expense.user_id == self.id,
-        Expense.date >= start_date,
-        Expense.date <= end_date
-    ).scalar() or 0
+        total = db.session.query(func.sum(Expense.amount)).filter(
+            Expense.user_id == self.id,
+            Expense.date >= start_date,
+            Expense.date <= end_date
+        ).scalar() or 0
     
-    return float(total)
+        return float(total)
 
     @property
     def total_income_current_month(self):
         """Calculate total income for current month"""
-        from backend.models.income import Income
-        from datetime import datetime
+        from app.models.income import Income
         import calendar
         
         now = datetime.utcnow()
@@ -218,7 +228,7 @@ class User(db.Model, UserMixin):
     @property
     def expense_categories_with_budget(self):
         """Get all expense categories that have budget limits set"""
-        from backend.models.category import Category
+        from app.models.category import Category
         
         return Category.query.filter(
             Category.user_id == self.id,
@@ -229,57 +239,34 @@ class User(db.Model, UserMixin):
 
     def get_expense_category_breakdown(self, start_date=None, end_date=None):
         """Get breakdown of expenses by category for a date range"""
-        from backend.models.expense import Expense
+        from app.models.expense import Expense
         
         return Expense.get_total_by_category(self.id, start_date, end_date)
 
     def get_income_source_breakdown(self, start_date=None, end_date=None):
         """Get breakdown of income by source for a date range"""
-        from backend.models.income import Income
+        from app.models.income import Income
         
         return Income.get_total_by_source(self.id, start_date, end_date)
 
     def get_monthly_expense_trend(self, months=6):
         """Get expense trend for the last X months"""
-        from backend.models.expense import Expense
-        from datetime import datetime
+        from app.models.expense import Expense
         
-        # Calculate start year and month
-        now = datetime.utcnow()
-        start_month = now.month - months
-        start_year = now.year
-        
-        # Adjust for previous year
-        while start_month <= 0:
-            start_month += 12
-            start_year -= 1
-            
         # Get expense totals by month
         return Expense.get_total_by_month(self.id, None)  # passing None gets all years
 
     def get_monthly_income_trend(self, months=6):
         """Get income trend for the last X months"""
-        from backend.models.income import Income
-        from datetime import datetime
+        from app.models.income import Income
         
-        # Calculate start year and month
-        now = datetime.utcnow()
-        start_month = now.month - months
-        start_year = now.year
-        
-        # Adjust for previous year
-        while start_month <= 0:
-            start_month += 12
-            start_year -= 1
-            
         # Get income totals by month
         return Income.get_total_by_month(self.id, None)  # passing None gets all years
 
     def get_savings_rate(self, months=3):
         """Calculate savings rate (income - expenses) / income for recent months"""
-        from backend.models.expense import Expense
-        from backend.models.income import Income
-        from datetime import datetime
+        from app.models.expense import Expense
+        from app.models.income import Income
         
         # Calculate start date (months ago)
         now = datetime.utcnow()
@@ -312,6 +299,15 @@ class User(db.Model, UserMixin):
         savings_rate = (savings / float(total_income)) * 100
         
         return max(0, savings_rate)  # Ensure we don't return negative savings rate
+
+    def save_to_db(self):
+        """Save user to database"""
+        db.session.add(self)
+        db.session.commit()
+
+    def __repr__(self):
+        """String representation of the User object"""
+        return f'<User {self.username}>'
 
 
 class LoginAttempt(db.Model):

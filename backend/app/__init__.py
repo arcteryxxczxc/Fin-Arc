@@ -1,5 +1,3 @@
-# app/__init__.py
-
 import os
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
@@ -21,7 +19,18 @@ login_manager = LoginManager()
 bcrypt = Bcrypt()
 
 def create_app(config=None):
-    """Application factory function"""
+    """Application factory function
+    
+    Creates and configures the Flask application based on provided config
+    or environment settings. Initializes all extensions and registers
+    all blueprints.
+    
+    Args:
+        config: Configuration object to use (optional)
+        
+    Returns:
+        Configured Flask application
+    """
     app = Flask(__name__)
     
     # Configure the app
@@ -52,12 +61,14 @@ def create_app(config=None):
         return User.query.get(int(user_id))
 
     # Register blueprints
-    from app.api.auth import auth_bp
+    from app.api import api_bp
+    from app.auth import auth_bp
     from app.api.expenses import expense_routes
     from app.api.categories import category_routes
     from app.api.income import income_routes
     from app.api.reports import report_routes
 
+    app.register_blueprint(api_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(expense_routes)
     app.register_blueprint(category_routes)

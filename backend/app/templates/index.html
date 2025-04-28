@@ -17,6 +17,30 @@
                                 <i class="fas fa-money-bill-wave text-primary fa-2x"></i>
                             </div>
                             <div>
+                                <h5 class="mb-2">Expense Tracking</h5>
+                                <p class="text-muted mb-0">Easily record and categorize all your expenses in one place.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-start">
+                            <div class="me-3">
+                                <i class="fas fa-tags text-primary fa-2x"></i>
+                            </div>
+                            <div>
+                                <h5 class="mb-2">Custom Categories</h5>
+                                <p class="text-muted mb-0">Create and manage your own expense categories.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-start">
+                            <div class="me-3">
+                                <i class="fas fa-chart-pie text-primary fa-2x"></i>
+                            </div>
+                            <div>
                                 <h5 class="mb-2">Visual Reports</h5>
                                 <p class="text-muted mb-0">Understand your spending with interactive charts and graphs.</p>
                             </div>
@@ -42,10 +66,10 @@
                             <i class="fas fa-tachometer-alt me-2"></i>Go to Dashboard
                         </a>
                     {% else %}
-                        <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg px-4 me-md-2">
+                        <a href="{{ url_for('auth.register') if 'auth.register' in url_for_security else '#' }}" class="btn btn-primary btn-lg px-4 me-md-2">
                             <i class="fas fa-user-plus me-2"></i>Get Started
                         </a>
-                        <a href="{{ url_for('auth.login') }}" class="btn btn-outline-primary btn-lg px-4">
+                        <a href="{{ url_for('auth.login') if 'auth.login' in url_for_security else '#' }}" class="btn btn-outline-primary btn-lg px-4">
                             <i class="fas fa-sign-in-alt me-2"></i>Login
                         </a>
                     {% endif %}
@@ -55,7 +79,7 @@
     </div>
     
     <div class="col-lg-5 order-lg-2 order-1 d-flex align-items-center">
-        <img src="{{ url_for('static', filename='images/finance-app.svg') }}" alt="Finance Application" class="img-fluid" />
+        <img src="{{ url_for('static', filename='images/finance-app.svg') if 'images/finance-app.svg' in static_files else 'https://via.placeholder.com/500x400?text=Fin-Arc' }}" alt="Finance Application" class="img-fluid" />
     </div>
 </div>
 
@@ -125,7 +149,7 @@
                     <i class="fas fa-tachometer-alt me-2"></i>Go to Dashboard
                 </a>
             {% else %}
-                <a href="{{ url_for('auth.register') }}" class="btn btn-primary px-4">
+                <a href="{{ url_for('auth.register') if 'auth.register' in url_for_security else '#' }}" class="btn btn-primary px-4">
                     <i class="fas fa-user-plus me-2"></i>Get Started for Free
                 </a>
             {% endif %}
@@ -157,7 +181,7 @@
                     </li>
                     <li>
                         <i class="fas fa-check-circle text-success me-2"></i>
-                        <strong>Innovative features</strong> not available in other financial apps in Uzbekistan
+                        <strong>Innovative features</strong> not available in other financial apps
                     </li>
                 </ul>
             </div>
@@ -188,28 +212,4 @@
         });
     });
 </script>
-{% endblock %}5 class="mb-2">Expense Tracking</h5>
-                                <p class="text-muted mb-0">Easily record and categorize all your expenses in one place.</p>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="col-md-6">
-                        <div class="d-flex align-items-start">
-                            <div class="me-3">
-                                <i class="fas fa-tags text-primary fa-2x"></i>
-                            </div>
-                            <div>
-                                <h5 class="mb-2">Custom Categories</h5>
-                                <p class="text-muted mb-0">Create and manage your own expense categories.</p>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="col-md-6">
-                        <div class="d-flex align-items-start">
-                            <div class="me-3">
-                                <i class="fas fa-chart-pie text-primary fa-2x"></i>
-                            </div>
-                            <div>
-                                <h
+{% endblock %}

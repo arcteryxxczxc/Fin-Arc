@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from flask import current_app
 from flask_login import UserMixin
 from sqlalchemy.sql import func
-from app import db, bcrypt
+from backend.app import db, bcrypt
 
 class User(db.Model, UserMixin):
     """
@@ -185,7 +185,7 @@ class User(db.Model, UserMixin):
     @property
     def total_expenses_current_month(self):
         """Calculate total expenses for current month"""
-        from app.models.expense import Expense
+        from backend.app.models.expense import Expense
         import calendar
     
         now = datetime.utcnow()
@@ -204,7 +204,7 @@ class User(db.Model, UserMixin):
     @property
     def total_income_current_month(self):
         """Calculate total income for current month"""
-        from app.models.income import Income
+        from backend.app.models.income import Income
         import calendar
         
         now = datetime.utcnow()
@@ -228,7 +228,7 @@ class User(db.Model, UserMixin):
     @property
     def expense_categories_with_budget(self):
         """Get all expense categories that have budget limits set"""
-        from app.models.category import Category
+        from backend.app.models.category import Category
         
         return Category.query.filter(
             Category.user_id == self.id,
@@ -239,34 +239,34 @@ class User(db.Model, UserMixin):
 
     def get_expense_category_breakdown(self, start_date=None, end_date=None):
         """Get breakdown of expenses by category for a date range"""
-        from app.models.expense import Expense
+        from backend.app.models.expense import Expense
         
         return Expense.get_total_by_category(self.id, start_date, end_date)
 
     def get_income_source_breakdown(self, start_date=None, end_date=None):
         """Get breakdown of income by source for a date range"""
-        from app.models.income import Income
+        from backend.app.models.income import Income
         
         return Income.get_total_by_source(self.id, start_date, end_date)
 
     def get_monthly_expense_trend(self, months=6):
         """Get expense trend for the last X months"""
-        from app.models.expense import Expense
+        from backend.app.models.expense import Expense
         
         # Get expense totals by month
         return Expense.get_total_by_month(self.id, None)  # passing None gets all years
 
     def get_monthly_income_trend(self, months=6):
         """Get income trend for the last X months"""
-        from app.models.income import Income
+        from backend.app.models.income import Income
         
         # Get income totals by month
         return Income.get_total_by_month(self.id, None)  # passing None gets all years
 
     def get_savings_rate(self, months=3):
         """Calculate savings rate (income - expenses) / income for recent months"""
-        from app.models.expense import Expense
-        from app.models.income import Income
+        from backend.app.models.expense import Expense
+        from backend.app.models.income import Income
         
         # Calculate start date (months ago)
         now = datetime.utcnow()
@@ -304,6 +304,20 @@ class User(db.Model, UserMixin):
         """Save user to database"""
         db.session.add(self)
         db.session.commit()
+        
+    def has_reached_max_login_attempts(self):
+        """Check if user has reached max login attempts"""
+        max_attempts = current_app.config.get('MAX_LOGIN_ATTEMPTS', 5)
+        
+        # Count recent failed attempts (last hour)
+        one_hour_ago = datetime.utcnow() - timedelta(hours=1)
+        recent_failed_attempts = LoginAttempt.query.filter(
+            LoginAttempt.user_id == self.id,
+            LoginAttempt.success == False,
+            LoginAttempt.timestamp > one_hour_ago
+        ).count()
+        
+        return recent_failed_attempts >= max_attempts
 
     def __repr__(self):
         """String representation of the User object"""

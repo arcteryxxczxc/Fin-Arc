@@ -16,7 +16,7 @@ class Config:
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=1)
     
     # Security settings
-    SESSION_COOKIE_SECURE = True  # Only send cookies over HTTPS
+    SESSION_COOKIE_SECURE = False  # Set to False for development without HTTPS
     SESSION_COOKIE_HTTPONLY = True  # Prevent JavaScript access to session cookie
     PERMANENT_SESSION_LIFETIME = timedelta(days=30)  # Session expiration
     
@@ -32,7 +32,7 @@ class Config:
     LOGIN_ATTEMPT_TIMEOUT = 15 * 60  # Lockout period in seconds (15 minutes)
     
     # Upload settings
-    UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uploads')
+    UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'app', 'uploads')
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16 MB max upload size
     
     # Application defaults
@@ -66,7 +66,7 @@ class DevelopmentConfig(Config):
     
     # Override database URI for development
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-        'postgresql://postgres:postgres@localhost/fin_arc_dev'
+        'sqlite:///app.db'  # Using SQLite for simplicity in development
     
 
 class TestingConfig(Config):

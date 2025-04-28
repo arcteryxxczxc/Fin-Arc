@@ -1,9 +1,14 @@
 #!/usr/bin/env python3
-# run.py - Application entry point
+# Application entry point
 
 import os
-from app import create_app
-from app.models.category import Category
+import sys
+
+# Add the parent directory to the Python path so we can import the app package
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
+
+from backend.app import create_app
+from backend.app.models.category import Category
 from flask_login import current_user
 
 app = create_app()
@@ -17,7 +22,7 @@ def check_default_categories():
     If not, it creates the default categories defined in the application config.
     """
     from flask_login import current_user
-    from app import db
+    from backend.app import db
     
     if current_user.is_authenticated:
         # Count user's categories

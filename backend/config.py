@@ -66,14 +66,14 @@ class DevelopmentConfig(Config):
     
     # Override database URI for development
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-        'sqlite:///app.db'  # Using SQLite for simplicity in development
+        'postgresql://postgres:postgres@localhost/fin_arc'
     
 
 class TestingConfig(Config):
     """Testing configuration"""
     TESTING = True
     DEBUG = True
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'  # Use in-memory database for tests
+    SQLALCHEMY_DATABASE_URI = 'postgresql://postgres:postgres@localhost/fin_arc'  # Use in-memory database for tests
     WTF_CSRF_ENABLED = False  # Disable CSRF during tests
     SESSION_COOKIE_SECURE = False
     

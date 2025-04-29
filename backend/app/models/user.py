@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from flask import current_app
 from flask_login import UserMixin
 from sqlalchemy.sql import func
-from backend.app import db, bcrypt
+from app import db, bcrypt
 
 class User(db.Model, UserMixin):
     """

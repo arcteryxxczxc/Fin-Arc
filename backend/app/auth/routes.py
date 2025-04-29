@@ -66,7 +66,7 @@ def login():
         # Check if user exists
         if user:
             # Check if account is locked
-            if user.check_account_lock_status():
+            if user.is_account_locked():
                 flash('Account is temporarily locked due to multiple failed login attempts. Please try again later.', 'danger')
                 logger.warning(f"Login attempt on locked account: {user.username}")
                 return render_template('auth/login.html', title='Login', form=form)

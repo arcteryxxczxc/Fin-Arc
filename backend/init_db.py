@@ -22,8 +22,10 @@ def init_db():
             test_user = User(
                 username="test_user",
                 email="test@example.com",
-                password_hash=User.generate_hash("password123")
+                first_name="Test",
+                last_name="User"
             )
+            test_user.password = "password123"
             db.session.add(test_user)
             db.session.commit()
             

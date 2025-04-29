@@ -1,5 +1,5 @@
 import os
-from flask import Flask
+from flask import Flask, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_jwt_extended import JWTManager
@@ -19,11 +19,11 @@ login_manager = LoginManager()
 bcrypt = Bcrypt()
 
 def create_app(config=None):
-    """Application factory function
+    """Application factory function that creates a Flask API-only backend
     
     Creates and configures the Flask application based on provided config
     or environment settings. Initializes all extensions and registers
-    all blueprints.
+    all API blueprints.
     
     Args:
         config: Configuration object to use (optional)
@@ -47,12 +47,12 @@ def create_app(config=None):
     jwt.init_app(app)
     login_manager.init_app(app)
     bcrypt.init_app(app)
-    CORS(app)
+    
+    # Configure CORS to allow requests from Flutter Web client
+    CORS(app, resources={r"/api/*": {"origins": "*"}})
 
-    # Configure login manager
-    login_manager.login_view = 'auth.login'
-    login_manager.login_message_category = 'info'
-    login_manager.session_protection = 'strong'
+    # Configure login manager for API auth only
+    login_manager.login_view = None  # No redirect for failed auth
 
     @login_manager.user_loader
     def load_user(user_id):
@@ -60,59 +60,24 @@ def create_app(config=None):
         from app.models.user import User
         return User.query.get(int(user_id))
 
-    # Register blueprints
+    # Register API blueprint
     from app.api import api_bp
-    from app.auth import auth_bp
-
     app.register_blueprint(api_bp)
-    app.register_blueprint(auth_bp)
 
-    # Register individual route blueprints
-    with app.app_context():
-        # Try to import and register UI route blueprints
-        try:
-            from app.api.expenses import expense_routes
-            app.register_blueprint(expense_routes)
-        except ImportError:
-            app.logger.warning("Could not register expense routes")
-
-        try:
-            from app.api.categories import category_routes
-            app.register_blueprint(category_routes)
-        except ImportError:
-            app.logger.warning("Could not register category routes")
-
-        try:
-            from app.api.income import income_routes
-            app.register_blueprint(income_routes)
-        except ImportError:
-            app.logger.warning("Could not register income routes")
-
-        try:
-            from app.api.reports import report_routes
-            app.register_blueprint(report_routes)
-        except ImportError:
-            app.logger.warning("Could not register report routes")
-
-    # Error handlers
+    # Error handlers returning JSON responses
     @app.errorhandler(404)
     def page_not_found(e):
-        """Handle 404 errors"""
-        from flask import render_template
-        return render_template('404.html'), 404
+        """Handle 404 errors with JSON response"""
+        return jsonify({"error": "Resource not found", "message": str(e)}), 404
 
     @app.errorhandler(500)
     def internal_server_error(e):
-        """Handle 500 errors"""
-        from flask import render_template
-        return render_template('500.html'), 500
+        """Handle 500 errors with JSON response"""
+        return jsonify({"error": "Internal server error", "message": str(e)}), 500
 
     # Route for health check
-    @app.route('/health')
+    @app.route('/api/health')
     def health_check():
-        return {"status": "healthy"}
+        return jsonify({"status": "healthy"})
         
-    # Make sure template directories exist
-    os.makedirs(os.path.join(app.root_path, 'templates'), exist_ok=True)
-
     return app

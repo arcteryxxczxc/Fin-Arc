@@ -6,11 +6,20 @@ class Config:
     # Secret key for session management and CSRF protection
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'you-will-never-guess'
     FLUTTER_WEB_URL = os.environ.get('FLUTTER_WEB_URL')
+    # Comma-separated list of allowed Flutter Web URLs in production
+    FLUTTER_WEB_URLS = os.environ.get('FLUTTER_WEB_URLS', '')
 
     # Database configuration
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
         'postgresql://postgres:postgres@localhost/fin_arc'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    
+    # Connection pool settings
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        'pool_size': 10,
+        'pool_recycle': 3600,
+        'pool_pre_ping': True
+    }
     
     # Enhanced security headers
     SECURITY_HEADERS = {
@@ -60,14 +69,9 @@ class Config:
         {'name': 'Other', 'color_code': '#757575'}
     ]
     
-    # Default dark blue theme colors
-    PRIMARY_COLOR = '#001F3F'
-    SECONDARY_COLOR = '#0074D9'
-    ACCENT_COLOR = '#39CCCC'
-    SUCCESS_COLOR = '#2ECC40'
-    DANGER_COLOR = '#FF4136'
-    WARNING_COLOR = '#FFDC00'
-    INFO_COLOR = '#7FDBFF'
+    # Logging configuration
+    LOG_FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    LOG_LEVEL = 'INFO'
 
 
 class DevelopmentConfig(Config):
@@ -80,14 +84,20 @@ class DevelopmentConfig(Config):
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
         'postgresql://postgres:postgres@localhost/fin_arc'
     
+    # More verbose logging for development
+    LOG_LEVEL = 'DEBUG'
 
 class TestingConfig(Config):
     """Testing configuration"""
     TESTING = True
     DEBUG = True
-    SQLALCHEMY_DATABASE_URI = 'postgresql://postgres:postgres@localhost/fin_arc'  # Use in-memory database for tests
+    SQLALCHEMY_DATABASE_URI = os.environ.get('TEST_DATABASE_URL') or \
+        'postgresql://postgres:postgres@localhost/fin_arc_test'
     WTF_CSRF_ENABLED = False  # Disable CSRF during tests
     SESSION_COOKIE_SECURE = False
+    
+    # Reduce security timeouts for testing
+    LOGIN_ATTEMPT_TIMEOUT = 1  # 1 second timeout for tests
     
 
 class ProductionConfig(Config):
@@ -101,8 +111,16 @@ class ProductionConfig(Config):
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
     
     # Enhanced security for production
-    SESSION_COOKIE_SECURE = True
+    SESSION_COOKIE_SECURE = True  # Require HTTPS
     PERMANENT_SESSION_LIFETIME = timedelta(days=7)  # Shorter session in production
+    
+    # Connection pool optimized for production
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        'pool_size': 20,
+        'max_overflow': 10,
+        'pool_recycle': 1800,
+        'pool_pre_ping': True
+    }
 
 
 # Set active configuration

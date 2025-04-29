@@ -1,14 +1,18 @@
-from flask import request, jsonify
+from flask import request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.api import api_bp
 from app import db
 from app.models.income import Income
 from app.models.category import Category
 from app.models.user import User
+from app.utils.api import api_success, api_error
+from app.utils.db import safe_commit, paginate_query
+from app.utils.validation import validate_json, INCOME_SCHEMA
 from sqlalchemy import or_, func
-from datetime import datetime, timedelta
+from datetime import datetime
 import csv
 import io
+import hashlib
 import logging
 
 # Set up logging
@@ -41,7 +45,7 @@ def get_income_entries():
         user = User.query.filter_by(username=current_username).first()
         
         if not user:
-            return jsonify({"error": "User not found"}), 404
+            return api_error("User not found", 404)
         
         # Get pagination parameters
         page = request.args.get('page', 1, type=int)
@@ -57,11 +61,17 @@ def get_income_entries():
         
         start_date = request.args.get('start_date')
         if start_date:
-            query = query.filter(Income.date >= datetime.strptime(start_date, '%Y-%m-%d').date())
+            try:
+                query = query.filter(Income.date >= datetime.strptime(start_date, '%Y-%m-%d').date())
+            except ValueError:
+                return api_error("Invalid start_date format. Use YYYY-MM-DD", 400)
         
         end_date = request.args.get('end_date')
         if end_date:
-            query = query.filter(Income.date <= datetime.strptime(end_date, '%Y-%m-%d').date())
+            try:
+                query = query.filter(Income.date <= datetime.strptime(end_date, '%Y-%m-%d').date())
+            except ValueError:
+                return api_error("Invalid end_date format. Use YYYY-MM-DD", 400)
         
         min_amount = request.args.get('min_amount', type=float)
         if min_amount:
@@ -94,39 +104,41 @@ def get_income_entries():
         query = query.order_by(Income.date.desc(), Income.id.desc())
         
         # Paginate
-        income_page = query.paginate(page=page, per_page=per_page, error_out=False)
+        income_page = paginate_query(query, page, per_page)
         
         # Format response
-        result = {
-            "income": [{
-                "id": income.id,
-                "amount": float(income.amount),
-                "formatted_amount": income.formatted_amount,
-                "source": income.source,
-                "description": income.description,
-                "date": income.formatted_date,
-                "category_id": income.category_id,
-                "category_name": income.category.name if income.category else None,
-                "is_recurring": income.is_recurring,
-                "recurring_type": income.recurring_type,
-                "recurring_day": income.recurring_day,
-                "is_taxable": income.is_taxable,
-                "tax_rate": float(income.tax_rate) if income.tax_rate else None,
-                "after_tax_amount": income.after_tax_amount
-            } for income in income_page.items],
-            "pagination": {
-                "page": income_page.page,
-                "per_page": income_page.per_page,
-                "total_pages": income_page.pages,
-                "total_items": income_page.total
-            }
+        incomes = [{
+            "id": income.id,
+            "amount": float(income.amount),
+            "formatted_amount": income.formatted_amount,
+            "source": income.source,
+            "description": income.description,
+            "date": income.formatted_date,
+            "category_id": income.category_id,
+            "category_name": income.category.name if income.category else None,
+            "is_recurring": income.is_recurring,
+            "recurring_type": income.recurring_type,
+            "recurring_day": income.recurring_day,
+            "is_taxable": income.is_taxable,
+            "tax_rate": float(income.tax_rate) if income.tax_rate else None,
+            "after_tax_amount": income.after_tax_amount
+        } for income in income_page.items]
+        
+        pagination = {
+            "page": income_page.page,
+            "per_page": income_page.per_page,
+            "total_pages": income_page.pages,
+            "total_items": income_page.total
         }
         
-        return jsonify(result), 200
+        return api_success({
+            "income": incomes,
+            "pagination": pagination
+        })
         
     except Exception as e:
         logger.error(f"Error getting income entries: {str(e)}")
-        return jsonify({"error": "An error occurred while retrieving income entries"}), 500
+        return api_error("An error occurred while retrieving income entries", 500)
 
 @api_bp.route('/income/<int:income_id>', methods=['GET'])
 @jwt_required()
@@ -146,16 +158,16 @@ def get_income(income_id):
         user = User.query.filter_by(username=current_username).first()
         
         if not user:
-            return jsonify({"error": "User not found"}), 404
+            return api_error("User not found", 404)
         
         # Get income
         income = Income.query.filter_by(id=income_id, user_id=user.id).first()
         
         if not income:
-            return jsonify({"error": "Income entry not found"}), 404
+            return api_error("Income entry not found", 404)
         
         # Format response
-        result = {
+        income_data = {
             "id": income.id,
             "amount": float(income.amount),
             "formatted_amount": income.formatted_amount,
@@ -174,14 +186,15 @@ def get_income(income_id):
             "updated_at": income.updated_at.strftime('%Y-%m-%d %H:%M:%S')
         }
         
-        return jsonify(result), 200
+        return api_success({"income": income_data})
         
     except Exception as e:
         logger.error(f"Error getting income {income_id}: {str(e)}")
-        return jsonify({"error": "An error occurred while retrieving the income entry"}), 500
+        return api_error("An error occurred while retrieving the income entry", 500)
 
 @api_bp.route('/income', methods=['POST'])
 @jwt_required()
+@validate_json(INCOME_SCHEMA)
 def create_income():
     """
     Create a new income entry
@@ -207,42 +220,23 @@ def create_income():
         user = User.query.filter_by(username=current_username).first()
         
         if not user:
-            return jsonify({"error": "User not found"}), 404
+            return api_error("User not found", 404)
         
         # Get request data
         data = request.get_json()
         
-        if not data:
-            return jsonify({"error": "Missing JSON in request"}), 400
-        
-        # Validate required fields
-        if 'amount' not in data:
-            return jsonify({"error": "Amount is required"}), 400
-        
-        if 'source' not in data:
-            return jsonify({"error": "Source is required"}), 400
-        
-        try:
-            amount = float(data['amount'])
-            if amount <= 0:
-                return jsonify({"error": "Amount must be greater than zero"}), 400
-        except ValueError:
-            return jsonify({"error": "Invalid amount format"}), 400
-        
         # Parse date
-        date_str = data.get('date')
-        if date_str:
+        date_val = datetime.utcnow().date()
+        if 'date' in data and data['date']:
             try:
-                date_val = datetime.strptime(date_str, '%Y-%m-%d').date()
+                date_val = datetime.strptime(data['date'], '%Y-%m-%d').date()
             except ValueError:
-                return jsonify({"error": "Invalid date format. Use YYYY-MM-DD"}), 400
-        else:
-            date_val = datetime.utcnow().date()
+                return api_error("Invalid date format. Use YYYY-MM-DD", 400)
         
         # Create income entry
         income = Income(
             user_id=user.id,
-            amount=amount,
+            amount=data['amount'],
             source=data['source'],
             description=data.get('description'),
             date=date_val,
@@ -266,39 +260,42 @@ def create_income():
             if category:
                 income.category_id = category.id
             else:
-                return jsonify({"error": "Invalid income category"}), 400
+                return api_error("Invalid income category", 400)
         
         # Save to database
         db.session.add(income)
-        db.session.commit()
+        success, error = safe_commit()
+        
+        if not success:
+            return api_error(f"Database error: {error}", 500)
         
         # Format response
-        result = {
-            "message": "Income entry created successfully",
-            "income": {
-                "id": income.id,
-                "amount": float(income.amount),
-                "formatted_amount": income.formatted_amount,
-                "source": income.source,
-                "description": income.description,
-                "date": income.formatted_date,
-                "category_id": income.category_id,
-                "category_name": income.category.name if income.category else None,
-                "is_recurring": income.is_recurring,
-                "recurring_type": income.recurring_type,
-                "recurring_day": income.recurring_day,
-                "is_taxable": income.is_taxable,
-                "tax_rate": float(income.tax_rate) if income.tax_rate else None,
-                "after_tax_amount": income.after_tax_amount
-            }
+        income_data = {
+            "id": income.id,
+            "amount": float(income.amount),
+            "formatted_amount": income.formatted_amount,
+            "source": income.source,
+            "description": income.description,
+            "date": income.formatted_date,
+            "category_id": income.category_id,
+            "category_name": income.category.name if income.category else None,
+            "is_recurring": income.is_recurring,
+            "recurring_type": income.recurring_type,
+            "recurring_day": income.recurring_day,
+            "is_taxable": income.is_taxable,
+            "tax_rate": float(income.tax_rate) if income.tax_rate else None,
+            "after_tax_amount": income.after_tax_amount
         }
         
-        return jsonify(result), 201
+        return api_success({
+            "message": "Income entry created successfully",
+            "income": income_data
+        }, code=201)
         
     except Exception as e:
         db.session.rollback()
         logger.error(f"Error creating income: {str(e)}")
-        return jsonify({"error": "An error occurred while creating the income entry"}), 500
+        return api_error("An error occurred while creating the income entry", 500)
 
 @api_bp.route('/income/<int:income_id>', methods=['PUT'])
 @jwt_required()
@@ -330,29 +327,29 @@ def update_income(income_id):
         user = User.query.filter_by(username=current_username).first()
         
         if not user:
-            return jsonify({"error": "User not found"}), 404
+            return api_error("User not found", 404)
         
         # Get income
         income = Income.query.filter_by(id=income_id, user_id=user.id).first()
         
         if not income:
-            return jsonify({"error": "Income entry not found"}), 404
+            return api_error("Income entry not found", 404)
         
         # Get request data
         data = request.get_json()
         
         if not data:
-            return jsonify({"error": "Missing JSON in request"}), 400
+            return api_error("Missing JSON in request", 400)
         
         # Update income
         if 'amount' in data:
             try:
                 amount = float(data['amount'])
                 if amount <= 0:
-                    return jsonify({"error": "Amount must be greater than zero"}), 400
+                    return api_error("Amount must be greater than zero", 400)
                 income.amount = amount
             except ValueError:
-                return jsonify({"error": "Invalid amount format"}), 400
+                return api_error("Invalid amount format", 400)
         
         # Update source
         if 'source' in data:
@@ -367,7 +364,7 @@ def update_income(income_id):
             try:
                 income.date = datetime.strptime(data['date'], '%Y-%m-%d').date()
             except ValueError:
-                return jsonify({"error": "Invalid date format. Use YYYY-MM-DD"}), 400
+                return api_error("Invalid date format. Use YYYY-MM-DD", 400)
         
         # Update category
         if 'category_id' in data:
@@ -383,7 +380,7 @@ def update_income(income_id):
                 if category:
                     income.category_id = category.id
                 else:
-                    return jsonify({"error": "Invalid income category"}), 400
+                    return api_error("Invalid income category", 400)
             else:
                 income.category_id = None
         
@@ -417,36 +414,39 @@ def update_income(income_id):
                 income.tax_rate = None
         
         # Save to database
-        db.session.commit()
+        success, error = safe_commit()
+        
+        if not success:
+            return api_error(f"Database error: {error}", 500)
         
         # Format response
-        result = {
-            "message": "Income entry updated successfully",
-            "income": {
-                "id": income.id,
-                "amount": float(income.amount),
-                "formatted_amount": income.formatted_amount,
-                "source": income.source,
-                "description": income.description,
-                "date": income.formatted_date,
-                "category_id": income.category_id,
-                "category_name": income.category.name if income.category else None,
-                "is_recurring": income.is_recurring,
-                "recurring_type": income.recurring_type,
-                "recurring_day": income.recurring_day,
-                "is_taxable": income.is_taxable,
-                "tax_rate": float(income.tax_rate) if income.tax_rate else None,
-                "after_tax_amount": income.after_tax_amount,
-                "updated_at": income.updated_at.strftime('%Y-%m-%d %H:%M:%S')
-            }
+        income_data = {
+            "id": income.id,
+            "amount": float(income.amount),
+            "formatted_amount": income.formatted_amount,
+            "source": income.source,
+            "description": income.description,
+            "date": income.formatted_date,
+            "category_id": income.category_id,
+            "category_name": income.category.name if income.category else None,
+            "is_recurring": income.is_recurring,
+            "recurring_type": income.recurring_type,
+            "recurring_day": income.recurring_day,
+            "is_taxable": income.is_taxable,
+            "tax_rate": float(income.tax_rate) if income.tax_rate else None,
+            "after_tax_amount": income.after_tax_amount,
+            "updated_at": income.updated_at.strftime('%Y-%m-%d %H:%M:%S')
         }
         
-        return jsonify(result), 200
+        return api_success({
+            "message": "Income entry updated successfully",
+            "income": income_data
+        })
         
     except Exception as e:
         db.session.rollback()
         logger.error(f"Error updating income {income_id}: {str(e)}")
-        return jsonify({"error": "An error occurred while updating the income entry"}), 500
+        return api_error("An error occurred while updating the income entry", 500)
 
 @api_bp.route('/income/<int:income_id>', methods=['DELETE'])
 @jwt_required()
@@ -466,24 +466,27 @@ def delete_income(income_id):
         user = User.query.filter_by(username=current_username).first()
         
         if not user:
-            return jsonify({"error": "User not found"}), 404
+            return api_error("User not found", 404)
         
         # Get income
         income = Income.query.filter_by(id=income_id, user_id=user.id).first()
         
         if not income:
-            return jsonify({"error": "Income entry not found"}), 404
+            return api_error("Income entry not found", 404)
         
         # Delete income
         db.session.delete(income)
-        db.session.commit()
+        success, error = safe_commit()
         
-        return jsonify({"message": "Income entry deleted successfully"}), 200
+        if not success:
+            return api_error(f"Database error: {error}", 500)
+        
+        return api_success(message="Income entry deleted successfully")
         
     except Exception as e:
         db.session.rollback()
         logger.error(f"Error deleting income {income_id}: {str(e)}")
-        return jsonify({"error": "An error occurred while deleting the income entry"}), 500
+        return api_error("An error occurred while deleting the income entry", 500)
 
 @api_bp.route('/income/bulk', methods=['POST'])
 @jwt_required()
@@ -505,20 +508,20 @@ def bulk_action_income():
         user = User.query.filter_by(username=current_username).first()
         
         if not user:
-            return jsonify({"error": "User not found"}), 404
+            return api_error("User not found", 404)
         
         # Get request data
         data = request.get_json()
         
         if not data:
-            return jsonify({"error": "Missing JSON in request"}), 400
+            return api_error("Missing JSON in request", 400)
         
         # Validate required fields
         if 'action' not in data:
-            return jsonify({"error": "Action is required"}), 400
+            return api_error("Action is required", 400)
         
         if 'income_ids' not in data or not data['income_ids']:
-            return jsonify({"error": "Income IDs are required"}), 400
+            return api_error("Income IDs are required", 400)
         
         action = data['action']
         income_ids = data['income_ids']
@@ -527,7 +530,7 @@ def bulk_action_income():
         try:
             income_ids = [int(id) for id in income_ids]
         except ValueError:
-            return jsonify({"error": "Invalid income ID format"}), 400
+            return api_error("Invalid income ID format", 400)
         
         # Get income entries
         incomes = Income.query.filter(
@@ -536,7 +539,7 @@ def bulk_action_income():
         ).all()
         
         if not incomes:
-            return jsonify({"error": "No valid income entries found"}), 404
+            return api_error("No valid income entries found", 404)
         
         # Perform action
         if action == 'delete':
@@ -544,15 +547,19 @@ def bulk_action_income():
             for income in incomes:
                 db.session.delete(income)
             
-            db.session.commit()
-            return jsonify({
+            success, error = safe_commit()
+            
+            if not success:
+                return api_error(f"Database error: {error}", 500)
+                
+            return api_success({
                 "message": f"{len(incomes)} income entries deleted successfully"
-            }), 200
+            })
             
         elif action == 'change_category':
             # Validate target category ID
             if 'target_category_id' not in data:
-                return jsonify({"error": "Target category ID is required for change_category action"}), 400
+                return api_error("Target category ID is required for change_category action", 400)
             
             target_category_id = data['target_category_id']
             
@@ -565,24 +572,28 @@ def bulk_action_income():
                 ).first()
                 
                 if not category:
-                    return jsonify({"error": "Target category not found or not an income category"}), 404
+                    return api_error("Target category not found or not an income category", 404)
             
             # Update category
             for income in incomes:
                 income.category_id = target_category_id
             
-            db.session.commit()
-            return jsonify({
+            success, error = safe_commit()
+            
+            if not success:
+                return api_error(f"Database error: {error}", 500)
+                
+            return api_success({
                 "message": f"Category updated for {len(incomes)} income entries"
-            }), 200
+            })
             
         else:
-            return jsonify({"error": f"Invalid action: {action}"}), 400
+            return api_error(f"Invalid action: {action}", 400)
         
     except Exception as e:
         db.session.rollback()
         logger.error(f"Error performing bulk action on income entries: {str(e)}")
-        return jsonify({"error": "An error occurred while performing the bulk action"}), 500
+        return api_error("An error occurred while performing the bulk action", 500)
 
 @api_bp.route('/income/export', methods=['GET'])
 @jwt_required()
@@ -603,7 +614,7 @@ def export_income():
         user = User.query.filter_by(username=current_username).first()
         
         if not user:
-            return jsonify({"error": "User not found"}), 404
+            return api_error("User not found", 404)
         
         # Check if specific IDs are provided
         ids_param = request.args.get('ids')
@@ -615,7 +626,7 @@ def export_income():
                     Income.user_id == user.id
                 ).order_by(Income.date.desc()).all()
             except ValueError:
-                return jsonify({"error": "Invalid income ID format"}), 400
+                return api_error("Invalid income ID format", 400)
         else:
             # Build query using the same filters as get_income_entries
             query = Income.query.filter_by(user_id=user.id)
@@ -627,11 +638,17 @@ def export_income():
             
             start_date = request.args.get('start_date')
             if start_date:
-                query = query.filter(Income.date >= datetime.strptime(start_date, '%Y-%m-%d').date())
+                try:
+                    query = query.filter(Income.date >= datetime.strptime(start_date, '%Y-%m-%d').date())
+                except ValueError:
+                    return api_error("Invalid start_date format. Use YYYY-MM-DD", 400)
             
             end_date = request.args.get('end_date')
             if end_date:
-                query = query.filter(Income.date <= datetime.strptime(end_date, '%Y-%m-%d').date())
+                try:
+                    query = query.filter(Income.date <= datetime.strptime(end_date, '%Y-%m-%d').date())
+                except ValueError:
+                    return api_error("Invalid end_date format. Use YYYY-MM-DD", 400)
             
             min_amount = request.args.get('min_amount', type=float)
             if min_amount:
@@ -664,7 +681,7 @@ def export_income():
             incomes = query.order_by(Income.date.desc()).all()
         
         if not incomes:
-            return jsonify({"error": "No income entries found matching the criteria"}), 404
+            return api_error("No income entries found matching the criteria", 404)
         
         # Create CSV
         output = io.StringIO()
@@ -711,7 +728,7 @@ def export_income():
         
     except Exception as e:
         logger.error(f"Error exporting income entries: {str(e)}")
-        return jsonify({"error": "An error occurred while exporting income entries"}), 500
+        return api_error("An error occurred while exporting income entries", 500)
 
 @api_bp.route('/income/stats', methods=['GET'])
 @jwt_required()
@@ -732,7 +749,7 @@ def get_income_stats():
         user = User.query.filter_by(username=current_username).first()
         
         if not user:
-            return jsonify({"error": "User not found"}), 404
+            return api_error("User not found", 404)
         
         # Get period
         period = request.args.get('period', 'month')
@@ -765,10 +782,11 @@ def get_income_stats():
         ).scalar() or 0
         
         # Get after-tax income
-        after_tax_income = sum(income.after_tax_amount for income in query.all())
+        income_entries = query.all()
+        after_tax_income = sum(income.after_tax_amount for income in income_entries)
         
         # Get income count
-        income_count = query.count()
+        income_count = len(income_entries)
         
         # Get average income
         avg_income = total_income / income_count if income_count > 0 else 0
@@ -793,18 +811,18 @@ def get_income_stats():
         # Format source data
         sources = []
         for source_name, source_total in source_data:
-            # Generate a color for this source based on name
-            import hashlib
-            hash_object = hashlib.md5(source_name.encode())
-            hashed = hash_object.hexdigest()
-            color = f'#{hashed[:6]}'
-            
-            sources.append({
-                'source': source_name,
-                'total': float(source_total),
-                'color': color,
-                'percentage': (float(source_total) / float(total_income) * 100) if total_income > 0 else 0
-            })
+            if source_total:
+                # Generate a color for this source based on name
+                hash_object = hashlib.md5(source_name.encode())
+                hashed = hash_object.hexdigest()
+                color = f'#{hashed[:6]}'
+                
+                sources.append({
+                    'source': source_name,
+                    'total': float(source_total),
+                    'color': color,
+                    'percentage': (float(source_total) / float(total_income) * 100) if float(total_income) > 0 else 0
+                })
         
         # Get monthly trend
         monthly_data = db.session.query(
@@ -836,7 +854,7 @@ def get_income_stats():
         avg_monthly = Income.calculate_monthly_average(user.id, months=3)
         
         # Format response
-        result = {
+        stats_data = {
             'period': period,
             'start_date': start_date.strftime('%Y-%m-%d') if start_date else None,
             'end_date': today.strftime('%Y-%m-%d'),
@@ -851,8 +869,8 @@ def get_income_stats():
             'monthly_trend': monthly_trend
         }
         
-        return jsonify(result), 200
+        return api_success(stats_data)
         
     except Exception as e:
         logger.error(f"Error getting income stats: {str(e)}")
-        return jsonify({"error": "An error occurred while getting income statistics"}), 500
+        return api_error("An error occurred while getting income statistics", 500)

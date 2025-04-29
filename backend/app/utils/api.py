@@ -1,16 +1,16 @@
-# backend/app/utils/api.py
 from flask import jsonify
 import logging
 
 logger = logging.getLogger(__name__)
 
-def api_error(message, code=400, log_error=True):
+def api_error(message, code=400, errors=None, log_error=True):
     """
     Standardized API error response
     
     Args:
-        message: Error message string or dict
+        message: Error message string
         code: HTTP status code
+        errors: Optional dict of field-specific errors
         log_error: Whether to log the error
         
     Returns:
@@ -19,10 +19,11 @@ def api_error(message, code=400, log_error=True):
     if log_error:
         logger.error(f"API Error ({code}): {message}")
     
-    if isinstance(message, str):
-        return jsonify({"error": message}), code
-    else:
-        return jsonify(message), code
+    response = {"error": message}
+    if errors:
+        response["errors"] = errors
+    
+    return jsonify(response), code
 
 def api_success(data=None, message=None, code=200):
     """

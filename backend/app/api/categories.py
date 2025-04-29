@@ -1,11 +1,14 @@
-from flask import request, jsonify
+from flask import request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.api import api_bp
 from app import db
 from app.models.category import Category
 from app.models.expense import Expense
-from app.models.income import Income
-from sqlalchemy import func, extract
+from app.models.user import User
+from app.utils.api import api_success, api_error
+from app.utils.db import safe_commit
+from app.utils.validation import validate_json, CATEGORY_SCHEMA
+from sqlalchemy import func
 from datetime import datetime
 import logging
 
@@ -28,11 +31,10 @@ def get_categories():
     try:
         # Get current user
         current_username = get_jwt_identity()
-        from app.models.user import User
         user = User.query.filter_by(username=current_username).first()
         
         if not user:
-            return jsonify({"error": "User not found"}), 404
+            return api_error("User not found", 404)
         
         # Get query parameters
         include_inactive = request.args.get('include_inactive', 'false').lower() == 'true'
@@ -46,7 +48,7 @@ def get_categories():
         )
         
         # Format response
-        result = []
+        categories_list = []
         for category in categories:
             current_spending = category.current_spending if hasattr(category, 'current_spending') else 0
             
@@ -73,13 +75,13 @@ def get_categories():
                     'budget_status': category.budget_status
                 })
             
-            result.append(category_data)
+            categories_list.append(category_data)
         
-        return jsonify(result), 200
+        return api_success({"categories": categories_list})
         
     except Exception as e:
         logger.error(f"Error getting categories: {str(e)}")
-        return jsonify({"error": "An error occurred while retrieving categories"}), 500
+        return api_error("An error occurred while retrieving categories", 500)
 
 @api_bp.route('/categories/<int:category_id>', methods=['GET'])
 @jwt_required()
@@ -96,17 +98,16 @@ def get_category(category_id):
     try:
         # Get current user
         current_username = get_jwt_identity()
-        from app.models.user import User
         user = User.query.filter_by(username=current_username).first()
         
         if not user:
-            return jsonify({"error": "User not found"}), 404
+            return api_error("User not found", 404)
         
         # Get category
         category = Category.query.filter_by(id=category_id, user_id=user.id).first()
         
         if not category:
-            return jsonify({"error": "Category not found"}), 404
+            return api_error("Category not found", 404)
         
         # Get total expenses for this category
         total_expenses = db.session.query(func.sum(Expense.amount)).filter_by(
@@ -121,7 +122,7 @@ def get_category(category_id):
         ).count()
         
         # Format response
-        result = {
+        category_data = {
             'id': category.id,
             'name': category.name,
             'description': category.description,
@@ -142,20 +143,21 @@ def get_category(category_id):
         
         # Add budget data if this is an expense category with a budget limit
         if not category.is_income and category.budget_limit:
-            result['stats'].update({
+            category_data['stats'].update({
                 'current_spending': category.current_spending,
                 'budget_percentage': category.budget_percentage,
                 'budget_status': category.budget_status
             })
         
-        return jsonify(result), 200
+        return api_success({"category": category_data})
         
     except Exception as e:
         logger.error(f"Error getting category {category_id}: {str(e)}")
-        return jsonify({"error": "An error occurred while retrieving the category"}), 500
+        return api_error("An error occurred while retrieving the category", 500)
 
 @api_bp.route('/categories', methods=['POST'])
 @jwt_required()
+@validate_json(CATEGORY_SCHEMA)
 def create_category():
     """
     Create a new category
@@ -176,21 +178,13 @@ def create_category():
     try:
         # Get current user
         current_username = get_jwt_identity()
-        from app.models.user import User
         user = User.query.filter_by(username=current_username).first()
         
         if not user:
-            return jsonify({"error": "User not found"}), 404
+            return api_error("User not found", 404)
         
         # Get request data
         data = request.get_json()
-        
-        if not data:
-            return jsonify({"error": "Missing JSON in request"}), 400
-        
-        # Validate required fields
-        if 'name' not in data or not data['name']:
-            return jsonify({"error": "Category name is required"}), 400
         
         # Check if category name already exists for this user
         existing_category = Category.query.filter_by(
@@ -199,7 +193,7 @@ def create_category():
         ).first()
         
         if existing_category:
-            return jsonify({"error": "A category with this name already exists"}), 409
+            return api_error("A category with this name already exists", 409)
         
         # Create category
         category = Category(
@@ -217,31 +211,34 @@ def create_category():
         
         # Save to database
         db.session.add(category)
-        db.session.commit()
+        success, error = safe_commit()
+        
+        if not success:
+            return api_error(f"Database error: {error}", 500)
         
         # Format response
-        result = {
-            "message": "Category created successfully",
-            "category": {
-                'id': category.id,
-                'name': category.name,
-                'description': category.description,
-                'color_code': category.color_code,
-                'icon': category.icon,
-                'budget_limit': float(category.budget_limit) if category.budget_limit else None,
-                'budget_start_day': category.budget_start_day,
-                'is_default': category.is_default,
-                'is_active': category.is_active,
-                'is_income': category.is_income
-            }
+        category_data = {
+            'id': category.id,
+            'name': category.name,
+            'description': category.description,
+            'color_code': category.color_code,
+            'icon': category.icon,
+            'budget_limit': float(category.budget_limit) if category.budget_limit else None,
+            'budget_start_day': category.budget_start_day,
+            'is_default': category.is_default,
+            'is_active': category.is_active,
+            'is_income': category.is_income
         }
         
-        return jsonify(result), 201
+        return api_success({
+            "message": "Category created successfully",
+            "category": category_data
+        }, code=201)
         
     except Exception as e:
         db.session.rollback()
         logger.error(f"Error creating category: {str(e)}")
-        return jsonify({"error": "An error occurred while creating the category"}), 500
+        return api_error("An error occurred while creating the category", 500)
 
 @api_bp.route('/categories/<int:category_id>', methods=['PUT'])
 @jwt_required()
@@ -268,23 +265,22 @@ def update_category(category_id):
     try:
         # Get current user
         current_username = get_jwt_identity()
-        from app.models.user import User
         user = User.query.filter_by(username=current_username).first()
         
         if not user:
-            return jsonify({"error": "User not found"}), 404
+            return api_error("User not found", 404)
         
         # Get category
         category = Category.query.filter_by(id=category_id, user_id=user.id).first()
         
         if not category:
-            return jsonify({"error": "Category not found"}), 404
+            return api_error("Category not found", 404)
         
         # Get request data
         data = request.get_json()
         
         if not data:
-            return jsonify({"error": "Missing JSON in request"}), 400
+            return api_error("Missing JSON in request", 400)
         
         # Check if updating name and if it conflicts with existing categories
         if 'name' in data and data['name'] != category.name:
@@ -295,7 +291,7 @@ def update_category(category_id):
             ).first()
             
             if existing_category:
-                return jsonify({"error": "A category with this name already exists"}), 409
+                return api_error("A category with this name already exists", 409)
             
             category.name = data['name']
         
@@ -322,32 +318,35 @@ def update_category(category_id):
             category.is_active = data['is_active']
         
         # Save to database
-        db.session.commit()
+        success, error = safe_commit()
+        
+        if not success:
+            return api_error(f"Database error: {error}", 500)
         
         # Format response
-        result = {
-            "message": "Category updated successfully",
-            "category": {
-                'id': category.id,
-                'name': category.name,
-                'description': category.description,
-                'color_code': category.color_code,
-                'icon': category.icon,
-                'budget_limit': float(category.budget_limit) if category.budget_limit else None,
-                'budget_start_day': category.budget_start_day,
-                'is_default': category.is_default,
-                'is_active': category.is_active,
-                'is_income': category.is_income,
-                'updated_at': category.updated_at.strftime('%Y-%m-%d %H:%M:%S')
-            }
+        category_data = {
+            'id': category.id,
+            'name': category.name,
+            'description': category.description,
+            'color_code': category.color_code,
+            'icon': category.icon,
+            'budget_limit': float(category.budget_limit) if category.budget_limit else None,
+            'budget_start_day': category.budget_start_day,
+            'is_default': category.is_default,
+            'is_active': category.is_active,
+            'is_income': category.is_income,
+            'updated_at': category.updated_at.strftime('%Y-%m-%d %H:%M:%S')
         }
         
-        return jsonify(result), 200
+        return api_success({
+            "message": "Category updated successfully",
+            "category": category_data
+        })
         
     except Exception as e:
         db.session.rollback()
         logger.error(f"Error updating category {category_id}: {str(e)}")
-        return jsonify({"error": "An error occurred while updating the category"}), 500
+        return api_error("An error occurred while updating the category", 500)
 
 @api_bp.route('/categories/<int:category_id>', methods=['DELETE'])
 @jwt_required()
@@ -367,21 +366,20 @@ def delete_category(category_id):
     try:
         # Get current user
         current_username = get_jwt_identity()
-        from app.models.user import User
         user = User.query.filter_by(username=current_username).first()
         
         if not user:
-            return jsonify({"error": "User not found"}), 404
+            return api_error("User not found", 404)
         
         # Get category
         category = Category.query.filter_by(id=category_id, user_id=user.id).first()
         
         if not category:
-            return jsonify({"error": "Category not found"}), 404
+            return api_error("Category not found", 404)
         
         # Check if category is a default category
         if category.is_default:
-            return jsonify({"error": "Cannot delete default categories"}), 403
+            return api_error("Cannot delete default categories", 403)
         
         # Check if category has expenses
         expense_count = Expense.query.filter_by(
@@ -394,11 +392,11 @@ def delete_category(category_id):
             force = request.args.get('force', 'false').lower() == 'true'
             
             if not force:
-                return jsonify({
+                return api_error({
                     "error": "Category has expenses and cannot be deleted",
                     "expense_count": expense_count,
                     "message": "Use force=true query parameter to delete anyway and set expenses to uncategorized"
-                }), 409
+                }, 409)
             
             # Update expenses to uncategorized
             expenses = Expense.query.filter_by(
@@ -411,7 +409,10 @@ def delete_category(category_id):
         
         # Delete category
         db.session.delete(category)
-        db.session.commit()
+        success, error = safe_commit()
+        
+        if not success:
+            return api_error(f"Database error: {error}", 500)
         
         result = {
             "message": "Category deleted successfully"
@@ -420,12 +421,12 @@ def delete_category(category_id):
         if expense_count > 0:
             result["info"] = f"{expense_count} expenses were uncategorized"
         
-        return jsonify(result), 200
+        return api_success(result)
         
     except Exception as e:
         db.session.rollback()
         logger.error(f"Error deleting category {category_id}: {str(e)}")
-        return jsonify({"error": "An error occurred while deleting the category"}), 500
+        return api_error("An error occurred while deleting the category", 500)
 
 @api_bp.route('/categories/bulk', methods=['POST'])
 @jwt_required()
@@ -444,24 +445,23 @@ def bulk_action_categories():
     try:
         # Get current user
         current_username = get_jwt_identity()
-        from app.models.user import User
         user = User.query.filter_by(username=current_username).first()
         
         if not user:
-            return jsonify({"error": "User not found"}), 404
+            return api_error("User not found", 404)
         
         # Get request data
         data = request.get_json()
         
         if not data:
-            return jsonify({"error": "Missing JSON in request"}), 400
+            return api_error("Missing JSON in request", 400)
         
         # Validate required fields
         if 'action' not in data:
-            return jsonify({"error": "Action is required"}), 400
+            return api_error("Action is required", 400)
         
         if 'category_ids' not in data or not data['category_ids']:
-            return jsonify({"error": "Category IDs are required"}), 400
+            return api_error("Category IDs are required", 400)
         
         action = data['action']
         category_ids = data['category_ids']
@@ -470,7 +470,7 @@ def bulk_action_categories():
         try:
             category_ids = [int(id) for id in category_ids]
         except ValueError:
-            return jsonify({"error": "Invalid category ID format"}), 400
+            return api_error("Invalid category ID format", 400)
         
         # Get categories
         categories = Category.query.filter(
@@ -479,17 +479,17 @@ def bulk_action_categories():
         ).all()
         
         if not categories:
-            return jsonify({"error": "No valid categories found"}), 404
+            return api_error("No valid categories found", 404)
         
         # Perform action
         if action == 'delete':
             # Check for default categories
             default_categories = [c.name for c in categories if c.is_default]
             if default_categories:
-                return jsonify({
+                return api_error({
                     "error": "Cannot delete default categories",
                     "default_categories": default_categories
-                }), 403
+                }, 403)
             
             # Check if categories have expenses
             categories_with_expenses = []
@@ -511,11 +511,11 @@ def bulk_action_categories():
                 force = data.get('force', False)
                 
                 if not force:
-                    return jsonify({
+                    return api_error({
                         "error": "Some categories have expenses and cannot be deleted",
                         "categories_with_expenses": categories_with_expenses,
                         "message": "Use force=true parameter to delete anyway and set expenses to uncategorized"
-                    }), 409
+                    }, 409)
                 
                 # Update expenses to uncategorized
                 for category_info in categories_with_expenses:
@@ -531,7 +531,10 @@ def bulk_action_categories():
             for category in categories:
                 db.session.delete(category)
             
-            db.session.commit()
+            success, error = safe_commit()
+            
+            if not success:
+                return api_error(f"Database error: {error}", 500)
             
             result = {
                 "message": f"{len(categories)} categories deleted successfully"
@@ -541,35 +544,43 @@ def bulk_action_categories():
                 total_expenses = sum(c["expense_count"] for c in categories_with_expenses)
                 result["info"] = f"{total_expenses} expenses were uncategorized"
             
-            return jsonify(result), 200
+            return api_success(result)
             
         elif action == 'activate':
             # Activate categories
             for category in categories:
                 category.is_active = True
             
-            db.session.commit()
-            return jsonify({
+            success, error = safe_commit()
+            
+            if not success:
+                return api_error(f"Database error: {error}", 500)
+                
+            return api_success({
                 "message": f"{len(categories)} categories activated successfully"
-            }), 200
+            })
             
         elif action == 'deactivate':
             # Deactivate categories
             for category in categories:
                 category.is_active = False
             
-            db.session.commit()
-            return jsonify({
+            success, error = safe_commit()
+            
+            if not success:
+                return api_error(f"Database error: {error}", 500)
+                
+            return api_success({
                 "message": f"{len(categories)} categories deactivated successfully"
-            }), 200
+            })
             
         else:
-            return jsonify({"error": f"Invalid action: {action}"}), 400
+            return api_error(f"Invalid action: {action}", 400)
         
     except Exception as e:
         db.session.rollback()
         logger.error(f"Error performing bulk action on categories: {str(e)}")
-        return jsonify({"error": "An error occurred while performing the bulk action"}), 500
+        return api_error("An error occurred while performing the bulk action", 500)
 
 @api_bp.route('/categories/budgets', methods=['PUT'])
 @jwt_required()
@@ -586,21 +597,20 @@ def update_category_budgets():
     try:
         # Get current user
         current_username = get_jwt_identity()
-        from app.models.user import User
         user = User.query.filter_by(username=current_username).first()
         
         if not user:
-            return jsonify({"error": "User not found"}), 404
+            return api_error("User not found", 404)
         
         # Get request data
         data = request.get_json()
         
         if not data:
-            return jsonify({"error": "Missing JSON in request"}), 400
+            return api_error("Missing JSON in request", 400)
         
         # Validate required fields
         if 'budgets' not in data or not isinstance(data['budgets'], dict):
-            return jsonify({"error": "Budgets dictionary is required"}), 400
+            return api_error("Budgets dictionary is required", 400)
         
         budgets = data['budgets']
         
@@ -610,7 +620,7 @@ def update_category_budgets():
             try:
                 category_ids.append(int(category_id))
             except ValueError:
-                return jsonify({"error": f"Invalid category ID format: {category_id}"}), 400
+                return api_error(f"Invalid category ID format: {category_id}", 400)
         
         # Get categories
         categories = Category.query.filter(
@@ -634,10 +644,10 @@ def update_category_budgets():
                     try:
                         budget_limit = float(budget_limit)
                         if budget_limit < 0:
-                            return jsonify({"error": f"Budget limit cannot be negative: {budget_limit}"}), 400
+                            return api_error(f"Budget limit cannot be negative: {budget_limit}", 400)
                         category.budget_limit = budget_limit
                     except ValueError:
-                        return jsonify({"error": f"Invalid budget limit format: {budget_limit}"}), 400
+                        return api_error(f"Invalid budget limit format: {budget_limit}", 400)
                 
                 updated_categories.append({
                     'id': category.id,
@@ -646,17 +656,20 @@ def update_category_budgets():
                 })
         
         # Save to database
-        db.session.commit()
+        success, error = safe_commit()
         
-        return jsonify({
+        if not success:
+            return api_error(f"Database error: {error}", 500)
+        
+        return api_success({
             "message": f"Updated budgets for {len(updated_categories)} categories",
             "categories": updated_categories
-        }), 200
+        })
         
     except Exception as e:
         db.session.rollback()
         logger.error(f"Error updating category budgets: {str(e)}")
-        return jsonify({"error": "An error occurred while updating category budgets"}), 500
+        return api_error("An error occurred while updating category budgets", 500)
 
 @api_bp.route('/categories/<int:category_id>/expenses', methods=['GET'])
 @jwt_required()
@@ -681,17 +694,16 @@ def get_category_expenses(category_id):
     try:
         # Get current user
         current_username = get_jwt_identity()
-        from app.models.user import User
         user = User.query.filter_by(username=current_username).first()
         
         if not user:
-            return jsonify({"error": "User not found"}), 404
+            return api_error("User not found", 404)
         
         # Get category
         category = Category.query.filter_by(id=category_id, user_id=user.id).first()
         
         if not category:
-            return jsonify({"error": "Category not found"}), 404
+            return api_error("Category not found", 404)
         
         # Get pagination parameters
         page = request.args.get('page', 1, type=int)
@@ -710,7 +722,7 @@ def get_category_expenses(category_id):
                 start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
                 query = query.filter(Expense.date >= start_date)
             except ValueError:
-                return jsonify({"error": "Invalid start_date format. Use YYYY-MM-DD"}), 400
+                return api_error("Invalid start_date format. Use YYYY-MM-DD", 400)
                 
         end_date = request.args.get('end_date')
         if end_date:
@@ -718,7 +730,7 @@ def get_category_expenses(category_id):
                 end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
                 query = query.filter(Expense.date <= end_date)
             except ValueError:
-                return jsonify({"error": "Invalid end_date format. Use YYYY-MM-DD"}), 400
+                return api_error("Invalid end_date format. Use YYYY-MM-DD", 400)
         
         # Apply sorting
         sort = request.args.get('sort', 'date')
@@ -793,11 +805,11 @@ def get_category_expenses(category_id):
             }
         }
         
-        return jsonify(result), 200
+        return api_success(result)
         
     except Exception as e:
         logger.error(f"Error getting expenses for category {category_id}: {str(e)}")
-        return jsonify({"error": "An error occurred while retrieving category expenses"}), 500
+        return api_error("An error occurred while retrieving category expenses", 500)
 
 @api_bp.route('/categories/<int:category_id>/stats', methods=['GET'])
 @jwt_required()
@@ -817,17 +829,16 @@ def get_category_stats(category_id):
     try:
         # Get current user
         current_username = get_jwt_identity()
-        from app.models.user import User
         user = User.query.filter_by(username=current_username).first()
         
         if not user:
-            return jsonify({"error": "User not found"}), 404
+            return api_error("User not found", 404)
         
         # Get category
         category = Category.query.filter_by(id=category_id, user_id=user.id).first()
         
         if not category:
-            return jsonify({"error": "Category not found"}), 404
+            return api_error("Category not found", 404)
         
         # Get period
         period = request.args.get('period', 'month')
@@ -875,6 +886,7 @@ def get_category_stats(category_id):
         ).scalar() or 0
         
         # Get monthly trend
+        monthly_trend = []
         if period == 'year' or period == 'all':
             # Group by month
             monthly_data = db.session.query(
@@ -895,7 +907,6 @@ def get_category_stats(category_id):
             ).all()
             
             # Format monthly data
-            monthly_trend = []
             for month_date, total in monthly_data:
                 if month_date:
                     monthly_trend.append({
@@ -904,6 +915,7 @@ def get_category_stats(category_id):
                     })
         
         # Get daily trend for month view
+        daily_trend = []
         if period == 'month':
             # Group by day
             daily_data = db.session.query(
@@ -920,7 +932,6 @@ def get_category_stats(category_id):
             ).all()
             
             # Format daily data
-            daily_trend = []
             for day, total in daily_data:
                 daily_trend.append({
                     'day': int(day),
@@ -928,7 +939,7 @@ def get_category_stats(category_id):
                 })
         
         # Format response
-        result = {
+        stats = {
             'category': category_data,
             'period': period,
             'start_date': start_date.strftime('%Y-%m-%d') if start_date else None,
@@ -943,7 +954,7 @@ def get_category_stats(category_id):
         
         # Add budget data if applicable
         if category.budget_limit:
-            result['stats'].update({
+            stats['stats'].update({
                 'current_spending': category.current_spending,
                 'budget_limit': float(category.budget_limit),
                 'budget_percentage': category.budget_percentage,
@@ -952,15 +963,15 @@ def get_category_stats(category_id):
         
         # Add trend data based on period
         if period == 'month':
-            result['daily_trend'] = daily_trend
+            stats['daily_trend'] = daily_trend
         else:
-            result['monthly_trend'] = monthly_trend
+            stats['monthly_trend'] = monthly_trend
         
-        return jsonify(result), 200
+        return api_success(stats)
         
     except Exception as e:
         logger.error(f"Error getting stats for category {category_id}: {str(e)}")
-        return jsonify({"error": "An error occurred while retrieving category statistics"}), 500
+        return api_error("An error occurred while retrieving category statistics", 500)
 
 @api_bp.route('/categories/default', methods=['POST'])
 @jwt_required()
@@ -974,39 +985,38 @@ def create_default_categories():
     try:
         # Get current user
         current_username = get_jwt_identity()
-        from app.models.user import User
         user = User.query.filter_by(username=current_username).first()
         
         if not user:
-            return jsonify({"error": "User not found"}), 404
+            return api_error("User not found", 404)
         
         # Check if user already has categories
         existing_categories = Category.query.filter_by(user_id=user.id).count()
         
         if existing_categories > 0:
-            return jsonify({
+            return api_success({
                 "message": "User already has categories",
                 "count": existing_categories
-            }), 200
+            })
         
         # Create default categories
         categories = Category.get_or_create_default_categories(user.id)
         
         # Format response
-        result = {
-            "message": f"Created {len(categories)} default categories",
-            "categories": [{
-                'id': category.id,
-                'name': category.name,
-                'color_code': category.color_code,
-                'is_default': category.is_default,
-                'is_income': category.is_income
-            } for category in categories]
-        }
+        categories_list = [{
+            'id': category.id,
+            'name': category.name,
+            'color_code': category.color_code,
+            'is_default': category.is_default,
+            'is_income': category.is_income
+        } for category in categories]
         
-        return jsonify(result), 201
+        return api_success({
+            "message": f"Created {len(categories)} default categories",
+            "categories": categories_list
+        }, code=201)
         
     except Exception as e:
         db.session.rollback()
         logger.error(f"Error creating default categories: {str(e)}")
-        return jsonify({"error": "An error occurred while creating default categories"}), 500
+        return api_error("An error occurred while creating default categories", 500)

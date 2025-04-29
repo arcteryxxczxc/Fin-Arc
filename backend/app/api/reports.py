@@ -1,15 +1,17 @@
-from flask import request, jsonify
+from flask import request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.api import api_bp
 from app.models.user import User
 from app.models.expense import Expense
 from app.models.income import Income
 from app.models.category import Category
+from app.models.report import Report
+from app.utils.api import api_success, api_error
 from sqlalchemy import func, extract, and_
 from datetime import datetime, timedelta, date
 import calendar
-import logging
 import hashlib
+import logging
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -30,7 +32,7 @@ def get_dashboard_data():
         user = User.query.filter_by(username=current_username).first()
         
         if not user:
-            return jsonify({"error": "User not found"}), 404
+            return api_error("User not found", 404)
         
         # Get today's date and calculate start dates for different periods
         today = date.today()
@@ -106,17 +108,19 @@ def get_dashboard_data():
             'status': category.budget_status
         } for category in budget_categories]
         
-        return jsonify({
+        dashboard_data = {
             'stats': stats,
             'categories': category_data,
             'trend': trend_data,
             'recent_transactions': recent_transactions,
             'budget_overview': budget_overview
-        }), 200
+        }
+        
+        return api_success(dashboard_data)
         
     except Exception as e:
         logger.error(f"Error getting dashboard data: {str(e)}")
-        return jsonify({"error": "An error occurred while retrieving dashboard data"}), 500
+        return api_error("An error occurred while retrieving dashboard data", 500)
 
 @api_bp.route('/reports/monthly', methods=['GET'])
 @jwt_required()
@@ -137,7 +141,7 @@ def get_monthly_report():
         user = User.query.filter_by(username=current_username).first()
         
         if not user:
-            return jsonify({"error": "User not found"}), 404
+            return api_error("User not found", 404)
         
         # Get month and year from request or use current
         month = request.args.get('month', datetime.now().month, type=int)
@@ -184,7 +188,7 @@ def get_monthly_report():
             next_month = month + 1
             next_year = year
         
-        return jsonify({
+        monthly_report = {
             'month': month,
             'year': year,
             'month_name': calendar.month_name[month],
@@ -206,11 +210,13 @@ def get_monthly_report():
                 'start_date': start_date.strftime('%Y-%m-%d'),
                 'end_date': end_date.strftime('%Y-%m-%d')
             }
-        }), 200
+        }
+        
+        return api_success(monthly_report)
         
     except Exception as e:
         logger.error(f"Error getting monthly report: {str(e)}")
-        return jsonify({"error": "An error occurred while retrieving monthly report data"}), 500
+        return api_error("An error occurred while retrieving monthly report data", 500)
 
 @api_bp.route('/reports/annual', methods=['GET'])
 @jwt_required()
@@ -230,7 +236,7 @@ def get_annual_report():
         user = User.query.filter_by(username=current_username).first()
         
         if not user:
-            return jsonify({"error": "User not found"}), 404
+            return api_error("User not found", 404)
         
         # Get year from request or use current
         year = request.args.get('year', datetime.now().year, type=int)
@@ -305,7 +311,7 @@ def get_annual_report():
         prev_year = year - 1
         next_year = year + 1 if year < datetime.now().year else None
         
-        return jsonify({
+        annual_report = {
             'year': year,
             'navigation': {
                 'prev_year': prev_year,
@@ -324,11 +330,13 @@ def get_annual_report():
                 'start_date': start_date.strftime('%Y-%m-%d'),
                 'end_date': end_date.strftime('%Y-%m-%d')
             }
-        }), 200
+        }
+        
+        return api_success(annual_report)
         
     except Exception as e:
         logger.error(f"Error getting annual report: {str(e)}")
-        return jsonify({"error": "An error occurred while retrieving annual report data"}), 500
+        return api_error("An error occurred while retrieving annual report data", 500)
 
 @api_bp.route('/reports/cashflow', methods=['GET'])
 @jwt_required()
@@ -350,7 +358,7 @@ def get_cashflow_report():
         user = User.query.filter_by(username=current_username).first()
         
         if not user:
-            return jsonify({"error": "User not found"}), 404
+            return api_error("User not found", 404)
         
         # Get period and dates
         period = request.args.get('period', 'month')
@@ -368,64 +376,52 @@ def get_cashflow_report():
             end_date_str = request.args.get('end_date')
             
             if not start_date_str or not end_date_str:
-                return jsonify({"error": "Start date and end date are required for custom period"}), 400
+                return api_error("Start date and end date are required for custom period", 400)
                 
             try:
                 start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
                 end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
             except ValueError:
-                return jsonify({"error": "Invalid date format. Use YYYY-MM-DD"}), 400
+                return api_error("Invalid date format. Use YYYY-MM-DD", 400)
                 
             if start_date > end_date:
-                return jsonify({"error": "Start date cannot be after end date"}), 400
+                return api_error("Start date cannot be after end date", 400)
         else:
-            return jsonify({"error": "Invalid period. Use month, year, or custom"}), 400
+            return api_error("Invalid period. Use month, year, or custom", 400)
         
         # Get income data
-        income_data = db.session.query(
-            Income.date,
-            Income.source,
-            Income.description,
-            Income.amount
-        ).filter(
+        income_data = Income.query.filter(
             Income.user_id == user.id,
             Income.date >= start_date,
             Income.date <= end_date
-        ).order_by(
-            Income.date
-        ).all()
+        ).order_by(Income.date).all()
         
         # Format income data
         income_entries = [{
-            'date': income_date.strftime('%Y-%m-%d'),
-            'source': source,
-            'description': description or '',
-            'amount': float(amount)
-        } for income_date, source, description, amount in income_data]
+            'date': income.formatted_date,
+            'source': income.source,
+            'description': income.description or '',
+            'amount': float(income.amount)
+        } for income in income_data]
         
         # Get expense data
-        expense_data = db.session.query(
-            Expense.date,
-            Expense.description,
-            Category.name,
-            Expense.amount
-        ).outerjoin(
-            Category, Expense.category_id == Category.id
+        expense_data = Expense.query.join(
+            Category, 
+            Expense.category_id == Category.id, 
+            isouter=True
         ).filter(
             Expense.user_id == user.id,
             Expense.date >= start_date,
             Expense.date <= end_date
-        ).order_by(
-            Expense.date
-        ).all()
+        ).order_by(Expense.date).all()
         
         # Format expense data
         expense_entries = [{
-            'date': expense_date.strftime('%Y-%m-%d'),
-            'description': description or '',
-            'category': category_name or 'Uncategorized',
-            'amount': float(amount)
-        } for expense_date, description, category_name, amount in expense_data]
+            'date': expense.formatted_date,
+            'description': expense.description or '',
+            'category': expense.category.name if expense.category else 'Uncategorized',
+            'amount': float(expense.amount)
+        } for expense in expense_data]
         
         # Calculate totals
         total_income = sum(entry['amount'] for entry in income_entries)
@@ -451,7 +447,7 @@ def get_cashflow_report():
             
             current_date += timedelta(days=1)
         
-        return jsonify({
+        cashflow_report = {
             'period': period,
             'date_range': {
                 'start_date': start_date.strftime('%Y-%m-%d'),
@@ -465,11 +461,13 @@ def get_cashflow_report():
             'income_entries': income_entries,
             'expense_entries': expense_entries,
             'daily_cashflow': daily_cashflow
-        }), 200
+        }
+        
+        return api_success(cashflow_report)
         
     except Exception as e:
         logger.error(f"Error getting cashflow report: {str(e)}")
-        return jsonify({"error": "An error occurred while retrieving cashflow report data"}), 500
+        return api_error("An error occurred while retrieving cashflow report data", 500)
 
 @api_bp.route('/reports/budget', methods=['GET'])
 @jwt_required()
@@ -490,7 +488,7 @@ def get_budget_report():
         user = User.query.filter_by(username=current_username).first()
         
         if not user:
-            return jsonify({"error": "User not found"}), 404
+            return api_error("User not found", 404)
         
         # Get month and year from request or use current
         month = request.args.get('month', datetime.now().month, type=int)
@@ -589,10 +587,10 @@ def get_budget_report():
         
         # Get budget summary
         total_budget = sum(float(category.budget_limit) for category in budget_categories)
-        total_spent = sum(spent for _, _, _, _, spent, _, _, _ in budget_data)
+        total_spent = sum(cat.get('spent', 0) for cat in budget_data)
         
         # Include non-budget and uncategorized expenses in total spent
-        total_spent += sum(spent for _, _, _, spent in non_budget_data)
+        total_spent += sum(cat.get('spent', 0) for cat in non_budget_data)
         total_spent += float(uncategorized_expenses)
         
         budget_remaining = total_budget - total_spent
@@ -613,7 +611,7 @@ def get_budget_report():
             next_month = month + 1
             next_year = year
         
-        return jsonify({
+        budget_report = {
             'month': month,
             'year': year,
             'month_name': calendar.month_name[month],
@@ -636,11 +634,233 @@ def get_budget_report():
                 'start_date': start_date.strftime('%Y-%m-%d'),
                 'end_date': end_date.strftime('%Y-%m-%d')
             }
-        }), 200
+        }
+        
+        return api_success(budget_report)
         
     except Exception as e:
         logger.error(f"Error getting budget report: {str(e)}")
-        return jsonify({"error": "An error occurred while retrieving budget report data"}), 500
+        return api_error("An error occurred while retrieving budget report data", 500)
+
+@api_bp.route('/reports/save', methods=['POST'])
+@jwt_required()
+def save_report():
+    """
+    Save a report for future reference
+    
+    Request body:
+    - name: Report name
+    - type: Report type (monthly, annual, cashflow, budget)
+    - parameters: Report parameters (JSON)
+    
+    Returns:
+        JSON response with saved report
+    """
+    try:
+        # Get current user
+        current_username = get_jwt_identity()
+        user = User.query.filter_by(username=current_username).first()
+        
+        if not user:
+            return api_error("User not found", 404)
+        
+        # Get request data
+        data = request.get_json()
+        
+        if not data:
+            return api_error("Missing JSON in request", 400)
+        
+        # Validate required fields
+        if 'name' not in data:
+            return api_error("Report name is required", 400)
+        
+        if 'type' not in data:
+            return api_error("Report type is required", 400)
+        
+        # Validate report type
+        valid_types = ['monthly', 'annual', 'cashflow', 'budget']
+        if data['type'] not in valid_types:
+            return api_error(f"Invalid report type. Must be one of: {', '.join(valid_types)}", 400)
+        
+        # Create report
+        report = Report(
+            user_id=user.id,
+            name=data['name'],
+            type=data['type'],
+            parameters=data.get('parameters'),
+            data=None
+        )
+        
+        # Save to database
+        report.save_to_db()
+        
+        return api_success({
+            "message": "Report saved successfully",
+            "report": report.to_dict()
+        }, code=201)
+        
+    except Exception as e:
+        logger.error(f"Error saving report: {str(e)}")
+        return api_error("An error occurred while saving the report", 500)
+
+@api_bp.route('/reports/saved', methods=['GET'])
+@jwt_required()
+def get_saved_reports():
+    """
+    Get list of saved reports
+    
+    Returns:
+        JSON response with list of saved reports
+    """
+    try:
+        # Get current user
+        current_username = get_jwt_identity()
+        user = User.query.filter_by(username=current_username).first()
+        
+        if not user:
+            return api_error("User not found", 404)
+        
+        # Get saved reports
+        reports = Report.query.filter_by(user_id=user.id).order_by(Report.created_at.desc()).all()
+        
+        # Format response
+        report_list = [report.to_dict() for report in reports]
+        
+        return api_success({"reports": report_list})
+        
+    except Exception as e:
+        logger.error(f"Error getting saved reports: {str(e)}")
+        return api_error("An error occurred while retrieving saved reports", 500)
+
+@api_bp.route('/reports/saved/<int:report_id>', methods=['GET'])
+@jwt_required()
+def get_saved_report(report_id):
+    """
+    Get a specific saved report
+    
+    Path parameters:
+    - report_id: ID of the report to retrieve
+    
+    Returns:
+        JSON response with report data
+    """
+    try:
+        # Get current user
+        current_username = get_jwt_identity()
+        user = User.query.filter_by(username=current_username).first()
+        
+        if not user:
+            return api_error("User not found", 404)
+        
+        # Get report
+        report = Report.query.filter_by(id=report_id, user_id=user.id).first()
+        
+        if not report:
+            return api_error("Report not found", 404)
+        
+        # Get report data
+        if report.data:
+            # Return saved data
+            return api_success({
+                "report": report.to_dict(),
+                "data": report.data
+            })
+        else:
+            # Generate report based on parameters
+            if report.type == 'monthly':
+                params = report.parameters or {}
+                month = params.get('month', datetime.now().month)
+                year = params.get('year', datetime.now().year)
+                
+                # Set query parameters for the request
+                request.args = {'month': month, 'year': year}
+                
+                # Call the appropriate report function
+                response = get_monthly_report()
+                return response
+                
+            elif report.type == 'annual':
+                params = report.parameters or {}
+                year = params.get('year', datetime.now().year)
+                
+                # Set query parameters for the request
+                request.args = {'year': year}
+                
+                # Call the appropriate report function
+                response = get_annual_report()
+                return response
+                
+            elif report.type == 'cashflow':
+                params = report.parameters or {}
+                period = params.get('period', 'month')
+                
+                # Set query parameters for the request
+                if period == 'custom':
+                    request.args = {
+                        'period': period,
+                        'start_date': params.get('start_date'),
+                        'end_date': params.get('end_date')
+                    }
+                else:
+                    request.args = {'period': period}
+                
+                # Call the appropriate report function
+                response = get_cashflow_report()
+                return response
+                
+            elif report.type == 'budget':
+                params = report.parameters or {}
+                month = params.get('month', datetime.now().month)
+                year = params.get('year', datetime.now().year)
+                
+                # Set query parameters for the request
+                request.args = {'month': month, 'year': year}
+                
+                # Call the appropriate report function
+                response = get_budget_report()
+                return response
+            
+            # Unknown report type
+            return api_error("Unknown report type", 400)
+        
+    except Exception as e:
+        logger.error(f"Error getting saved report {report_id}: {str(e)}")
+        return api_error("An error occurred while retrieving the report", 500)
+
+@api_bp.route('/reports/saved/<int:report_id>', methods=['DELETE'])
+@jwt_required()
+def delete_saved_report(report_id):
+    """
+    Delete a saved report
+    
+    Path parameters:
+    - report_id: ID of the report to delete
+    
+    Returns:
+        JSON response with success message
+    """
+    try:
+        # Get current user
+        current_username = get_jwt_identity()
+        user = User.query.filter_by(username=current_username).first()
+        
+        if not user:
+            return api_error("User not found", 404)
+        
+        # Get report
+        report = Report.query.filter_by(id=report_id, user_id=user.id).first()
+        
+        if not report:
+            return api_error("Report not found", 404)
+        
+        # Delete report
+        report.delete_from_db()
+        
+        return api_success({"message": "Report deleted successfully"})
+        
+    except Exception as e:
+        logger.error(f"Error deleting report {report_id}: {str(e)}")
+        return api_error("An error occurred while deleting the report", 500)
 
 # Helper functions for reports
 def get_expense_total(user_id, start_date, end_date):

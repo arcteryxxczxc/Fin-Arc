@@ -1,7 +1,10 @@
-from flask import request, jsonify
+from flask import request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.api import api_bp
 from app.models import User, UserSettings
+from app.utils.api import api_success, api_error
+from app.utils.db import safe_commit
+from app.utils.validation import validate_json, USER_SETTINGS_SCHEMA
 import logging
 
 # Set up logging
@@ -20,7 +23,7 @@ def get_user_settings():
         user = User.query.filter_by(username=current_username).first()
         
         if not user:
-            return jsonify({"error": "User not found"}), 404
+            return api_error("User not found", 404)
         
         # Get or create settings
         settings = UserSettings.query.filter_by(user_id=user.id).first()
@@ -28,13 +31,14 @@ def get_user_settings():
             settings = UserSettings(user_id=user.id)
             settings.save_to_db()
         
-        return jsonify(settings.to_dict()), 200
+        return api_success(settings.to_dict())
     except Exception as e:
         logger.error(f"Error getting user settings: {str(e)}")
-        return jsonify({"error": f"Error getting user settings: {str(e)}"}), 500
+        return api_error(f"Error getting user settings: {str(e)}", 500)
 
 @api_bp.route('/settings', methods=['PUT'])
 @jwt_required()
+@validate_json(USER_SETTINGS_SCHEMA)
 def update_user_settings():
     """
     Update user settings
@@ -50,7 +54,7 @@ def update_user_settings():
         user = User.query.filter_by(username=current_username).first()
         
         if not user:
-            return jsonify({"error": "User not found"}), 404
+            return api_error("User not found", 404)
         
         # Get or create settings
         settings = UserSettings.query.filter_by(user_id=user.id).first()
@@ -59,7 +63,7 @@ def update_user_settings():
         
         data = request.get_json()
         if not data:
-            return jsonify({"error": "Missing JSON in request"}), 400
+            return api_error("Missing JSON in request", 400)
         
         # Update settings
         if 'default_currency' in data:
@@ -74,14 +78,13 @@ def update_user_settings():
         if 'language' in data:
             settings.language = data['language']
         
-        try:
-            settings.save_to_db()
-            return jsonify({
-                "message": "Settings updated successfully",
-                "settings": settings.to_dict()
-            }), 200
-        except Exception as e:
-            return jsonify({"error": f"Error updating settings: {str(e)}"}), 500
+        # Save to database
+        settings.save_to_db()
+        
+        return api_success({
+            "message": "Settings updated successfully",
+            "settings": settings.to_dict()
+        })
     except Exception as e:
         logger.error(f"Error updating user settings: {str(e)}")
-        return jsonify({"error": f"Error updating user settings: {str(e)}"}), 500
+        return api_error(f"Error updating user settings: {str(e)}", 500)

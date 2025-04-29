@@ -1,7 +1,8 @@
-from flask import request, jsonify
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask import request
+from flask_jwt_extended import jwt_required
 from app.api import api_bp
 from app.services.currency import CurrencyService
+from app.utils.api import api_success, api_error
 from datetime import datetime
 import logging
 
@@ -25,11 +26,12 @@ def convert_currency():
         to_currency = request.args.get('to', default='USD')
         
         if not amount:
-            return jsonify({"error": "Amount is required"}), 400
+            return api_error("Amount is required", 400)
         
         converted_amount = CurrencyService.convert_amount(amount, from_currency, to_currency)
+        rate = CurrencyService.get_exchange_rate(from_currency, to_currency)
         
-        return jsonify({
+        return api_success({
             "original": {
                 "amount": amount,
                 "currency": from_currency
@@ -38,11 +40,11 @@ def convert_currency():
                 "amount": converted_amount,
                 "currency": to_currency
             },
-            "rate": CurrencyService.get_exchange_rate(from_currency, to_currency)
-        }), 200
+            "rate": rate
+        })
     except Exception as e:
         logger.error(f"Error converting currency: {str(e)}")
-        return jsonify({"error": f"Error converting currency: {str(e)}"}), 500
+        return api_error(f"Error converting currency: {str(e)}", 500)
 
 @api_bp.route('/currencies/rates', methods=['GET'])
 @jwt_required()
@@ -64,14 +66,14 @@ def get_exchange_rates():
         for target in targets:
             rates[target] = CurrencyService.get_exchange_rate(base_currency, target)
         
-        return jsonify({
+        return api_success({
             "base": base_currency,
             "rates": rates,
             "timestamp": datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
-        }), 200
+        })
     except Exception as e:
         logger.error(f"Error getting exchange rates: {str(e)}")
-        return jsonify({"error": f"Error getting exchange rates: {str(e)}"}), 500
+        return api_error(f"Error getting exchange rates: {str(e)}", 500)
 
 @api_bp.route('/currencies/list', methods=['GET'])
 def get_currencies_list():
@@ -79,9 +81,8 @@ def get_currencies_list():
     Get list of common currencies
     """
     try:
-        return jsonify({
-            "currencies": CurrencyService.get_common_currencies()
-        }), 200
+        currencies = CurrencyService.get_common_currencies()
+        return api_success({"currencies": currencies})
     except Exception as e:
         logger.error(f"Error getting currencies list: {str(e)}")
-        return jsonify({"error": f"Error getting currencies list: {str(e)}"}), 500
+        return api_error(f"Error getting currencies list: {str(e)}", 500)

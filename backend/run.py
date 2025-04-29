@@ -4,18 +4,23 @@
 
 import os
 import sys
+import logging
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 
 # Add the parent directory to the Python path
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
 from app import create_app
-from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request
-from flask import jsonify, request
-from app.utils.api import api_success, api_error
+from app.utils.api import api_success
 
 app = create_app()
 
-# API route for root
+# API route for root - must be defined here to avoid circular imports
 @app.route('/api')
 def api_root():
     """API root endpoint with available endpoints"""
@@ -44,5 +49,14 @@ if __name__ == '__main__':
     # Get port from environment variable or use default
     port = int(os.environ.get('PORT', 5000))
     
+    # Get host from environment variable or use default
+    host = os.environ.get('HOST', '0.0.0.0')
+    
+    # Get debug mode from environment variable or use config
+    debug = os.environ.get('DEBUG', app.config.get('DEBUG', False))
+    
+    # Log startup information
+    app.logger.info(f"Starting Fin-Arc API on {host}:{port} (Debug: {debug})")
+    
     # Run the application
-    app.run(host='0.0.0.0', port=port, debug=app.config.get('DEBUG', False))
+    app.run(host=host, port=port, debug=debug)

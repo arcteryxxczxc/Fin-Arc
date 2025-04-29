@@ -17,3 +17,6 @@ try:
     from app.api import reports
 except ImportError:
     pass
+
+# Import routes to ensure they are registered
+from app.api.routes import *

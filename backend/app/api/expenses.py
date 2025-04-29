@@ -1,14 +1,15 @@
-from flask import request, jsonify
+from flask import request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.api import api_bp
 from app import db
 from app.models.expense import Expense
 from app.models.category import Category
 from app.models.user import User
-from sqlalchemy import or_, func
-from datetime import datetime, timedelta
 from app.utils.api import api_success, api_error
+from app.utils.db import safe_commit, paginate_query
 from app.utils.validation import validate_json, EXPENSE_SCHEMA
+from sqlalchemy import or_, func
+from datetime import datetime
 import csv
 import io
 import logging
@@ -42,7 +43,7 @@ def get_expenses():
         user = User.query.filter_by(username=current_username).first()
         
         if not user:
-            return jsonify({"error": "User not found"}), 404
+            return api_error("User not found", 404)
         
         # Get pagination parameters
         page = request.args.get('page', 1, type=int)
@@ -58,11 +59,17 @@ def get_expenses():
         
         start_date = request.args.get('start_date')
         if start_date:
-            query = query.filter(Expense.date >= datetime.strptime(start_date, '%Y-%m-%d').date())
+            try:
+                query = query.filter(Expense.date >= datetime.strptime(start_date, '%Y-%m-%d').date())
+            except ValueError:
+                return api_error("Invalid start_date format. Use YYYY-MM-DD", 400)
         
         end_date = request.args.get('end_date')
         if end_date:
-            query = query.filter(Expense.date <= datetime.strptime(end_date, '%Y-%m-%d').date())
+            try:
+                query = query.filter(Expense.date <= datetime.strptime(end_date, '%Y-%m-%d').date())
+            except ValueError:
+                return api_error("Invalid end_date format. Use YYYY-MM-DD", 400)
         
         min_amount = request.args.get('min_amount', type=float)
         if min_amount:
@@ -91,38 +98,38 @@ def get_expenses():
         query = query.order_by(Expense.date.desc(), Expense.id.desc())
         
         # Paginate
-        expenses_page = query.paginate(page=page, per_page=per_page, error_out=False)
+        expenses_page = paginate_query(query, page, per_page)
         
         # Format response
-        result = {
-            "expenses": [{
-                "id": expense.id,
-                "amount": float(expense.amount),
-                "formatted_amount": expense.formatted_amount,
-                "description": expense.description,
-                "date": expense.formatted_date,
-                "category_id": expense.category_id,
-                "category_name": expense.category.name if expense.category else "Uncategorized",
-                "payment_method": expense.payment_method,
-                "location": expense.location,
-                "has_receipt": expense.has_receipt,
-                "is_recurring": expense.is_recurring,
-                "recurring_type": expense.recurring_type,
-                "notes": expense.notes
-            } for expense in expenses_page.items],
+        expenses = [{
+            "id": expense.id,
+            "amount": float(expense.amount),
+            "formatted_amount": expense.formatted_amount,
+            "description": expense.description,
+            "date": expense.formatted_date,
+            "category_id": expense.category_id,
+            "category_name": expense.category.name if expense.category else "Uncategorized",
+            "payment_method": expense.payment_method,
+            "location": expense.location,
+            "has_receipt": expense.has_receipt,
+            "is_recurring": expense.is_recurring,
+            "recurring_type": expense.recurring_type,
+            "notes": expense.notes
+        } for expense in expenses_page.items]
+        
+        return api_success({
+            "expenses": expenses,
             "pagination": {
                 "page": expenses_page.page,
                 "per_page": expenses_page.per_page,
                 "total_pages": expenses_page.pages,
                 "total_items": expenses_page.total
             }
-        }
-        
-        return jsonify(result), 200
+        })
         
     except Exception as e:
         logger.error(f"Error getting expenses: {str(e)}")
-        return jsonify({"error": "An error occurred while retrieving expenses"}), 500
+        return api_error("An error occurred while retrieving expenses", 500)
 
 @api_bp.route('/expenses/<int:expense_id>', methods=['GET'])
 @jwt_required()
@@ -142,16 +149,16 @@ def get_expense(expense_id):
         user = User.query.filter_by(username=current_username).first()
         
         if not user:
-            return jsonify({"error": "User not found"}), 404
+            return api_error("User not found", 404)
         
         # Get expense
         expense = Expense.query.filter_by(id=expense_id, user_id=user.id).first()
         
         if not expense:
-            return jsonify({"error": "Expense not found"}), 404
+            return api_error("Expense not found", 404)
         
         # Format response
-        result = {
+        expense_data = {
             "id": expense.id,
             "amount": float(expense.amount),
             "formatted_amount": expense.formatted_amount,
@@ -171,11 +178,11 @@ def get_expense(expense_id):
             "updated_at": expense.updated_at.strftime('%Y-%m-%d %H:%M:%S')
         }
         
-        return jsonify(result), 200
+        return api_success({"expense": expense_data})
         
     except Exception as e:
         logger.error(f"Error getting expense {expense_id}: {str(e)}")
-        return jsonify({"error": "An error occurred while retrieving the expense"}), 500
+        return api_error("An error occurred while retrieving the expense", 500)
 
 @api_bp.route('/expenses', methods=['POST'])
 @jwt_required()
@@ -212,7 +219,7 @@ def create_expense():
         
         # Parse date
         date_val = datetime.utcnow().date()
-        if 'date' in data:
+        if 'date' in data and data['date']:
             try:
                 date_val = datetime.strptime(data['date'], '%Y-%m-%d').date()
             except ValueError:
@@ -220,7 +227,7 @@ def create_expense():
         
         # Parse time
         time_val = None
-        if 'time' in data:
+        if 'time' in data and data['time']:
             try:
                 time_val = datetime.strptime(data['time'], '%H:%M').time()
             except ValueError:
@@ -255,25 +262,25 @@ def create_expense():
             return api_error(f"Database error: {error}", 500)
         
         # Format response
-        result = {
-            "message": "Expense created successfully",
-            "expense": {
-                "id": expense.id,
-                "amount": float(expense.amount),
-                "formatted_amount": expense.formatted_amount,
-                "description": expense.description,
-                "date": expense.formatted_date,
-                "category_id": expense.category_id,
-                "category_name": expense.category.name if expense.category else "Uncategorized",
-                "payment_method": expense.payment_method,
-                "location": expense.location,
-                "is_recurring": expense.is_recurring,
-                "recurring_type": expense.recurring_type,
-                "notes": expense.notes
-            }
+        expense_data = {
+            "id": expense.id,
+            "amount": float(expense.amount),
+            "formatted_amount": expense.formatted_amount,
+            "description": expense.description,
+            "date": expense.formatted_date,
+            "category_id": expense.category_id,
+            "category_name": expense.category.name if expense.category else "Uncategorized",
+            "payment_method": expense.payment_method,
+            "location": expense.location,
+            "is_recurring": expense.is_recurring,
+            "recurring_type": expense.recurring_type,
+            "notes": expense.notes
         }
         
-        return api_success(result, code=201)
+        return api_success({
+            "message": "Expense created successfully",
+            "expense": expense_data
+        }, code=201)
         
     except Exception as e:
         db.session.rollback()
@@ -310,29 +317,29 @@ def update_expense(expense_id):
         user = User.query.filter_by(username=current_username).first()
         
         if not user:
-            return jsonify({"error": "User not found"}), 404
+            return api_error("User not found", 404)
         
         # Get expense
         expense = Expense.query.filter_by(id=expense_id, user_id=user.id).first()
         
         if not expense:
-            return jsonify({"error": "Expense not found"}), 404
+            return api_error("Expense not found", 404)
         
         # Get request data
         data = request.get_json()
         
         if not data:
-            return jsonify({"error": "Missing JSON in request"}), 400
+            return api_error("Missing JSON in request", 400)
         
         # Update expense
         if 'amount' in data:
             try:
                 amount = float(data['amount'])
                 if amount <= 0:
-                    return jsonify({"error": "Amount must be greater than zero"}), 400
+                    return api_error("Amount must be greater than zero", 400)
                 expense.amount = amount
             except ValueError:
-                return jsonify({"error": "Invalid amount format"}), 400
+                return api_error("Invalid amount format", 400)
         
         # Update description
         if 'description' in data:
@@ -343,7 +350,7 @@ def update_expense(expense_id):
             try:
                 expense.date = datetime.strptime(data['date'], '%Y-%m-%d').date()
             except ValueError:
-                return jsonify({"error": "Invalid date format. Use YYYY-MM-DD"}), 400
+                return api_error("Invalid date format. Use YYYY-MM-DD", 400)
         
         # Update time
         if 'time' in data:
@@ -351,7 +358,7 @@ def update_expense(expense_id):
                 try:
                     expense.time = datetime.strptime(data['time'], '%H:%M').time()
                 except ValueError:
-                    return jsonify({"error": "Invalid time format. Use HH:MM"}), 400
+                    return api_error("Invalid time format. Use HH:MM", 400)
             else:
                 expense.time = None
         
@@ -363,7 +370,7 @@ def update_expense(expense_id):
                 if category:
                     expense.category_id = category.id
                 else:
-                    return jsonify({"error": "Category not found"}), 404
+                    return api_error("Category not found", 404)
             else:
                 expense.category_id = None
         
@@ -388,35 +395,38 @@ def update_expense(expense_id):
             expense.notes = data['notes']
         
         # Save to database
-        db.session.commit()
+        success, error = safe_commit()
+        
+        if not success:
+            return api_error(f"Database error: {error}", 500)
         
         # Format response
-        result = {
-            "message": "Expense updated successfully",
-            "expense": {
-                "id": expense.id,
-                "amount": float(expense.amount),
-                "formatted_amount": expense.formatted_amount,
-                "description": expense.description,
-                "date": expense.formatted_date,
-                "time": expense.time.strftime('%H:%M') if expense.time else None,
-                "category_id": expense.category_id,
-                "category_name": expense.category.name if expense.category else "Uncategorized",
-                "payment_method": expense.payment_method,
-                "location": expense.location,
-                "is_recurring": expense.is_recurring,
-                "recurring_type": expense.recurring_type,
-                "notes": expense.notes,
-                "updated_at": expense.updated_at.strftime('%Y-%m-%d %H:%M:%S')
-            }
+        expense_data = {
+            "id": expense.id,
+            "amount": float(expense.amount),
+            "formatted_amount": expense.formatted_amount,
+            "description": expense.description,
+            "date": expense.formatted_date,
+            "time": expense.time.strftime('%H:%M') if expense.time else None,
+            "category_id": expense.category_id,
+            "category_name": expense.category.name if expense.category else "Uncategorized",
+            "payment_method": expense.payment_method,
+            "location": expense.location,
+            "is_recurring": expense.is_recurring,
+            "recurring_type": expense.recurring_type,
+            "notes": expense.notes,
+            "updated_at": expense.updated_at.strftime('%Y-%m-%d %H:%M:%S')
         }
         
-        return jsonify(result), 200
+        return api_success({
+            "message": "Expense updated successfully",
+            "expense": expense_data
+        })
         
     except Exception as e:
         db.session.rollback()
         logger.error(f"Error updating expense {expense_id}: {str(e)}")
-        return jsonify({"error": "An error occurred while updating the expense"}), 500
+        return api_error("An error occurred while updating the expense", 500)
 
 @api_bp.route('/expenses/<int:expense_id>', methods=['DELETE'])
 @jwt_required()
@@ -436,24 +446,27 @@ def delete_expense(expense_id):
         user = User.query.filter_by(username=current_username).first()
         
         if not user:
-            return jsonify({"error": "User not found"}), 404
+            return api_error("User not found", 404)
         
         # Get expense
         expense = Expense.query.filter_by(id=expense_id, user_id=user.id).first()
         
         if not expense:
-            return jsonify({"error": "Expense not found"}), 404
+            return api_error("Expense not found", 404)
         
         # Delete expense
         db.session.delete(expense)
-        db.session.commit()
+        success, error = safe_commit()
         
-        return jsonify({"message": "Expense deleted successfully"}), 200
+        if not success:
+            return api_error(f"Database error: {error}", 500)
+        
+        return api_success(message="Expense deleted successfully")
         
     except Exception as e:
         db.session.rollback()
         logger.error(f"Error deleting expense {expense_id}: {str(e)}")
-        return jsonify({"error": "An error occurred while deleting the expense"}), 500
+        return api_error("An error occurred while deleting the expense", 500)
 
 @api_bp.route('/expenses/bulk', methods=['POST'])
 @jwt_required()
@@ -475,20 +488,20 @@ def bulk_action_expenses():
         user = User.query.filter_by(username=current_username).first()
         
         if not user:
-            return jsonify({"error": "User not found"}), 404
+            return api_error("User not found", 404)
         
         # Get request data
         data = request.get_json()
         
         if not data:
-            return jsonify({"error": "Missing JSON in request"}), 400
+            return api_error("Missing JSON in request", 400)
         
         # Validate required fields
         if 'action' not in data:
-            return jsonify({"error": "Action is required"}), 400
+            return api_error("Action is required", 400)
         
         if 'expense_ids' not in data or not data['expense_ids']:
-            return jsonify({"error": "Expense IDs are required"}), 400
+            return api_error("Expense IDs are required", 400)
         
         action = data['action']
         expense_ids = data['expense_ids']
@@ -497,7 +510,7 @@ def bulk_action_expenses():
         try:
             expense_ids = [int(id) for id in expense_ids]
         except ValueError:
-            return jsonify({"error": "Invalid expense ID format"}), 400
+            return api_error("Invalid expense ID format", 400)
         
         # Get expenses
         expenses = Expense.query.filter(
@@ -506,7 +519,7 @@ def bulk_action_expenses():
         ).all()
         
         if not expenses:
-            return jsonify({"error": "No valid expenses found"}), 404
+            return api_error("No valid expenses found", 404)
         
         # Perform action
         if action == 'delete':
@@ -514,15 +527,19 @@ def bulk_action_expenses():
             for expense in expenses:
                 db.session.delete(expense)
             
-            db.session.commit()
-            return jsonify({
+            success, error = safe_commit()
+            
+            if not success:
+                return api_error(f"Database error: {error}", 500)
+                
+            return api_success({
                 "message": f"{len(expenses)} expenses deleted successfully"
-            }), 200
+            })
             
         elif action == 'change_category':
             # Validate target category ID
             if 'target_category_id' not in data:
-                return jsonify({"error": "Target category ID is required for change_category action"}), 400
+                return api_error("Target category ID is required for change_category action", 400)
             
             target_category_id = data['target_category_id']
             
@@ -530,24 +547,28 @@ def bulk_action_expenses():
             if target_category_id:
                 category = Category.query.filter_by(id=target_category_id, user_id=user.id).first()
                 if not category:
-                    return jsonify({"error": "Target category not found"}), 404
+                    return api_error("Target category not found", 404)
             
             # Update category
             for expense in expenses:
                 expense.category_id = target_category_id
             
-            db.session.commit()
-            return jsonify({
+            success, error = safe_commit()
+            
+            if not success:
+                return api_error(f"Database error: {error}", 500)
+                
+            return api_success({
                 "message": f"Category updated for {len(expenses)} expenses"
-            }), 200
+            })
             
         else:
-            return jsonify({"error": f"Invalid action: {action}"}), 400
+            return api_error(f"Invalid action: {action}", 400)
         
     except Exception as e:
         db.session.rollback()
         logger.error(f"Error performing bulk action on expenses: {str(e)}")
-        return jsonify({"error": "An error occurred while performing the bulk action"}), 500
+        return api_error("An error occurred while performing the bulk action", 500)
 
 @api_bp.route('/expenses/export', methods=['GET'])
 @jwt_required()
@@ -568,7 +589,7 @@ def export_expenses():
         user = User.query.filter_by(username=current_username).first()
         
         if not user:
-            return jsonify({"error": "User not found"}), 404
+            return api_error("User not found", 404)
         
         # Check if specific IDs are provided
         ids_param = request.args.get('ids')
@@ -580,7 +601,7 @@ def export_expenses():
                     Expense.user_id == user.id
                 ).order_by(Expense.date.desc()).all()
             except ValueError:
-                return jsonify({"error": "Invalid expense ID format"}), 400
+                return api_error("Invalid expense ID format", 400)
         else:
             # Build query using the same filters as get_expenses
             query = Expense.query.filter_by(user_id=user.id)
@@ -592,11 +613,17 @@ def export_expenses():
             
             start_date = request.args.get('start_date')
             if start_date:
-                query = query.filter(Expense.date >= datetime.strptime(start_date, '%Y-%m-%d').date())
+                try:
+                    query = query.filter(Expense.date >= datetime.strptime(start_date, '%Y-%m-%d').date())
+                except ValueError:
+                    return api_error("Invalid start_date format. Use YYYY-MM-DD", 400)
             
             end_date = request.args.get('end_date')
             if end_date:
-                query = query.filter(Expense.date <= datetime.strptime(end_date, '%Y-%m-%d').date())
+                try:
+                    query = query.filter(Expense.date <= datetime.strptime(end_date, '%Y-%m-%d').date())
+                except ValueError:
+                    return api_error("Invalid end_date format. Use YYYY-MM-DD", 400)
             
             min_amount = request.args.get('min_amount', type=float)
             if min_amount:
@@ -625,7 +652,7 @@ def export_expenses():
             expenses = query.order_by(Expense.date.desc()).all()
         
         if not expenses:
-            return jsonify({"error": "No expenses found matching the criteria"}), 404
+            return api_error("No expenses found matching the criteria", 404)
         
         # Create CSV
         output = io.StringIO()
@@ -670,7 +697,7 @@ def export_expenses():
         
     except Exception as e:
         logger.error(f"Error exporting expenses: {str(e)}")
-        return jsonify({"error": "An error occurred while exporting expenses"}), 500
+        return api_error("An error occurred while exporting expenses", 500)
 
 @api_bp.route('/expenses/stats', methods=['GET'])
 @jwt_required()
@@ -691,7 +718,7 @@ def get_expense_stats():
         user = User.query.filter_by(username=current_username).first()
         
         if not user:
-            return jsonify({"error": "User not found"}), 404
+            return api_error("User not found", 404)
         
         # Get period
         period = request.args.get('period', 'month')
@@ -767,10 +794,11 @@ def get_expense_stats():
                     'percentage': (float(cat_total) / float(total_expenses) * 100) if total_expenses > 0 else 0
                 })
         
-        # Get expenses by day
+        # Get expenses by day for month view
+        daily_expenses = []
         if period == 'month':
             # Group by day of month
-            daily_expenses = db.session.query(
+            daily_data = db.session.query(
                 func.extract('day', Expense.date).label('day'),
                 func.sum(Expense.amount).label('total')
             ).filter(
@@ -779,24 +807,23 @@ def get_expense_stats():
             )
             
             if category_id:
-                daily_expenses = daily_expenses.filter(Expense.category_id == category_id)
+                daily_data = daily_data.filter(Expense.category_id == category_id)
             
-            daily_expenses = daily_expenses.group_by(
+            daily_data = daily_data.group_by(
                 func.extract('day', Expense.date)
             ).order_by(
                 func.extract('day', Expense.date)
             ).all()
             
             # Format daily expenses
-            daily = []
-            for day, total in daily_expenses:
-                daily.append({
+            for day, total in daily_data:
+                daily_expenses.append({
                     'day': int(day),
                     'total': float(total)
                 })
         
         # Format response
-        result = {
+        stats_data = {
             'period': period,
             'start_date': start_date.strftime('%Y-%m-%d') if start_date else None,
             'end_date': today.strftime('%Y-%m-%d'),
@@ -808,10 +835,10 @@ def get_expense_stats():
         }
         
         if period == 'month':
-            result['daily_expenses'] = daily
+            stats_data['daily_expenses'] = daily_expenses
         
-        return jsonify(result), 200
+        return api_success(stats_data)
         
     except Exception as e:
         logger.error(f"Error getting expense stats: {str(e)}")
-        return jsonify({"error": "An error occurred while getting expense statistics"}), 500
+        return api_error("An error occurred while getting expense statistics", 500)

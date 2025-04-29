@@ -13,3 +13,13 @@ def test():
 @api_bp.route('/health', methods=['GET'])
 def health_check():
     return {"status": "healthy"}, 200
+
+@api_bp.route('/test-auth', methods=['GET'])
+@jwt_required()
+def test_auth():
+    """Test endpoint to verify authentication is working"""
+    current_username = get_jwt_identity()
+    return jsonify({
+        "msg": "Authentication working correctly",
+        "username": current_username
+    }), 200

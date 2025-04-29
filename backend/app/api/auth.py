@@ -1,239 +1,198 @@
-# backend/routes/auth.py
-
-from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, current_app
-from flask_login import login_user, logout_user, login_required, current_user
-from werkzeug.urls import url_parse
-from app import db, bcrypt
-from app.models.user import User, LoginAttempt
-from app.forms.auth import LoginForm, RegistrationForm, ResetPasswordRequestForm, ResetPasswordForm
+from flask import request, jsonify
+from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
+from app.api import api_bp
+from app.models.user import User
+from app import db
+from email_validator import validate_email, EmailNotValidError
+from datetime import datetime, timedelta
 import logging
 
 # Set up logging
 logger = logging.getLogger(__name__)
 
-# Create a Blueprint for auth routes
-auth_routes = Blueprint('auth', __name__, url_prefix='/auth')
-
-@auth_routes.route('/register', methods=['GET', 'POST'])
+@api_bp.route('/auth/register', methods=['POST'])
 def register():
-    """
-    User registration endpoint
-    Handles both form display and form submission
-    """
-    # If user is already logged in, redirect to home page
-    if current_user.is_authenticated:
-        return redirect(url_for('index'))
+    """API endpoint for user registration"""
+    data = request.get_json()
     
-    form = RegistrationForm()
-    if form.validate_on_submit():
-        try:
-            # Create new user with data from the form
-            user = User(
-                username=form.username.data,
-                email=form.email.data,
-                first_name=form.first_name.data,
-                last_name=form.last_name.data
-            )
-            user.password = form.password.data  # This will hash the password
-            
-            # Add user to database
-            db.session.add(user)
-            db.session.commit()
-            
-            # Log successful registration
-            logger.info(f"User registered successfully: {user.username}")
-            
-            flash('Registration successful! You can now log in.', 'success')
-            return redirect(url_for('auth.login'))
-        except Exception as e:
-            # Log error and rollback transaction
-            logger.error(f"Error during registration: {str(e)}")
-            db.session.rollback()
-            flash('An error occurred during registration. Please try again.', 'danger')
+    if not data:
+        return jsonify({"msg": "Missing JSON in request"}), 400
         
-    # For GET requests or if form validation fails
-    return render_template('auth/register.html', title='Register', form=form)
+    username = data.get('username', '')
+    email = data.get('email', '')
+    password = data.get('password', '')
+    first_name = data.get('first_name', '')
+    last_name = data.get('last_name', '')
+    
+    # Validate required fields
+    if not username or not email or not password:
+        return jsonify({"msg": "Missing required fields"}), 400
+    
+    # Validate email format
+    try:
+        valid = validate_email(email)
+        email = valid.email
+    except EmailNotValidError as e:
+        return jsonify({"msg": str(e)}), 400
+    
+    # Check if username already exists
+    if User.query.filter_by(username=username).first():
+        return jsonify({"msg": "Username already exists"}), 409
+    
+    # Check if email already exists
+    if User.query.filter_by(email=email).first():
+        return jsonify({"msg": "Email already exists"}), 409
+    
+    # Create new user
+    try:
+        new_user = User(
+            username=username,
+            email=email,
+            first_name=first_name,
+            last_name=last_name
+        )
+        new_user.password = password
+        new_user.save_to_db()
+        
+        # Generate JWT token
+        access_token = create_access_token(identity=username)
+        
+        logger.info(f"API: User registered successfully: {username}")
+        
+        return jsonify({
+            "msg": "User created successfully",
+            "access_token": access_token,
+            "user": {
+                "id": new_user.id,
+                "username": new_user.username,
+                "email": new_user.email,
+                "first_name": new_user.first_name,
+                "last_name": new_user.last_name
+            }
+        }), 201
+    except Exception as e:
+        logger.error(f"API: Error creating user: {str(e)}")
+        return jsonify({"msg": f"Error creating user: {str(e)}"}), 500
 
-@auth_routes.route('/login', methods=['GET', 'POST'])
+@api_bp.route('/auth/login', methods=['POST'])
 def login():
-    """
-    User login endpoint with attempt tracking and account lockout
-    Handles both form display and form submission
-    """
-    # If user is already logged in, redirect to home page
-    if current_user.is_authenticated:
-        return redirect(url_for('index'))
+    """API endpoint for user login"""
+    data = request.get_json()
     
-    form = LoginForm()
-    if form.validate_on_submit():
-        # Find user by username
-        user = User.query.filter_by(username=form.username.data).first()
-        login_success = False
+    if not data:
+        return jsonify({"msg": "Missing JSON in request"}), 400
         
-        # Check if user exists
-        if user:
-            # Check if account is locked
-            if user.check_account_lock_status():
-                flash('Account is temporarily locked due to multiple failed login attempts. Please try again later.', 'danger')
-                logger.warning(f"Login attempt on locked account: {user.username}")
-                return render_template('auth/login.html', title='Login', form=form)
-            
-            # Verify password
-            if user.verify_password(form.password.data):
-                login_success = True
-                
-                # Log the user in
-                login_user(user, remember=form.remember_me.data)
-                user.update_last_login()
-                
-                # Record successful login attempt
-                LoginAttempt.add_login_attempt(
-                    user=user,
-                    ip_address=request.remote_addr,
-                    user_agent=request.user_agent.string,
-                    success=True
-                )
-                
-                logger.info(f"Successful login: {user.username}")
-                
-                # Redirect to requested page or default
-                next_page = request.args.get('next')
-                if not next_page or url_parse(next_page).netloc != '':
-                    next_page = url_for('index')
-                
-                return redirect(next_page)
-        
-        # Login failed - record the attempt if user exists
-        if user:
-            LoginAttempt.add_login_attempt(
-                user=user,
-                ip_address=request.remote_addr,
-                user_agent=request.user_agent.string,
-                success=False
-            )
-            
-            logger.warning(f"Failed login attempt for user: {user.username}")
-        else:
-            logger.warning(f"Failed login attempt for non-existent user: {form.username.data}")
-        
-        # Show generic error message to prevent username enumeration
-        flash('Invalid username or password', 'danger')
+    username = data.get('username', '')
+    password = data.get('password', '')
     
-    return render_template('auth/login.html', title='Login', form=form)
-
-@auth_routes.route('/logout')
-@login_required
-def logout():
-    """User logout endpoint"""
-    username = current_user.username  # Save username before logout
-    logout_user()
-    logger.info(f"User logged out: {username}")
-    flash('You have been logged out successfully.', 'info')
-    return redirect(url_for('index'))
-
-@auth_routes.route('/profile')
-@login_required
-def profile():
-    """User profile page"""
-    return render_template('auth/profile.html', title='My Profile')
-
-@auth_routes.route('/reset_password_request', methods=['GET', 'POST'])
-def reset_password_request():
-    """
-    Password reset request endpoint
-    Handles both form display and form submission
-    """
-    if current_user.is_authenticated:
-        return redirect(url_for('index'))
+    # Validate required fields
+    if not username or not password:
+        return jsonify({"msg": "Missing username or password"}), 400
     
-    form = ResetPasswordRequestForm()
-    if form.validate_on_submit():
-        user = User.query.filter_by(email=form.email.data).first()
-        if user:
-            token = user.generate_reset_token()
-            # In a real application, send an email with the reset token
-            # Here we'll just log it for demonstration
-            reset_url = url_for('auth.reset_password', token=token, _external=True)
-            logger.info(f"Password reset requested for {user.email}. Reset URL: {reset_url}")
-            
-        # Don't reveal if email exists for security
-        flash('If your email address exists in our database, you will receive a password reset link shortly.', 'info')
-        return redirect(url_for('auth.login'))
+    # Find user by username
+    user = User.query.filter_by(username=username).first()
     
-    return render_template('auth/reset_password_request.html', title='Reset Password', form=form)
-
-@auth_routes.route('/reset_password/<token>', methods=['GET', 'POST'])
-def reset_password(token):
-    """
-    Password reset with token endpoint
-    Handles both form display and form submission
-    """
-    if current_user.is_authenticated:
-        return redirect(url_for('index'))
-    
-    # Verify token and get user
-    user = User.verify_reset_token(token)
+    # Check if user exists
     if not user:
-        flash('Invalid or expired reset token.', 'danger')
-        return redirect(url_for('auth.reset_password_request'))
+        logger.warning(f"API: Login attempt for non-existent user: {username}")
+        return jsonify({"msg": "Invalid username or password"}), 401
     
-    form = ResetPasswordForm()
-    if form.validate_on_submit():
-        user.password = form.password.data
-        user.clear_reset_token()
-        db.session.commit()
-        logger.info(f"Password reset successful for user: {user.username}")
-        flash('Your password has been reset successfully.', 'success')
-        return redirect(url_for('auth.login'))
+    # Check if account is locked
+    if user.is_account_locked():
+        if user.locked_until:
+            remaining_minutes = round((user.locked_until - datetime.utcnow()).total_seconds() / 60)
+            logger.warning(f"API: Login attempt on locked account: {username}")
+            return jsonify({
+                "msg": f"Account locked due to too many failed attempts. Try again in {remaining_minutes} minutes."
+            }), 403
     
-    return render_template('auth/reset_password.html', title='Reset Password', form=form)
+    # Verify password
+    if user.verify_password(password):
+        # Reset login attempts on successful login
+        user.update_login_attempts(successful=True)
+        
+        # Create JWT token
+        access_token = create_access_token(identity=username)
+        
+        logger.info(f"API: Successful login: {username}")
+        
+        return jsonify({
+            "msg": "Login successful",
+            "access_token": access_token,
+            "user": {
+                "id": user.id,
+                "username": user.username,
+                "email": user.email,
+                "first_name": user.first_name,
+                "last_name": user.last_name
+            }
+        }), 200
+    else:
+        # Increment login attempts on failed login
+        user.update_login_attempts(successful=False)
+        
+        logger.warning(f"API: Failed login attempt for user: {username}")
+        return jsonify({"msg": "Invalid username or password"}), 401
 
-@auth_routes.route('/change_password', methods=['GET', 'POST'])
-@login_required
-def change_password():
-    """
-    Change password endpoint for authenticated users
-    Handles both form display and form submission
-    """
-    from backend.app.forms.auth import ChangePasswordForm
+@api_bp.route('/auth/profile', methods=['GET'])
+@jwt_required()
+def profile():
+    """API endpoint to get user profile information"""
+    current_username = get_jwt_identity()
+    user = User.query.filter_by(username=current_username).first()
     
-    form = ChangePasswordForm()
-    if form.validate_on_submit():
-        if current_user.verify_password(form.current_password.data):
-            current_user.password = form.new_password.data
-            db.session.commit()
-            logger.info(f"Password changed for user: {current_user.username}")
-            flash('Your password has been updated.', 'success')
-            return redirect(url_for('auth.profile'))
-        else:
-            flash('Current password is incorrect.', 'danger')
+    if not user:
+        return jsonify({"msg": "User not found"}), 404
     
-    return render_template('auth/change_password.html', title='Change Password', form=form)
-
-@auth_routes.route('/account_status')
-@login_required
-def account_status():
-    """API endpoint to get account status information"""
     return jsonify({
-        'username': current_user.username,
-        'email': current_user.email,
-        'last_login': current_user.last_login.isoformat() if current_user.last_login else None,
-        'account_created': current_user.created_at.isoformat(),
-        'is_admin': current_user.is_admin
-    })
+        "id": user.id,
+        "username": user.username,
+        "email": user.email,
+        "first_name": user.first_name,
+        "last_name": user.last_name,
+        "created_at": user.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+        "last_login": user.last_login.strftime('%Y-%m-%d %H:%M:%S') if user.last_login else None
+    }), 200
 
-@auth_routes.route('/login_history')
-@login_required
-def login_history():
-    """View login history for the current user"""
-    # Get the most recent login attempts (limit to 10)
-    login_attempts = LoginAttempt.query.filter_by(user_id=current_user.id)\
-        .order_by(LoginAttempt.timestamp.desc())\
-        .limit(10)\
-        .all()
+@api_bp.route('/auth/change-password', methods=['POST'])
+@jwt_required()
+def change_password():
+    """API endpoint to change password"""
+    data = request.get_json()
     
-    return render_template(
-        'auth/login_history.html', 
-        title='Login History',
-        login_attempts=login_attempts
-    )
+    if not data:
+        return jsonify({"msg": "Missing JSON in request"}), 400
+    
+    current_password = data.get('current_password', '')
+    new_password = data.get('new_password', '')
+    
+    if not current_password or not new_password:
+        return jsonify({"msg": "Current password and new password are required"}), 400
+    
+    current_username = get_jwt_identity()
+    user = User.query.filter_by(username=current_username).first()
+    
+    if not user:
+        return jsonify({"msg": "User not found"}), 404
+    
+    # Verify current password
+    if not user.verify_password(current_password):
+        return jsonify({"msg": "Current password is incorrect"}), 401
+    
+    # Update password
+    try:
+        user.password = new_password
+        user.save_to_db()
+        logger.info(f"API: Password changed for user: {user.username}")
+        return jsonify({"msg": "Password changed successfully"}), 200
+    except Exception as e:
+        logger.error(f"API: Error changing password: {str(e)}")
+        return jsonify({"msg": "Error changing password"}), 500
+
+@api_bp.route('/auth/refresh', methods=['POST'])
+@jwt_required(refresh=True)
+def refresh_token():
+    """API endpoint to refresh an access token"""
+    current_username = get_jwt_identity()
+    access_token = create_access_token(identity=current_username)
+    return jsonify({"access_token": access_token}), 200

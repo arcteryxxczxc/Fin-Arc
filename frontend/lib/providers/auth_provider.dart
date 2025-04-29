@@ -1,111 +1,175 @@
-import 'dart:convert';
-import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:http/http.dart' as http;
-import 'package:finarc/utils/constants.dart';
-import 'package:finarc/models/user.dart';
+import 'package:flutter/foundation.dart';
+import '../services/auth_service.dart';
+import '../models/user.dart';
 
 class AuthProvider with ChangeNotifier {
-  String? _token;
+  final AuthService _authService = AuthService();
+  
   User? _user;
-  final _storage = FlutterSecureStorage();
+  bool _isLoading = false;
+  String? _error;
   
-  bool get isAuth => _token != null;
-  String? get token => _token;
+  // Getters
   User? get user => _user;
+  bool get isAuthenticated => _user != null;
+  bool get isLoading => _isLoading;
+  String? get error => _error;
   
-  Future<bool> tryAutoLogin() async {
-    final storedToken = await _storage.read(key: AppConstants.tokenKey);
-    final storedUser = await _storage.read(key: AppConstants.userKey);
+  // Initialize auth state on app start
+  Future<void> initAuth() async {
+    _isLoading = true;
+    notifyListeners();
     
-    if (storedToken == null || storedUser == null) {
+    try {
+      final isAuth = await _authService.isAuthenticated();
+      if (isAuth) {
+        _user = await _authService.getCurrentUser();
+      }
+    } catch (e) {
+      _error = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+  
+  // Register new user
+  Future<bool> register({
+    required String username,
+    required String email,
+    required String password,
+    String? firstName,
+    String? lastName,
+  }) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+    
+    try {
+      final result = await _authService.register(
+        username: username,
+        email: email,
+        password: password,
+        firstName: firstName,
+        lastName: lastName,
+      );
+      
+      if (result['success']) {
+        _user = await _authService.getCurrentUser();
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      } else {
+        _error = result['message'];
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      _error = e.toString();
+      _isLoading = false;
+      notifyListeners();
       return false;
     }
-    
-    _token = storedToken;
-    _user = User.fromJson(json.decode(storedUser));
+  }
+  
+  // Login user
+  Future<bool> login({
+    required String username,
+    required String password,
+  }) async {
+    _isLoading = true;
+    _error = null;
     notifyListeners();
-    return true;
-  }
-  
-  Future<Map<String, dynamic>> login(String username, String password) async {
+    
     try {
-      final response = await http.post(
-        Uri.parse('${AppConstants.baseUrl}/auth/login'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          'username': username,
-          'password': password,
-        }),
+      final result = await _authService.login(
+        username: username,
+        password: password,
       );
       
-      final responseData = json.decode(response.body);
-      
-      if (response.statusCode == 200) {
-        _token = responseData['access_token'];
-        _user = User.fromJson(responseData['user']);
-        
-        await _storage.write(key: AppConstants.tokenKey, value: _token);
-        await _storage.write(key: AppConstants.userKey, value: json.encode(_user!.toJson()));
-        
+      if (result['success']) {
+        _user = await _authService.getCurrentUser();
+        _isLoading = false;
         notifyListeners();
-        return {'success': true};
+        return true;
       } else {
-        return {
-          'success': false,
-          'message': responseData['msg'] ?? 'Authentication failed'
-        };
+        _error = result['message'];
+        _isLoading = false;
+        notifyListeners();
+        return false;
       }
-    } catch (error) {
-      return {
-        'success': false,
-        'message': 'Could not connect to server. Please check your internet connection.'
-      };
+    } catch (e) {
+      _error = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      return false;
     }
   }
   
-  Future<Map<String, dynamic>> register(String username, String email, String password) async {
-    try {
-      final response = await http.post(
-        Uri.parse('${AppConstants.baseUrl}/auth/register'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          'username': username,
-          'email': email,
-          'password': password,
-        }),
-      );
-      
-      final responseData = json.decode(response.body);
-      
-      if (response.statusCode == 201) {
-        _token = responseData['access_token'];
-        _user = User.fromJson(responseData['user']);
-        
-        await _storage.write(key: AppConstants.tokenKey, value: _token);
-        await _storage.write(key: AppConstants.userKey, value: json.encode(_user!.toJson()));
-        
-        notifyListeners();
-        return {'success': true};
-      } else {
-        return {
-          'success': false,
-          'message': responseData['msg'] ?? 'Registration failed'
-        };
-      }
-    } catch (error) {
-      return {
-        'success': false,
-        'message': 'Could not connect to server. Please check your internet connection.'
-      };
-    }
-  }
-  
+  // Logout user
   Future<void> logout() async {
-    _token = null;
+    _isLoading = true;
+    notifyListeners();
+    
+    await _authService.logout();
     _user = null;
-    await _storage.delete(key: AppConstants.tokenKey);
-    await _storage.delete(key: AppConstants.userKey);
+    
+    _isLoading = false;
+    notifyListeners();
+  }
+  
+  // Change password
+  Future<bool> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+    
+    try {
+      final result = await _authService.changePassword(
+        currentPassword: currentPassword,
+        newPassword: newPassword,
+      );
+      
+      _isLoading = false;
+      
+      if (result['success']) {
+        notifyListeners();
+        return true;
+      } else {
+        _error = result['message'];
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      _error = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+  
+  // Get fresh user profile data
+  Future<void> refreshUserProfile() async {
+    try {
+      final result = await _authService.getUserProfile();
+      
+      if (result['success']) {
+        _user = User.fromJson(result['data']);
+        notifyListeners();
+      }
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+    }
+  }
+  
+  // Clear error
+  void clearError() {
+    _error = null;
     notifyListeners();
   }
 }

@@ -1,125 +1,169 @@
-from datetime import datetime, timedelta
-from flask import request, jsonify
-from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
+from flask import render_template, redirect, url_for, flash, request
+from flask_login import login_user, logout_user, login_required, current_user
+from werkzeug.urls import url_parse
 from app.auth import auth_bp
-from app.models import User
-from app import db
-from email_validator import validate_email, EmailNotValidError
+from app.models.user import User, LoginAttempt
+from app.forms.auth import LoginForm, RegistrationForm, ResetPasswordRequestForm, ResetPasswordForm, ChangePasswordForm
+import logging
 
-@auth_bp.route('/register', methods=['POST'])
+# Set up logging
+logger = logging.getLogger(__name__)
+
+@auth_bp.route('/register', methods=['GET', 'POST'])
 def register():
-    data = request.get_json()
+    """
+    User registration endpoint
+    Handles both form display and form submission
+    """
+    # If user is already logged in, redirect to home page
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
     
-    if not data:
-        return jsonify({"msg": "Missing JSON in request"}), 400
+    form = RegistrationForm()
+    if form.validate_on_submit():
+        try:
+            # Create new user with data from the form
+            user = User(
+                username=form.username.data,
+                email=form.email.data,
+                first_name=form.first_name.data,
+                last_name=form.last_name.data
+            )
+            user.password = form.password.data  # This will hash the password
+            
+            # Add user to database
+            user.save_to_db()
+            
+            # Log successful registration
+            logger.info(f"User registered successfully: {user.username}")
+            
+            flash('Registration successful! You can now log in.', 'success')
+            return redirect(url_for('auth.login'))
+        except Exception as e:
+            # Log error and rollback transaction
+            logger.error(f"Error during registration: {str(e)}")
+            flash('An error occurred during registration. Please try again.', 'danger')
         
-    username = data.get('username', '')
-    email = data.get('email', '')
-    password = data.get('password', '')
-    
-    # Validate required fields
-    if not username or not email or not password:
-        return jsonify({"msg": "Missing required fields"}), 400
-    
-    # Validate email format
-    try:
-        valid = validate_email(email)
-        email = valid.email
-    except EmailNotValidError as e:
-        return jsonify({"msg": str(e)}), 400
-    
-    # Check if username already exists
-    if User.query.filter_by(username=username).first():
-        return jsonify({"msg": "Username already exists"}), 409
-    
-    # Check if email already exists
-    if User.query.filter_by(email=email).first():
-        return jsonify({"msg": "Email already exists"}), 409
-    
-    # Create new user
-    new_user = User(
-        username=username,
-        email=email,
-        password_hash=User.generate_hash(password)
-    )
-    
-    try:
-        new_user.save_to_db()
-        access_token = create_access_token(identity=username)
-        return jsonify({
-            "msg": "User created successfully",
-            "access_token": access_token,
-            "user": {
-                "id": new_user.id,
-                "username": new_user.username,
-                "email": new_user.email
-            }
-        }), 201
-    except Exception as e:
-        return jsonify({"msg": f"Error creating user: {str(e)}"}), 500
+    # For GET requests or if form validation fails
+    return render_template('auth/register.html', title='Register', form=form)
 
-@auth_bp.route('/login', methods=['POST'])
+@auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
-    data = request.get_json()
+    """
+    User login endpoint with attempt tracking and account lockout
+    Handles both form display and form submission
+    """
+    # If user is already logged in, redirect to home page
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
     
-    if not data:
-        return jsonify({"msg": "Missing JSON in request"}), 400
+    form = LoginForm()
+    if form.validate_on_submit():
+        # Find user by username
+        user = User.query.filter_by(username=form.username.data).first()
+        login_success = False
         
-    username = data.get('username', '')
-    password = data.get('password', '')
-    
-    # Validate required fields
-    if not username or not password:
-        return jsonify({"msg": "Missing username or password"}), 400
-    
-    # Find user by username
-    current_user = User.query.filter_by(username=username).first()
-    
-    # Check if user exists
-    if not current_user:
-        return jsonify({"msg": "User not found"}), 404
-    
-    # Check if account is locked
-    if current_user.is_account_locked():
-        lock_time = current_user.locked_until
-        remaining_minutes = round((lock_time - datetime.utcnow()).total_seconds() / 60)
-        return jsonify({
-            "msg": f"Account locked due to too many failed attempts. Try again in {remaining_minutes} minutes."
-        }), 403
-    
-    # Verify password
-    if User.verify_hash(password, current_user.password_hash):
-        # Reset login attempts on successful login
-        current_user.update_login_attempts(successful=True)
+        # Check if user exists
+        if user:
+            # Check if account is locked
+            if user.check_account_lock_status():
+                flash('Account is temporarily locked due to multiple failed login attempts. Please try again later.', 'danger')
+                logger.warning(f"Login attempt on locked account: {user.username}")
+                return render_template('auth/login.html', title='Login', form=form)
+            
+            # Verify password
+            if user.verify_password(form.password.data):
+                login_success = True
+                
+                # Log the user in
+                login_user(user, remember=form.remember_me.data)
+                user.update_last_login()
+                
+                # Record successful login attempt
+                LoginAttempt.add_login_attempt(
+                    user=user,
+                    ip_address=request.remote_addr,
+                    user_agent=request.user_agent.string,
+                    success=True
+                )
+                
+                logger.info(f"Successful login: {user.username}")
+                
+                # Redirect to requested page or default
+                next_page = request.args.get('next')
+                if not next_page or url_parse(next_page).netloc != '':
+                    next_page = url_for('index')
+                
+                return redirect(next_page)
         
-        access_token = create_access_token(identity=username)
-        return jsonify({
-            "msg": "Login successful",
-            "access_token": access_token,
-            "user": {
-                "id": current_user.id,
-                "username": current_user.username,
-                "email": current_user.email
-            }
-        }), 200
-    else:
-        # Increment login attempts on failed login
-        current_user.update_login_attempts(successful=False)
+        # Login failed - record the attempt if user exists
+        if user:
+            LoginAttempt.add_login_attempt(
+                user=user,
+                ip_address=request.remote_addr,
+                user_agent=request.user_agent.string,
+                success=False
+            )
+            
+            logger.warning(f"Failed login attempt for user: {user.username}")
+        else:
+            logger.warning(f"Failed login attempt for non-existent user: {form.username.data}")
         
-        return jsonify({"msg": "Invalid credentials"}), 401
+        # Show generic error message to prevent username enumeration
+        flash('Invalid username or password', 'danger')
+    
+    return render_template('auth/login.html', title='Login', form=form)
 
-@auth_bp.route('/profile', methods=['GET'])
-@jwt_required()
+@auth_bp.route('/logout')
+@login_required
+def logout():
+    """User logout endpoint"""
+    username = current_user.username  # Save username before logout
+    logout_user()
+    logger.info(f"User logged out: {username}")
+    flash('You have been logged out successfully.', 'info')
+    return redirect(url_for('index'))
+
+@auth_bp.route('/profile')
+@login_required
 def profile():
-    current_username = get_jwt_identity()
-    user = User.query.filter_by(username=current_username).first()
+    """User profile page"""
+    return render_template('auth/profile.html', title='My Profile')
+
+# Add other template-rendering auth routes like change_password, reset_password, login_history, etc.
+
+@auth_bp.route('/change_password', methods=['GET', 'POST'])
+@login_required
+def change_password():
+    """
+    Change password endpoint for authenticated users
+    Handles both form display and form submission
+    """
+    form = ChangePasswordForm()
+    if form.validate_on_submit():
+        if current_user.verify_password(form.current_password.data):
+            current_user.password = form.new_password.data
+            current_user.save_to_db()
+            logger.info(f"Password changed for user: {current_user.username}")
+            flash('Your password has been updated.', 'success')
+            return redirect(url_for('auth.profile'))
+        else:
+            flash('Current password is incorrect.', 'danger')
     
-    if not user:
-        return jsonify({"msg": "User not found"}), 404
+    return render_template('auth/change_password.html', title='Change Password', form=form)
+
+@auth_bp.route('/login_history')
+@login_required
+def login_history():
+    """View login history for the current user"""
+    # Get the most recent login attempts (limit to 10)
+    login_attempts = LoginAttempt.query.filter_by(user_id=current_user.id)\
+        .order_by(LoginAttempt.timestamp.desc())\
+        .limit(10)\
+        .all()
     
-    return jsonify({
-        "id": user.id,
-        "username": user.username,
-        "email": user.email,
-        "created_at": user.created_at.strftime('%Y-%m-%d %H:%M:%S')
-    }), 200
+    return render_template(
+        'auth/login_history.html', 
+        title='Login History',
+        login_attempts=login_attempts
+    )

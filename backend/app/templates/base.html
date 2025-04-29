@@ -159,18 +159,18 @@
                                 </a>
                             </li>
                             <li>
-                                <a class="dropdown-item" href="#">
+                                <a class="dropdown-item" href="{{ url_for('auth.change_password') }}">
                                     <i class="fas fa-key me-1"></i>Change Password
                                 </a>
                             </li>
                             <li>
-                                <a class="dropdown-item" href="#">
+                                <a class="dropdown-item" href="{{ url_for('auth.login_history') }}">
                                     <i class="fas fa-history me-1"></i>Login History
                                 </a>
                             </li>
                             <li><hr class="dropdown-divider"></li>
                             <li>
-                                <a class="dropdown-item" href="#">
+                                <a class="dropdown-item" href="{{ url_for('auth.logout') }}">
                                     <i class="fas fa-sign-out-alt me-1"></i>Logout
                                 </a>
                             </li>
@@ -179,13 +179,13 @@
                     {% else %}
                     <li class="nav-item">
                         <a class="nav-link {% if request.endpoint == 'auth.login' %}active{% endif %}" 
-                           href="{{ url_for('auth.login') if 'auth.login' in url_for_security else '#' }}">
+                           href="{{ url_for('auth.login') }}">
                             <i class="fas fa-sign-in-alt me-1"></i>Login
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {% if request.endpoint == 'auth.register' %}active{% endif %}" 
-                           href="{{ url_for('auth.register') if 'auth.register' in url_for_security else '#' }}">
+                           href="{{ url_for('auth.register') }}">
                             <i class="fas fa-user-plus me-1"></i>Register
                         </a>
                     </li>

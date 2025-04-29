@@ -3,46 +3,17 @@ from flask import Blueprint
 # Create a blueprint for API routes
 api_bp = Blueprint('api', __name__, url_prefix='/api')
 
-# Import routes to register them with the blueprint
-from app.api import routes
+# Import API modules to register routes
+from app.api import auth
+from app.api import expenses
+from app.api import income
+from app.api import categories
+from app.api import currencies
+from app.api import settings
+from app.api import notifications
 
-# Import other API modules
-try:
-    from app.api import auth
-except ImportError:
-    pass
-
-try:
-    from app.api import categories
-except ImportError:
-    pass
-
-try:
-    from app.api import expenses
-except ImportError:
-    pass
-
-try:
-    from app.api import income
-except ImportError:
-    pass
-
+# Import reports API if it exists
 try:
     from app.api import reports
-except ImportError:
-    pass
-
-try:
-    from app.api import currencies
-except ImportError:
-    pass
-
-try:
-    from app.api import settings
-except ImportError:
-    pass
-
-try:
-    from app.api import notifications
 except ImportError:
     pass

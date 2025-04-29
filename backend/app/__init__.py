@@ -4,7 +4,6 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_jwt_extended import JWTManager
 from flask_cors import CORS
-from flask_login import LoginManager
 from flask_bcrypt import Bcrypt
 from dotenv import load_dotenv
 
@@ -15,7 +14,6 @@ load_dotenv()
 db = SQLAlchemy()
 migrate = Migrate()
 jwt = JWTManager()
-login_manager = LoginManager()
 bcrypt = Bcrypt()
 
 def create_app(config=None):
@@ -45,20 +43,10 @@ def create_app(config=None):
     db.init_app(app)
     migrate.init_app(app, db)
     jwt.init_app(app)
-    login_manager.init_app(app)
     bcrypt.init_app(app)
     
     # Configure CORS to allow requests from Flutter Web client
     CORS(app, resources={r"/api/*": {"origins": "*"}})
-
-    # Configure login manager for API auth only
-    login_manager.login_view = None  # No redirect for failed auth
-
-    @login_manager.user_loader
-    def load_user(user_id):
-        # Import models here to avoid circular imports
-        from app.models.user import User
-        return User.query.get(int(user_id))
 
     # Register API blueprint
     from app.api import api_bp
@@ -74,10 +62,30 @@ def create_app(config=None):
     def internal_server_error(e):
         """Handle 500 errors with JSON response"""
         return jsonify({"error": "Internal server error", "message": str(e)}), 500
-
-    # Route for health check
-    @app.route('/api/health')
-    def health_check():
-        return jsonify({"status": "healthy"})
         
+    # JWT error handlers
+    @jwt.expired_token_loader
+    def expired_token_callback(jwt_header, jwt_payload):
+        return jsonify({
+            'status': 401,
+            'error': 'token_expired',
+            'message': 'The token has expired'
+        }), 401
+    
+    @jwt.invalid_token_loader
+    def invalid_token_callback(error):
+        return jsonify({
+            'status': 401,
+            'error': 'invalid_token',
+            'message': 'Signature verification failed'
+        }), 401
+    
+    @jwt.unauthorized_loader
+    def missing_token_callback(error):
+        return jsonify({
+            'status': 401,
+            'error': 'authorization_required',
+            'message': 'Request does not contain an access token'
+        }), 401
+
     return app

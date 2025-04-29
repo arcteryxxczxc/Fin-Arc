@@ -1,12 +1,11 @@
-from flask import Blueprint, request, jsonify, current_app, render_template, redirect, url_for, flash
+from flask import request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from flask_login import login_required, current_user
+from app.api import api_bp
 from app import db
 from app.models.expense import Expense
 from app.models.category import Category
 from app.models.user import User
-from app.forms.expenses import ExpenseForm, ExpenseFilterForm, ExpenseBulkActionForm
-from sqlalchemy import or_, and_, func
+from sqlalchemy import or_, func
 from datetime import datetime, timedelta
 import csv
 import io
@@ -15,447 +14,11 @@ import logging
 # Set up logger
 logger = logging.getLogger(__name__)
 
-# Create a blueprint for expense routes
-expense_routes = Blueprint('expenses', __name__, url_prefix='/expenses')
-
-@expense_routes.route('/')
-@login_required
-def index():
-    """
-    Display a list of expenses with filtering options
-    """
-    # Initialize the filter form
-    filter_form = ExpenseFilterForm()
-    bulk_action_form = ExpenseBulkActionForm()
-    
-    # Get categories for the form dropdowns
-    categories = Category.query.filter_by(
-        user_id=current_user.id,
-        is_income=False,
-        is_active=True
-    ).order_by(Category.name).all()
-    
-    filter_form.category_id.choices = [(-1, 'All Categories')] + [(c.id, c.name) for c in categories]
-    bulk_action_form.target_category_id.choices = [(c.id, c.name) for c in categories]
-    
-    # Handle filter parameters
-    page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 10, type=int)
-    
-    # Build query
-    query = Expense.query.filter_by(user_id=current_user.id)
-    
-    # Apply filters from request parameters
-    category_id = request.args.get('category_id', type=int)
-    start_date = request.args.get('start_date')
-    end_date = request.args.get('end_date')
-    payment_method = request.args.get('payment_method')
-    min_amount = request.args.get('min_amount', type=float)
-    max_amount = request.args.get('max_amount', type=float)
-    search = request.args.get('search')
-    
-    # Pre-fill form with query params
-    if start_date:
-        filter_form.start_date.data = datetime.strptime(start_date, '%Y-%m-%d').date()
-        query = query.filter(Expense.date >= filter_form.start_date.data)
-        
-    if end_date:
-        filter_form.end_date.data = datetime.strptime(end_date, '%Y-%m-%d').date()
-        query = query.filter(Expense.date <= filter_form.end_date.data)
-        
-    if category_id and category_id > 0:
-        filter_form.category_id.data = category_id
-        query = query.filter(Expense.category_id == category_id)
-        
-    if payment_method:
-        filter_form.payment_method.data = payment_method
-        query = query.filter(Expense.payment_method == payment_method)
-        
-    if min_amount:
-        filter_form.min_amount.data = min_amount
-        query = query.filter(Expense.amount >= min_amount)
-        
-    if max_amount:
-        filter_form.max_amount.data = max_amount
-        query = query.filter(Expense.amount <= max_amount)
-        
-    if search:
-        filter_form.search.data = search
-        search_term = f'%{search}%'
-        query = query.filter(
-            or_(
-                Expense.description.ilike(search_term),
-                Expense.notes.ilike(search_term),
-                Expense.location.ilike(search_term)
-            )
-        )
-    
-    # Order by date (newest first)
-    query = query.order_by(Expense.date.desc(), Expense.id.desc())
-    
-    # Paginate results
-    expenses = query.paginate(page=page, per_page=per_page, error_out=False)
-    
-    # Calculate totals for filtered expenses
-    total_amount = db.session.query(func.sum(Expense.amount)).filter(
-        Expense.user_id == current_user.id
-    ).scalar() or 0
-    
-    filtered_total = db.session.query(func.sum(Expense.amount)).filter(
-        query.whereclause
-    ).scalar() or 0
-    
-    # Get quick stats for sidebar
-    today = datetime.now().date()
-    start_of_week = today - timedelta(days=today.weekday())
-    start_of_month = today.replace(day=1)
-    
-    today_total = db.session.query(func.sum(Expense.amount)).filter(
-        Expense.user_id == current_user.id,
-        Expense.date == today
-    ).scalar() or 0
-    
-    week_total = db.session.query(func.sum(Expense.amount)).filter(
-        Expense.user_id == current_user.id,
-        Expense.date >= start_of_week
-    ).scalar() or 0
-    
-    month_total = db.session.query(func.sum(Expense.amount)).filter(
-        Expense.user_id == current_user.id,
-        Expense.date >= start_of_month
-    ).scalar() or 0
-    
-    stats = {
-        'today': float(today_total),
-        'week': float(week_total),
-        'month': float(month_total),
-        'total': float(total_amount),
-        'filtered': float(filtered_total)
-    }
-    
-    return render_template(
-        'expenses/index.html',
-        expenses=expenses,
-        filter_form=filter_form,
-        bulk_action_form=bulk_action_form,
-        stats=stats,
-        title='Expenses'
-    )
-
-@expense_routes.route('/add', methods=['GET', 'POST'])
-@login_required
-def add():
-    """Add a new expense"""
-    form = ExpenseForm()
-    
-    # Get categories for the form dropdown
-    categories = Category.query.filter_by(
-        user_id=current_user.id,
-        is_income=False,
-        is_active=True
-    ).order_by(Category.name).all()
-    
-    form.category_id.choices = [(0, 'Select Category')] + [(c.id, c.name) for c in categories]
-    
-    if form.validate_on_submit():
-        try:
-            # Create new expense
-            expense = Expense(
-                user_id=current_user.id,
-                amount=form.amount.data,
-                description=form.description.data,
-                date=form.date.data,
-                time=form.time.data,
-                payment_method=form.payment_method.data,
-                location=form.location.data,
-                is_recurring=form.is_recurring.data,
-                recurring_type=form.recurring_type.data if form.is_recurring.data else None,
-                notes=form.notes.data
-            )
-            
-            # Handle category
-            if form.category_id.data > 0:
-                expense.category_id = form.category_id.data
-            
-            # Handle receipt upload
-            if form.receipt.data:
-                # Save receipt file
-                # This is a placeholder - actual file saving would be implemented here
-                expense.has_receipt = True
-                expense.receipt_path = "path/to/receipt.jpg"  # Replace with actual path
-            
-            # Add to database
-            db.session.add(expense)
-            db.session.commit()
-            
-            flash('Expense added successfully!', 'success')
-            return redirect(url_for('expenses.index'))
-        
-        except Exception as e:
-            db.session.rollback()
-            logger.error(f"Error adding expense: {str(e)}")
-            flash('An error occurred while adding the expense. Please try again.', 'danger')
-    
-    return render_template('expenses/add.html', form=form, title='Add Expense')
-
-@expense_routes.route('/edit/<int:id>', methods=['GET', 'POST'])
-@login_required
-def edit(id):
-    """Edit an existing expense"""
-    expense = Expense.query.filter_by(id=id, user_id=current_user.id).first_or_404()
-    form = ExpenseForm(obj=expense)
-    
-    # Get categories for the form dropdown
-    categories = Category.query.filter_by(
-        user_id=current_user.id,
-        is_income=False,
-        is_active=True
-    ).order_by(Category.name).all()
-    
-    form.category_id.choices = [(0, 'Select Category')] + [(c.id, c.name) for c in categories]
-    
-    if form.validate_on_submit():
-        try:
-            # Update expense data
-            expense.amount = form.amount.data
-            expense.description = form.description.data
-            expense.date = form.date.data
-            expense.time = form.time.data
-            expense.payment_method = form.payment_method.data
-            expense.location = form.location.data
-            expense.is_recurring = form.is_recurring.data
-            expense.recurring_type = form.recurring_type.data if form.is_recurring.data else None
-            expense.notes = form.notes.data
-            
-            # Handle category
-            if form.category_id.data > 0:
-                expense.category_id = form.category_id.data
-            else:
-                expense.category_id = None
-            
-            # Handle receipt upload
-            if form.receipt.data:
-                # Save receipt file
-                # This is a placeholder - actual file saving would be implemented here
-                expense.has_receipt = True
-                expense.receipt_path = "path/to/receipt.jpg"  # Replace with actual path
-            
-            # Save changes
-            db.session.commit()
-            
-            flash('Expense updated successfully!', 'success')
-            return redirect(url_for('expenses.index'))
-        
-        except Exception as e:
-            db.session.rollback()
-            logger.error(f"Error updating expense: {str(e)}")
-            flash('An error occurred while updating the expense. Please try again.', 'danger')
-    
-    return render_template('expenses/edit.html', form=form, expense=expense, title='Edit Expense')
-
-@expense_routes.route('/delete/<int:id>', methods=['POST'])
-@login_required
-def delete(id):
-    """Delete an expense"""
-    expense = Expense.query.filter_by(id=id, user_id=current_user.id).first_or_404()
-    
-    try:
-        # Delete expense
-        db.session.delete(expense)
-        db.session.commit()
-        
-        flash('Expense deleted successfully!', 'success')
-    except Exception as e:
-        db.session.rollback()
-        logger.error(f"Error deleting expense: {str(e)}")
-        flash('An error occurred while deleting the expense.', 'danger')
-    
-    return redirect(url_for('expenses.index'))
-
-@expense_routes.route('/view/<int:id>')
-@login_required
-def view(id):
-    """View expense details"""
-    expense = Expense.query.filter_by(id=id, user_id=current_user.id).first_or_404()
-    return render_template('expenses/view.html', expense=expense, title='Expense Details')
-
-@expense_routes.route('/bulk-action', methods=['POST'])
-@login_required
-def bulk_action():
-    """Perform bulk actions on selected expenses"""
-    form = ExpenseBulkActionForm()
-    
-    # Get categories for the form dropdown
-    categories = Category.query.filter_by(
-        user_id=current_user.id,
-        is_income=False,
-        is_active=True
-    ).order_by(Category.name).all()
-    
-    form.target_category_id.choices = [(c.id, c.name) for c in categories]
-    
-    if form.validate_on_submit():
-        selected_ids = form.selected_expenses.data.split(',')
-        action = form.action.data
-        
-        if not selected_ids:
-            flash('No expenses selected.', 'warning')
-            return redirect(url_for('expenses.index'))
-        
-        try:
-            # Convert IDs to integers and filter by user_id for security
-            expense_ids = [int(id) for id in selected_ids if id]
-            expenses = Expense.query.filter(
-                Expense.id.in_(expense_ids),
-                Expense.user_id == current_user.id
-            ).all()
-            
-            if not expenses:
-                flash('No valid expenses selected.', 'warning')
-                return redirect(url_for('expenses.index'))
-            
-            if action == 'delete':
-                # Delete expenses
-                for expense in expenses:
-                    db.session.delete(expense)
-                
-                db.session.commit()
-                flash(f'{len(expenses)} expenses deleted successfully!', 'success')
-                
-            elif action == 'change_category':
-                # Change category for all selected expenses
-                target_category_id = form.target_category_id.data
-                
-                for expense in expenses:
-                    expense.category_id = target_category_id
-                
-                db.session.commit()
-                flash(f'Category updated for {len(expenses)} expenses!', 'success')
-                
-            elif action == 'export':
-                # Export selected expenses as CSV
-                return export_expenses_csv(expenses)
-            
-            else:
-                flash('Invalid action selected.', 'warning')
-        
-        except Exception as e:
-            db.session.rollback()
-            logger.error(f"Error in bulk action: {str(e)}")
-            flash('An error occurred while processing the bulk action.', 'danger')
-    
-    return redirect(url_for('expenses.index'))
-
-@expense_routes.route('/export')
-@login_required
-def export():
-    """Export all expenses as CSV"""
-    # Get all expenses for the current user
-    expenses = Expense.query.filter_by(user_id=current_user.id).order_by(Expense.date.desc()).all()
-    return export_expenses_csv(expenses)
-
-def export_expenses_csv(expenses):
-    """Helper function to export expenses as CSV"""
-    output = io.StringIO()
-    writer = csv.writer(output)
-    
-    # Write header row
-    writer.writerow([
-        'ID', 'Date', 'Time', 'Description', 'Amount', 'Category',
-        'Payment Method', 'Location', 'Recurring', 'Notes'
-    ])
-    
-    # Write data rows
-    for expense in expenses:
-        category_name = expense.category.name if expense.category else 'Uncategorized'
-        time_str = expense.time.strftime('%H:%M') if expense.time else ''
-        
-        writer.writerow([
-            expense.id,
-            expense.formatted_date,
-            time_str,
-            expense.description or '',
-            expense.formatted_amount,
-            category_name,
-            expense.payment_method or '',
-            expense.location or '',
-            'Yes' if expense.is_recurring else 'No',
-            expense.notes or ''
-        ])
-    
-    # Create response
-    output.seek(0)
-    return current_app.response_class(
-        output.getvalue(),
-        mimetype='text/csv',
-        headers={'Content-Disposition': f'attachment;filename=expenses_{datetime.now().strftime("%Y%m%d")}.csv'}
-    )
-
-@expense_routes.route('/stats')
-@login_required
-def stats():
-    """View expense statistics and trends"""
-    # Get date range from request or use default (last 6 months)
-    months = request.args.get('months', 6, type=int)
-    
-    # Calculate start date
-    today = datetime.now()
-    start_month = today.month - months
-    start_year = today.year
-    
-    # Adjust for previous year
-    while start_month <= 0:
-        start_month += 12
-        start_year -= 1
-        
-    start_date = datetime(start_year, start_month, 1).date()
-    
-    # Get expense breakdown by category
-    category_breakdown = Expense.get_total_by_category(current_user.id, start_date)
-    
-    # Get monthly expense trend
-    monthly_trend = Expense.get_total_by_month(current_user.id)
-    
-    # Format data for charts
-    category_data = []
-    for category_id, category_name, category_total in category_breakdown:
-        # Get category color or use default
-        color = "#757575"  # Default color
-        if category_id:
-            category = Category.query.get(category_id)
-            if category:
-                color = category.color_code
-        
-        category_data.append({
-            'id': category_id,
-            'name': category_name or "Uncategorized",
-            'total': float(category_total),
-            'color': color
-        })
-    
-    monthly_data = []
-    for month_date, total in monthly_trend:
-        if month_date:
-            month_str = month_date.strftime('%b %Y')
-            monthly_data.append({
-                'month': month_str,
-                'total': float(total)
-            })
-    
-    return render_template(
-        'expenses/stats.html',
-        category_data=category_data,
-        monthly_data=monthly_data,
-        months=months,
-        title='Expense Statistics'
-    )
-
-# API endpoints for expenses
-@expense_routes.route('/api/expenses', methods=['GET'])
+@api_bp.route('/expenses', methods=['GET'])
 @jwt_required()
 def get_expenses():
     """
-    Get a list of expenses for the current user via API
+    Get a list of expenses for the current user
     
     Query parameters:
     - page: Page number (default: 1)
@@ -477,7 +40,7 @@ def get_expenses():
         user = User.query.filter_by(username=current_username).first()
         
         if not user:
-            return jsonify({"msg": "User not found"}), 404
+            return jsonify({"error": "User not found"}), 404
         
         # Get pagination parameters
         page = request.args.get('page', 1, type=int)
@@ -557,4 +120,710 @@ def get_expenses():
         
     except Exception as e:
         logger.error(f"Error getting expenses: {str(e)}")
-        return jsonify({"msg": "An error occurred while retrieving expenses"}), 500
+        return jsonify({"error": "An error occurred while retrieving expenses"}), 500
+
+@api_bp.route('/expenses/<int:expense_id>', methods=['GET'])
+@jwt_required()
+def get_expense(expense_id):
+    """
+    Get a specific expense by ID
+    
+    Path parameters:
+    - expense_id: ID of the expense to retrieve
+    
+    Returns:
+        JSON response with expense details
+    """
+    try:
+        # Get current user
+        current_username = get_jwt_identity()
+        user = User.query.filter_by(username=current_username).first()
+        
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+        
+        # Get expense
+        expense = Expense.query.filter_by(id=expense_id, user_id=user.id).first()
+        
+        if not expense:
+            return jsonify({"error": "Expense not found"}), 404
+        
+        # Format response
+        result = {
+            "id": expense.id,
+            "amount": float(expense.amount),
+            "formatted_amount": expense.formatted_amount,
+            "description": expense.description,
+            "date": expense.formatted_date,
+            "time": expense.time.strftime('%H:%M') if expense.time else None,
+            "category_id": expense.category_id,
+            "category_name": expense.category.name if expense.category else "Uncategorized",
+            "payment_method": expense.payment_method,
+            "location": expense.location,
+            "has_receipt": expense.has_receipt,
+            "receipt_path": expense.receipt_path,
+            "is_recurring": expense.is_recurring,
+            "recurring_type": expense.recurring_type,
+            "notes": expense.notes,
+            "created_at": expense.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+            "updated_at": expense.updated_at.strftime('%Y-%m-%d %H:%M:%S')
+        }
+        
+        return jsonify(result), 200
+        
+    except Exception as e:
+        logger.error(f"Error getting expense {expense_id}: {str(e)}")
+        return jsonify({"error": "An error occurred while retrieving the expense"}), 500
+
+@api_bp.route('/expenses', methods=['POST'])
+@jwt_required()
+def create_expense():
+    """
+    Create a new expense
+    
+    Request body:
+    - amount: Expense amount (required)
+    - description: Expense description
+    - date: Expense date (YYYY-MM-DD)
+    - time: Expense time (HH:MM)
+    - category_id: Category ID
+    - payment_method: Payment method
+    - location: Location
+    - is_recurring: Whether the expense is recurring
+    - recurring_type: Type of recurrence (daily, weekly, monthly, yearly)
+    - notes: Additional notes
+    
+    Returns:
+        JSON response with the created expense
+    """
+    try:
+        # Get current user
+        current_username = get_jwt_identity()
+        user = User.query.filter_by(username=current_username).first()
+        
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+        
+        # Get request data
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({"error": "Missing JSON in request"}), 400
+        
+        # Validate required fields
+        if 'amount' not in data:
+            return jsonify({"error": "Amount is required"}), 400
+        
+        try:
+            amount = float(data['amount'])
+            if amount <= 0:
+                return jsonify({"error": "Amount must be greater than zero"}), 400
+        except ValueError:
+            return jsonify({"error": "Invalid amount format"}), 400
+        
+        # Parse date
+        date_str = data.get('date')
+        if date_str:
+            try:
+                date_val = datetime.strptime(date_str, '%Y-%m-%d').date()
+            except ValueError:
+                return jsonify({"error": "Invalid date format. Use YYYY-MM-DD"}), 400
+        else:
+            date_val = datetime.utcnow().date()
+        
+        # Parse time
+        time_str = data.get('time')
+        if time_str:
+            try:
+                time_val = datetime.strptime(time_str, '%H:%M').time()
+            except ValueError:
+                return jsonify({"error": "Invalid time format. Use HH:MM"}), 400
+        else:
+            time_val = None
+        
+        # Create expense
+        expense = Expense(
+            user_id=user.id,
+            amount=amount,
+            description=data.get('description'),
+            date=date_val,
+            time=time_val,
+            payment_method=data.get('payment_method'),
+            location=data.get('location'),
+            is_recurring=data.get('is_recurring', False),
+            recurring_type=data.get('recurring_type') if data.get('is_recurring', False) else None,
+            notes=data.get('notes')
+        )
+        
+        # Handle category
+        category_id = data.get('category_id')
+        if category_id:
+            category = Category.query.filter_by(id=category_id, user_id=user.id).first()
+            if category:
+                expense.category_id = category.id
+        
+        # Save to database
+        db.session.add(expense)
+        db.session.commit()
+        
+        # Format response
+        result = {
+            "message": "Expense created successfully",
+            "expense": {
+                "id": expense.id,
+                "amount": float(expense.amount),
+                "formatted_amount": expense.formatted_amount,
+                "description": expense.description,
+                "date": expense.formatted_date,
+                "category_id": expense.category_id,
+                "category_name": expense.category.name if expense.category else "Uncategorized",
+                "payment_method": expense.payment_method,
+                "location": expense.location,
+                "is_recurring": expense.is_recurring,
+                "recurring_type": expense.recurring_type,
+                "notes": expense.notes
+            }
+        }
+        
+        return jsonify(result), 201
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error creating expense: {str(e)}")
+        return jsonify({"error": "An error occurred while creating the expense"}), 500
+
+@api_bp.route('/expenses/<int:expense_id>', methods=['PUT'])
+@jwt_required()
+def update_expense(expense_id):
+    """
+    Update an existing expense
+    
+    Path parameters:
+    - expense_id: ID of the expense to update
+    
+    Request body:
+    - amount: Expense amount
+    - description: Expense description
+    - date: Expense date (YYYY-MM-DD)
+    - time: Expense time (HH:MM)
+    - category_id: Category ID
+    - payment_method: Payment method
+    - location: Location
+    - is_recurring: Whether the expense is recurring
+    - recurring_type: Type of recurrence (daily, weekly, monthly, yearly)
+    - notes: Additional notes
+    
+    Returns:
+        JSON response with the updated expense
+    """
+    try:
+        # Get current user
+        current_username = get_jwt_identity()
+        user = User.query.filter_by(username=current_username).first()
+        
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+        
+        # Get expense
+        expense = Expense.query.filter_by(id=expense_id, user_id=user.id).first()
+        
+        if not expense:
+            return jsonify({"error": "Expense not found"}), 404
+        
+        # Get request data
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({"error": "Missing JSON in request"}), 400
+        
+        # Update expense
+        if 'amount' in data:
+            try:
+                amount = float(data['amount'])
+                if amount <= 0:
+                    return jsonify({"error": "Amount must be greater than zero"}), 400
+                expense.amount = amount
+            except ValueError:
+                return jsonify({"error": "Invalid amount format"}), 400
+        
+        # Update description
+        if 'description' in data:
+            expense.description = data['description']
+        
+        # Update date
+        if 'date' in data:
+            try:
+                expense.date = datetime.strptime(data['date'], '%Y-%m-%d').date()
+            except ValueError:
+                return jsonify({"error": "Invalid date format. Use YYYY-MM-DD"}), 400
+        
+        # Update time
+        if 'time' in data:
+            if data['time']:
+                try:
+                    expense.time = datetime.strptime(data['time'], '%H:%M').time()
+                except ValueError:
+                    return jsonify({"error": "Invalid time format. Use HH:MM"}), 400
+            else:
+                expense.time = None
+        
+        # Update category
+        if 'category_id' in data:
+            category_id = data['category_id']
+            if category_id:
+                category = Category.query.filter_by(id=category_id, user_id=user.id).first()
+                if category:
+                    expense.category_id = category.id
+                else:
+                    return jsonify({"error": "Category not found"}), 404
+            else:
+                expense.category_id = None
+        
+        # Update other fields
+        if 'payment_method' in data:
+            expense.payment_method = data['payment_method']
+        
+        if 'location' in data:
+            expense.location = data['location']
+        
+        if 'is_recurring' in data:
+            expense.is_recurring = data['is_recurring']
+            
+            # Update recurring_type if is_recurring is True
+            if 'recurring_type' in data and expense.is_recurring:
+                expense.recurring_type = data['recurring_type']
+            # Clear recurring_type if is_recurring is False
+            elif not expense.is_recurring:
+                expense.recurring_type = None
+        
+        if 'notes' in data:
+            expense.notes = data['notes']
+        
+        # Save to database
+        db.session.commit()
+        
+        # Format response
+        result = {
+            "message": "Expense updated successfully",
+            "expense": {
+                "id": expense.id,
+                "amount": float(expense.amount),
+                "formatted_amount": expense.formatted_amount,
+                "description": expense.description,
+                "date": expense.formatted_date,
+                "time": expense.time.strftime('%H:%M') if expense.time else None,
+                "category_id": expense.category_id,
+                "category_name": expense.category.name if expense.category else "Uncategorized",
+                "payment_method": expense.payment_method,
+                "location": expense.location,
+                "is_recurring": expense.is_recurring,
+                "recurring_type": expense.recurring_type,
+                "notes": expense.notes,
+                "updated_at": expense.updated_at.strftime('%Y-%m-%d %H:%M:%S')
+            }
+        }
+        
+        return jsonify(result), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error updating expense {expense_id}: {str(e)}")
+        return jsonify({"error": "An error occurred while updating the expense"}), 500
+
+@api_bp.route('/expenses/<int:expense_id>', methods=['DELETE'])
+@jwt_required()
+def delete_expense(expense_id):
+    """
+    Delete an expense
+    
+    Path parameters:
+    - expense_id: ID of the expense to delete
+    
+    Returns:
+        JSON response with success message
+    """
+    try:
+        # Get current user
+        current_username = get_jwt_identity()
+        user = User.query.filter_by(username=current_username).first()
+        
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+        
+        # Get expense
+        expense = Expense.query.filter_by(id=expense_id, user_id=user.id).first()
+        
+        if not expense:
+            return jsonify({"error": "Expense not found"}), 404
+        
+        # Delete expense
+        db.session.delete(expense)
+        db.session.commit()
+        
+        return jsonify({"message": "Expense deleted successfully"}), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error deleting expense {expense_id}: {str(e)}")
+        return jsonify({"error": "An error occurred while deleting the expense"}), 500
+
+@api_bp.route('/expenses/bulk', methods=['POST'])
+@jwt_required()
+def bulk_action_expenses():
+    """
+    Perform bulk actions on expenses
+    
+    Request body:
+    - action: Action to perform (delete, change_category)
+    - expense_ids: List of expense IDs to perform the action on
+    - target_category_id: Target category ID (for change_category action)
+    
+    Returns:
+        JSON response with success message
+    """
+    try:
+        # Get current user
+        current_username = get_jwt_identity()
+        user = User.query.filter_by(username=current_username).first()
+        
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+        
+        # Get request data
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({"error": "Missing JSON in request"}), 400
+        
+        # Validate required fields
+        if 'action' not in data:
+            return jsonify({"error": "Action is required"}), 400
+        
+        if 'expense_ids' not in data or not data['expense_ids']:
+            return jsonify({"error": "Expense IDs are required"}), 400
+        
+        action = data['action']
+        expense_ids = data['expense_ids']
+        
+        # Validate expense IDs
+        try:
+            expense_ids = [int(id) for id in expense_ids]
+        except ValueError:
+            return jsonify({"error": "Invalid expense ID format"}), 400
+        
+        # Get expenses
+        expenses = Expense.query.filter(
+            Expense.id.in_(expense_ids),
+            Expense.user_id == user.id
+        ).all()
+        
+        if not expenses:
+            return jsonify({"error": "No valid expenses found"}), 404
+        
+        # Perform action
+        if action == 'delete':
+            # Delete expenses
+            for expense in expenses:
+                db.session.delete(expense)
+            
+            db.session.commit()
+            return jsonify({
+                "message": f"{len(expenses)} expenses deleted successfully"
+            }), 200
+            
+        elif action == 'change_category':
+            # Validate target category ID
+            if 'target_category_id' not in data:
+                return jsonify({"error": "Target category ID is required for change_category action"}), 400
+            
+            target_category_id = data['target_category_id']
+            
+            # Validate category
+            if target_category_id:
+                category = Category.query.filter_by(id=target_category_id, user_id=user.id).first()
+                if not category:
+                    return jsonify({"error": "Target category not found"}), 404
+            
+            # Update category
+            for expense in expenses:
+                expense.category_id = target_category_id
+            
+            db.session.commit()
+            return jsonify({
+                "message": f"Category updated for {len(expenses)} expenses"
+            }), 200
+            
+        else:
+            return jsonify({"error": f"Invalid action: {action}"}), 400
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error performing bulk action on expenses: {str(e)}")
+        return jsonify({"error": "An error occurred while performing the bulk action"}), 500
+
+@api_bp.route('/expenses/export', methods=['GET'])
+@jwt_required()
+def export_expenses():
+    """
+    Export expenses as CSV
+    
+    Query parameters:
+    - ids: Comma-separated list of expense IDs to export (optional)
+    - all other filter parameters from get_expenses
+    
+    Returns:
+        CSV file with expenses
+    """
+    try:
+        # Get current user
+        current_username = get_jwt_identity()
+        user = User.query.filter_by(username=current_username).first()
+        
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+        
+        # Check if specific IDs are provided
+        ids_param = request.args.get('ids')
+        if ids_param:
+            try:
+                expense_ids = [int(id) for id in ids_param.split(',')]
+                expenses = Expense.query.filter(
+                    Expense.id.in_(expense_ids),
+                    Expense.user_id == user.id
+                ).order_by(Expense.date.desc()).all()
+            except ValueError:
+                return jsonify({"error": "Invalid expense ID format"}), 400
+        else:
+            # Build query using the same filters as get_expenses
+            query = Expense.query.filter_by(user_id=user.id)
+            
+            # Apply filters
+            category_id = request.args.get('category_id', type=int)
+            if category_id:
+                query = query.filter(Expense.category_id == category_id)
+            
+            start_date = request.args.get('start_date')
+            if start_date:
+                query = query.filter(Expense.date >= datetime.strptime(start_date, '%Y-%m-%d').date())
+            
+            end_date = request.args.get('end_date')
+            if end_date:
+                query = query.filter(Expense.date <= datetime.strptime(end_date, '%Y-%m-%d').date())
+            
+            min_amount = request.args.get('min_amount', type=float)
+            if min_amount:
+                query = query.filter(Expense.amount >= min_amount)
+            
+            max_amount = request.args.get('max_amount', type=float)
+            if max_amount:
+                query = query.filter(Expense.amount <= max_amount)
+            
+            payment_method = request.args.get('payment_method')
+            if payment_method:
+                query = query.filter(Expense.payment_method == payment_method)
+            
+            search = request.args.get('search')
+            if search:
+                search_term = f"%{search}%"
+                query = query.filter(
+                    or_(
+                        Expense.description.ilike(search_term),
+                        Expense.notes.ilike(search_term),
+                        Expense.location.ilike(search_term)
+                    )
+                )
+            
+            # Get all matching expenses
+            expenses = query.order_by(Expense.date.desc()).all()
+        
+        if not expenses:
+            return jsonify({"error": "No expenses found matching the criteria"}), 404
+        
+        # Create CSV
+        output = io.StringIO()
+        writer = csv.writer(output)
+        
+        # Write header row
+        writer.writerow([
+            'ID', 'Date', 'Time', 'Description', 'Amount', 'Category',
+            'Payment Method', 'Location', 'Recurring', 'Notes'
+        ])
+        
+        # Write data rows
+        for expense in expenses:
+            category_name = expense.category.name if expense.category else 'Uncategorized'
+            time_str = expense.time.strftime('%H:%M') if expense.time else ''
+            
+            writer.writerow([
+                expense.id,
+                expense.formatted_date,
+                time_str,
+                expense.description or '',
+                expense.formatted_amount,
+                category_name,
+                expense.payment_method or '',
+                expense.location or '',
+                'Yes' if expense.is_recurring else 'No',
+                expense.notes or ''
+            ])
+        
+        # Prepare response
+        output.seek(0)
+        
+        # Return CSV file
+        return {
+            "content": output.getvalue(),
+            "status": 200,
+            "mimetype": "text/csv",
+            "headers": {
+                "Content-Disposition": f"attachment;filename=expenses_{datetime.now().strftime('%Y%m%d')}.csv"
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Error exporting expenses: {str(e)}")
+        return jsonify({"error": "An error occurred while exporting expenses"}), 500
+
+@api_bp.route('/expenses/stats', methods=['GET'])
+@jwt_required()
+def get_expense_stats():
+    """
+    Get expense statistics
+    
+    Query parameters:
+    - period: Stats period (month, year, all) - default: month
+    - category_id: Filter by category ID
+    
+    Returns:
+        JSON response with expense statistics
+    """
+    try:
+        # Get current user
+        current_username = get_jwt_identity()
+        user = User.query.filter_by(username=current_username).first()
+        
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+        
+        # Get period
+        period = request.args.get('period', 'month')
+        
+        # Calculate date range
+        today = datetime.now().date()
+        
+        if period == 'month':
+            start_date = today.replace(day=1)
+        elif period == 'year':
+            start_date = today.replace(month=1, day=1)
+        else:  # 'all'
+            start_date = None
+        
+        # Get category filter
+        category_id = request.args.get('category_id', type=int)
+        
+        # Build query
+        query = Expense.query.filter_by(user_id=user.id)
+        
+        if start_date:
+            query = query.filter(Expense.date >= start_date)
+        
+        if category_id:
+            query = query.filter(Expense.category_id == category_id)
+        
+        # Get total expenses
+        total_expenses = db.session.query(func.sum(Expense.amount)).filter(
+            query.whereclause
+        ).scalar() or 0
+        
+        # Get expense count
+        expense_count = query.count()
+        
+        # Get average expense
+        avg_expense = total_expenses / expense_count if expense_count > 0 else 0
+        
+        # Get max expense
+        max_expense = db.session.query(func.max(Expense.amount)).filter(
+            query.whereclause
+        ).scalar() or 0
+        
+        # Get expense by category
+        category_expenses = db.session.query(
+            Category.id,
+            Category.name,
+            Category.color_code,
+            func.sum(Expense.amount).label('total')
+        ).outerjoin(
+            Expense, Expense.category_id == Category.id
+        ).filter(
+            Expense.user_id == user.id
+        )
+        
+        if start_date:
+            category_expenses = category_expenses.filter(Expense.date >= start_date)
+        
+        category_expenses = category_expenses.group_by(
+            Category.id, Category.name, Category.color_code
+        ).order_by(
+            func.sum(Expense.amount).desc()
+        ).all()
+        
+        # Format category expenses
+        categories = []
+        for cat_id, cat_name, cat_color, cat_total in category_expenses:
+            if cat_total:
+                categories.append({
+                    'id': cat_id,
+                    'name': cat_name or 'Uncategorized',
+                    'color': cat_color or '#757575',
+                    'total': float(cat_total),
+                    'percentage': (float(cat_total) / float(total_expenses) * 100) if total_expenses > 0 else 0
+                })
+        
+        # Get expenses by day
+        if period == 'month':
+            # Group by day of month
+            daily_expenses = db.session.query(
+                func.extract('day', Expense.date).label('day'),
+                func.sum(Expense.amount).label('total')
+            ).filter(
+                Expense.user_id == user.id,
+                Expense.date >= start_date
+            )
+            
+            if category_id:
+                daily_expenses = daily_expenses.filter(Expense.category_id == category_id)
+            
+            daily_expenses = daily_expenses.group_by(
+                func.extract('day', Expense.date)
+            ).order_by(
+                func.extract('day', Expense.date)
+            ).all()
+            
+            # Format daily expenses
+            daily = []
+            for day, total in daily_expenses:
+                daily.append({
+                    'day': int(day),
+                    'total': float(total)
+                })
+        
+        # Format response
+        result = {
+            'period': period,
+            'start_date': start_date.strftime('%Y-%m-%d') if start_date else None,
+            'end_date': today.strftime('%Y-%m-%d'),
+            'total_expenses': float(total_expenses),
+            'expense_count': expense_count,
+            'average_expense': float(avg_expense),
+            'max_expense': float(max_expense),
+            'categories': categories
+        }
+        
+        if period == 'month':
+            result['daily_expenses'] = daily
+        
+        return jsonify(result), 200
+        
+    except Exception as e:
+        logger.error(f"Error getting expense stats: {str(e)}")
+        return jsonify({"error": "An error occurred while getting expense statistics"}), 500

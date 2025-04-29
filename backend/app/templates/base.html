@@ -118,31 +118,41 @@
                     </li>
                     {% if current_user.is_authenticated %}
                     <li class="nav-item">
-                        <a class="nav-link {% if request.endpoint.startswith('dashboard') %}active{% endif %}" href="#">
+                        <a class="nav-link {% if request.endpoint.startswith('dashboard') %}active{% endif %}" href="{{ url_for('dashboard') }}">
                             <i class="fas fa-chart-pie me-1"></i>Dashboard
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if request.endpoint.startswith('expenses') %}active{% endif %}" href="#">
+                        <a class="nav-link {% if request.endpoint.startswith('expenses') %}active{% endif %}" href="{{ url_for('expenses') }}">
                             <i class="fas fa-money-bill-wave me-1"></i>Expenses
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if request.endpoint.startswith('categories') %}active{% endif %}" href="#">
+                        <a class="nav-link {% if request.endpoint.startswith('categories') %}active{% endif %}" href="{{ url_for('categories') }}">
                             <i class="fas fa-tags me-1"></i>Categories
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if request.endpoint.startswith('income') %}active{% endif %}" href="#">
+                        <a class="nav-link {% if request.endpoint.startswith('income') %}active{% endif %}" href="{{ url_for('income') }}">
                             <i class="fas fa-hand-holding-usd me-1"></i>Income
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if request.endpoint.startswith('reports') %}active{% endif %}" href="#">
+                        <a class="nav-link {% if request.endpoint.startswith('reports') %}active{% endif %}" href="{{ url_for('reports') }}">
                             <i class="fas fa-file-invoice-dollar me-1"></i>Reports
                         </a>
                     </li>
                     {% endif %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'about' %}active{% endif %}" href="{{ url_for('about') }}">
+                            <i class="fas fa-info-circle me-1"></i>About
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'contact' %}active{% endif %}" href="{{ url_for('contact') }}">
+                            <i class="fas fa-envelope me-1"></i>Contact
+                        </a>
+                    </li>
                 </ul>
                 
                 <ul class="navbar-nav">
@@ -218,8 +228,8 @@
         <div class="container text-center">
             <span>
                 <i class="fas fa-wallet me-2"></i>Fin-Arc Personal Finance Application &copy; 2025 | 
-                <a href="#" class="text-white">About</a> | 
-                <a href="#" class="text-white">Contact</a>
+                <a href="{{ url_for('about') }}" class="text-white">About</a> | 
+                <a href="{{ url_for('contact') }}" class="text-white">Contact</a>
             </span>
         </div>
     </footer>

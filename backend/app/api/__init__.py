@@ -4,11 +4,9 @@ from flask import Blueprint
 api_bp = Blueprint('api', __name__, url_prefix='/api')
 
 # Import routes to register them with the blueprint
-try:
-    from app.api import routes
-except ImportError:
-    pass
+from app.api import routes
 
+# Import other API modules
 try:
     from app.api import auth
 except ImportError:
@@ -25,7 +23,7 @@ except ImportError:
     pass
 
 try:
-    from app.api import income  # Исправлено с incomes на income
+    from app.api import income
 except ImportError:
     pass
 

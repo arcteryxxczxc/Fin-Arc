@@ -67,20 +67,32 @@ def create_app(config=None):
     app.register_blueprint(api_bp)
     app.register_blueprint(auth_bp)
 
-    # Optional: Register individual route blueprints if they exist
-    try:
-        from app.api.expenses import expense_routes
-        from app.api.categories import category_routes
-        from app.api.income import income_routes
-        from app.api.reports import report_routes
-        
-        app.register_blueprint(expense_routes)
-        app.register_blueprint(category_routes)
-        app.register_blueprint(income_routes)
-        app.register_blueprint(report_routes)
-    except ImportError:
-        # If these blueprints don't exist yet, we'll continue anyway
-        pass
+    # Register individual route blueprints
+    with app.app_context():
+        # Try to import and register UI route blueprints
+        try:
+            from app.api.expenses import expense_routes
+            app.register_blueprint(expense_routes)
+        except ImportError:
+            app.logger.warning("Could not register expense routes")
+
+        try:
+            from app.api.categories import category_routes
+            app.register_blueprint(category_routes)
+        except ImportError:
+            app.logger.warning("Could not register category routes")
+
+        try:
+            from app.api.income import income_routes
+            app.register_blueprint(income_routes)
+        except ImportError:
+            app.logger.warning("Could not register income routes")
+
+        try:
+            from app.api.reports import report_routes
+            app.register_blueprint(report_routes)
+        except ImportError:
+            app.logger.warning("Could not register report routes")
 
     # Error handlers
     @app.errorhandler(404)
@@ -99,5 +111,10 @@ def create_app(config=None):
     @app.route('/health')
     def health_check():
         return {"status": "healthy"}
+        
+    # Create template directories if they don't exist
+    template_dirs = ['about', 'contact']
+    os.makedirs(os.path.join(app.root_path, 'templates', 'about'), exist_ok=True)
+    os.makedirs(os.path.join(app.root_path, 'templates', 'contact'), exist_ok=True)
 
     return app

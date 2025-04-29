@@ -167,3 +167,18 @@ def login_history():
         title='Login History',
         login_attempts=login_attempts
     )
+
+@auth_bp.route('/reset-password-request', methods=['GET', 'POST'])
+def reset_password_request():
+    """Password reset request endpoint"""
+    # If user is already logged in, redirect to home page
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+    
+    form = ResetPasswordRequestForm()
+    if form.validate_on_submit():
+        # Implementation would go here
+        flash('Check your email for password reset instructions.', 'info')
+        return redirect(url_for('auth.login'))
+        
+    return render_template('auth/reset_password_request.html', title='Reset Password', form=form)

@@ -42,6 +42,70 @@ def index():
     from flask import render_template
     return render_template('index.html')
 
+# Routes for the pages that weren't working
+@app.route('/dashboard')
+def dashboard():
+    """Dashboard route
+    
+    Redirect to the reports dashboard page.
+    """
+    from flask import redirect, url_for
+    return redirect(url_for('reports.dashboard'))
+
+@app.route('/categories')
+def categories():
+    """Categories route
+    
+    Redirect to the categories index page.
+    """
+    from flask import redirect, url_for
+    return redirect(url_for('categories.index'))
+
+@app.route('/expenses')
+def expenses():
+    """Expenses route
+    
+    Redirect to the expenses index page.
+    """
+    from flask import redirect, url_for
+    return redirect(url_for('expenses.index'))
+
+@app.route('/income')
+def income():
+    """Income route
+    
+    Redirect to the income index page.
+    """
+    from flask import redirect, url_for
+    return redirect(url_for('income.index'))
+
+@app.route('/reports')
+def reports():
+    """Reports route
+    
+    Redirect to the reports dashboard page.
+    """
+    from flask import redirect, url_for
+    return redirect(url_for('reports.dashboard'))
+
+@app.route('/about')
+def about():
+    """About page route
+    
+    Renders the about page for the application.
+    """
+    from flask import render_template
+    return render_template('about.html')
+
+@app.route('/contact')
+def contact():
+    """Contact page route
+    
+    Renders the contact page for the application.
+    """
+    from flask import render_template
+    return render_template('contact.html')
+
 if __name__ == '__main__':
     # Get port from environment variable or use default
     port = int(os.environ.get('PORT', 5000))

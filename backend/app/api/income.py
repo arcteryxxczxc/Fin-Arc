@@ -1,11 +1,9 @@
-# backend/routes/income.py
-
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, current_app
 from flask_login import login_required, current_user
 from app import db
-from models.income import Income
-from models.category import Category
-from forms.income import IncomeForm, IncomeFilterForm, IncomeBulkActionForm, RecurringIncomeForm
+from app.models.income import Income
+from app.models.category import Category
+from app.forms.income import IncomeForm, IncomeFilterForm, IncomeBulkActionForm, RecurringIncomeForm
 from sqlalchemy import or_, and_, func
 from datetime import datetime, timedelta
 import csv

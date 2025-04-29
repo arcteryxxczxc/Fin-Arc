@@ -28,13 +28,13 @@ class DataUtils {
   /// Calculate total expenses for a list of expenses
   static double calculateTotalExpenses(List<Expense> expenses) {
     if (expenses.isEmpty) return 0;
-    return expenses.fold(0, (sum, expense) => sum + expense.amount);
+    return expenses.fold(0.0, (sum, expense) => sum + expense.amount);
   }
   
   /// Calculate total income for a list of income entries
   static double calculateTotalIncome(List<Income> incomes) {
     if (incomes.isEmpty) return 0;
-    return incomes.fold(0, (sum, income) => sum + income.amount);
+    return incomes.fold(0.0, (sum, income) => sum + income.amount);
   }
   
   /// Calculate balance (income - expenses)

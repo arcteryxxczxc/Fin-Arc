@@ -62,14 +62,14 @@
                 
                 <div class="d-grid gap-2 d-md-flex justify-content-md-start">
                     {% if current_user.is_authenticated %}
-                        <a href="#" class="btn btn-primary btn-lg px-4 me-md-2">
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-primary btn-lg px-4 me-md-2">
                             <i class="fas fa-tachometer-alt me-2"></i>Go to Dashboard
                         </a>
                     {% else %}
-                        <a href="{{ url_for('auth.register') if 'auth.register' in url_for_security else '#' }}" class="btn btn-primary btn-lg px-4 me-md-2">
+                        <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg px-4 me-md-2">
                             <i class="fas fa-user-plus me-2"></i>Get Started
                         </a>
-                        <a href="{{ url_for('auth.login') if 'auth.login' in url_for_security else '#' }}" class="btn btn-outline-primary btn-lg px-4">
+                        <a href="{{ url_for('auth.login') }}" class="btn btn-outline-primary btn-lg px-4">
                             <i class="fas fa-sign-in-alt me-2"></i>Login
                         </a>
                     {% endif %}
@@ -79,7 +79,7 @@
     </div>
     
     <div class="col-lg-5 order-lg-2 order-1 d-flex align-items-center">
-        <img src="{{ url_for('static', filename='images/finance-app.svg') if 'images/finance-app.svg' in static_files else 'https://via.placeholder.com/500x400?text=Fin-Arc' }}" alt="Finance Application" class="img-fluid" />
+        <img src="https://via.placeholder.com/500x400?text=Fin-Arc" alt="Finance Application" class="img-fluid" />
     </div>
 </div>
 
@@ -145,11 +145,11 @@
         
         <div class="d-grid gap-2 d-md-flex justify-content-md-start">
             {% if current_user.is_authenticated %}
-                <a href="#" class="btn btn-primary px-4 me-md-2">
+                <a href="{{ url_for('dashboard') }}" class="btn btn-primary px-4 me-md-2">
                     <i class="fas fa-tachometer-alt me-2"></i>Go to Dashboard
                 </a>
             {% else %}
-                <a href="{{ url_for('auth.register') if 'auth.register' in url_for_security else '#' }}" class="btn btn-primary px-4">
+                <a href="{{ url_for('auth.register') }}" class="btn btn-primary px-4">
                     <i class="fas fa-user-plus me-2"></i>Get Started for Free
                 </a>
             {% endif %}

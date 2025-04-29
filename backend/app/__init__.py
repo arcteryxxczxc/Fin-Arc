@@ -99,22 +99,20 @@ def create_app(config=None):
     def page_not_found(e):
         """Handle 404 errors"""
         from flask import render_template
-        return render_template('errors/404.html'), 404
+        return render_template('404.html'), 404
 
     @app.errorhandler(500)
     def internal_server_error(e):
         """Handle 500 errors"""
         from flask import render_template
-        return render_template('errors/500.html'), 500
+        return render_template('500.html'), 500
 
     # Route for health check
     @app.route('/health')
     def health_check():
         return {"status": "healthy"}
         
-    # Create template directories if they don't exist
-    template_dirs = ['about', 'contact']
-    os.makedirs(os.path.join(app.root_path, 'templates', 'about'), exist_ok=True)
-    os.makedirs(os.path.join(app.root_path, 'templates', 'contact'), exist_ok=True)
+    # Make sure template directories exist
+    os.makedirs(os.path.join(app.root_path, 'templates'), exist_ok=True)
 
     return app

@@ -10,6 +10,7 @@ sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 from app import create_app
 from app.models.category import Category
 from flask_login import current_user
+from flask import render_template, redirect, url_for
 
 app = create_app()
 
@@ -32,6 +33,21 @@ def check_default_categories():
         if category_count == 0:
             Category.get_or_create_default_categories(current_user.id)
 
+# Add template utility functions to jinja environment
+@app.context_processor
+def utility_processor():
+    def url_for_security(*args, **kwargs):
+        # Helper function to check if URL exists without raising an error
+        try:
+            return url_for(*args, **kwargs)
+        except:
+            return None
+    
+    return {
+        'url_for_security': url_for_security,
+        'static_files': []  # Add any static files you need to check
+    }
+
 # Home route
 @app.route('/')
 def index():
@@ -39,7 +55,6 @@ def index():
     
     Renders the main landing page for the application.
     """
-    from flask import render_template
     return render_template('index.html')
 
 # Routes for the pages that weren't working
@@ -49,7 +64,6 @@ def dashboard():
     
     Redirect to the reports dashboard page.
     """
-    from flask import redirect, url_for
     return redirect(url_for('reports.dashboard'))
 
 @app.route('/categories')
@@ -58,7 +72,6 @@ def categories():
     
     Redirect to the categories index page.
     """
-    from flask import redirect, url_for
     return redirect(url_for('categories.index'))
 
 @app.route('/expenses')
@@ -67,7 +80,6 @@ def expenses():
     
     Redirect to the expenses index page.
     """
-    from flask import redirect, url_for
     return redirect(url_for('expenses.index'))
 
 @app.route('/income')
@@ -76,7 +88,6 @@ def income():
     
     Redirect to the income index page.
     """
-    from flask import redirect, url_for
     return redirect(url_for('income.index'))
 
 @app.route('/reports')
@@ -85,7 +96,6 @@ def reports():
     
     Redirect to the reports dashboard page.
     """
-    from flask import redirect, url_for
     return redirect(url_for('reports.dashboard'))
 
 @app.route('/about')
@@ -94,7 +104,6 @@ def about():
     
     Renders the about page for the application.
     """
-    from flask import render_template
     return render_template('about.html')
 
 @app.route('/contact')
@@ -103,7 +112,6 @@ def contact():
     
     Renders the contact page for the application.
     """
-    from flask import render_template
     return render_template('contact.html')
 
 if __name__ == '__main__':

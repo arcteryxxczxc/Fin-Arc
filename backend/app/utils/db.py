@@ -1,4 +1,5 @@
 from app import db
+from functools import wraps
 from sqlalchemy.exc import SQLAlchemyError
 import logging
 
@@ -59,3 +60,34 @@ def get_or_create(model, **kwargs):
     instance = model(**kwargs)
     save_to_db(instance)
     return instance, True
+
+def safe_commit():
+    """
+    Safely commit changes to database with error handling
+    
+    Returns:
+        tuple: (success, error_message)
+    """
+    try:
+        db.session.commit()
+        return True, None
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        logger.error(f"Database error during commit: {str(e)}")
+        return False, str(e)
+
+def transaction(func):
+    """
+    Decorator for functions that should run in a transaction
+    Will automatically handle committing or rolling back the session
+    """
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        try:
+            result = func(*args, **kwargs)
+            db.session.commit()
+            return result
+        except Exception as e:
+            db.session.rollback()
+            raise e
+    return wrapper

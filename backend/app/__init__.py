@@ -46,7 +46,23 @@ def create_app(config=None):
     bcrypt.init_app(app)
     
     # Configure CORS to allow requests from Flutter Web client
-    CORS(app, resources={r"/api/*": {"origins": "*"}})
+    origins = [
+        'http://localhost:8080',  # Flutter web default dev port
+        'http://127.0.0.1:8080',
+        'http://localhost:3000',  # Alternative dev server
+        '*'  # Temporarily allow all origins during development
+    ]
+    
+    # For production, use specific origins
+    if app.config.get('FLASK_ENV') == 'production':
+        origins = [
+            app.config.get('FLUTTER_WEB_URL', '*')
+        ]
+    
+    CORS(app, 
+         resources={r"/api/*": {"origins": origins}}, 
+         supports_credentials=True,
+         allow_headers=["Content-Type", "Authorization", "Access-Control-Allow-Credentials"])
 
     # Register API blueprint
     from app.api import api_bp

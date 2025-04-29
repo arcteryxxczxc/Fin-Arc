@@ -7,6 +7,8 @@ from app.models.category import Category
 from app.models.user import User
 from sqlalchemy import or_, func
 from datetime import datetime, timedelta
+from app.utils.api import api_success, api_error
+from app.utils.validation import validate_json, EXPENSE_SCHEMA
 import csv
 import io
 import logging
@@ -177,6 +179,7 @@ def get_expense(expense_id):
 
 @api_bp.route('/expenses', methods=['POST'])
 @jwt_required()
+@validate_json(EXPENSE_SCHEMA)
 def create_expense():
     """
     Create a new expense
@@ -202,49 +205,31 @@ def create_expense():
         user = User.query.filter_by(username=current_username).first()
         
         if not user:
-            return jsonify({"error": "User not found"}), 404
+            return api_error("User not found", 404)
         
-        # Get request data
+        # Get validated request data
         data = request.get_json()
         
-        if not data:
-            return jsonify({"error": "Missing JSON in request"}), 400
-        
-        # Validate required fields
-        if 'amount' not in data:
-            return jsonify({"error": "Amount is required"}), 400
-        
-        try:
-            amount = float(data['amount'])
-            if amount <= 0:
-                return jsonify({"error": "Amount must be greater than zero"}), 400
-        except ValueError:
-            return jsonify({"error": "Invalid amount format"}), 400
-        
         # Parse date
-        date_str = data.get('date')
-        if date_str:
+        date_val = datetime.utcnow().date()
+        if 'date' in data:
             try:
-                date_val = datetime.strptime(date_str, '%Y-%m-%d').date()
+                date_val = datetime.strptime(data['date'], '%Y-%m-%d').date()
             except ValueError:
-                return jsonify({"error": "Invalid date format. Use YYYY-MM-DD"}), 400
-        else:
-            date_val = datetime.utcnow().date()
+                return api_error("Invalid date format. Use YYYY-MM-DD", 400)
         
         # Parse time
-        time_str = data.get('time')
-        if time_str:
+        time_val = None
+        if 'time' in data:
             try:
-                time_val = datetime.strptime(time_str, '%H:%M').time()
+                time_val = datetime.strptime(data['time'], '%H:%M').time()
             except ValueError:
-                return jsonify({"error": "Invalid time format. Use HH:MM"}), 400
-        else:
-            time_val = None
+                return api_error("Invalid time format. Use HH:MM", 400)
         
         # Create expense
         expense = Expense(
             user_id=user.id,
-            amount=amount,
+            amount=data['amount'],
             description=data.get('description'),
             date=date_val,
             time=time_val,
@@ -264,7 +249,10 @@ def create_expense():
         
         # Save to database
         db.session.add(expense)
-        db.session.commit()
+        success, error = safe_commit()
+        
+        if not success:
+            return api_error(f"Database error: {error}", 500)
         
         # Format response
         result = {
@@ -285,12 +273,12 @@ def create_expense():
             }
         }
         
-        return jsonify(result), 201
+        return api_success(result, code=201)
         
     except Exception as e:
         db.session.rollback()
         logger.error(f"Error creating expense: {str(e)}")
-        return jsonify({"error": "An error occurred while creating the expense"}), 500
+        return api_error("An error occurred while creating the expense", 500)
 
 @api_bp.route('/expenses/<int:expense_id>', methods=['PUT'])
 @jwt_required()

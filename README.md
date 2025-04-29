@@ -1,138 +1,183 @@
-# Fin-Arc - Personal Finance Application
+# Fin-Arc Backend API
 
-Fin-Arc is a comprehensive personal finance management application that helps you track expenses, set budgets, and achieve your financial goals. The application features both a web interface (Flask) and a mobile app (Flutter).
+This is the RESTful API backend for the Fin-Arc personal finance application. It's built with Flask and PostgreSQL and is designed to be consumed by a Flutter frontend.
 
-## Features
+## Technology Stack
 
-- **Expense Tracking**: Record and categorize all your expenses
-- **Income Management**: Track various income sources
-- **Budget Planning**: Set budgets for different expense categories
-- **Visual Reports**: Understand your spending with interactive charts
-- **Multi-currency Support**: Handle transactions in different currencies
-- **Receipt Storage**: Upload and store receipts for your expenses
-- **Recurring Transactions**: Set up recurring income and expenses
-- **Budget Notifications**: Get alerts when approaching budget limits
-- **Secure Authentication**: Protect your financial data
+- **Flask**: Lightweight web framework
+- **PostgreSQL**: Relational database for persistent storage
+- **SQLAlchemy**: ORM for database interaction
+- **Flask-JWT-Extended**: JWT authentication 
+- **Flask-Migrate**: Database migrations
+- **Flask-CORS**: Cross-Origin Resource Sharing support for Flutter
 
-## Architecture
+## Project Structure
 
-The application consists of two main components:
+```
+backend/
+├── app/
+│   ├── api/                  # API routes
+│   │   ├── __init__.py       # API blueprint registration
+│   │   ├── auth.py           # Authentication endpoints
+│   │   ├── categories.py     # Category management 
+│   │   ├── currencies.py     # Currency conversion
+│   │   ├── expenses.py       # Expense management
+│   │   ├── income.py         # Income management
+│   │   ├── notifications.py  # User notifications
+│   │   ├── reports.py        # Financial reports
+│   │   └── settings.py       # User settings
+│   ├── forms/                # Form definitions (for validation)
+│   ├── models/               # Database models
+│   ├── services/             # Business logic services
+│   ├── utils/                # Utility functions
+│   └── __init__.py           # Application factory
+├── config.py                 # Configuration
+├── run.py                    # Application entry point
+└── init_db.py                # Database initialization
+```
 
-1. **Backend**: Python Flask REST API with PostgreSQL database
-2. **Frontend**: Flutter cross-platform mobile application and web interface
+## API Endpoints
 
-### Backend Tech Stack
+The API follows RESTful conventions and is structured under the `/api` prefix. All endpoints return JSON responses.
 
-- **Flask**: Web framework
-- **SQLAlchemy**: ORM for database operations
-- **PostgreSQL**: Database
-- **JWT**: Authentication
-- **Pytest**: Testing
-- **Gunicorn**: WSGI HTTP Server
+### Authentication
 
-### Frontend Tech Stack
+- `POST /api/auth/register`: Register a new user
+- `POST /api/auth/login`: Login and get access token
+- `GET /api/auth/profile`: Get user profile
+- `POST /api/auth/change-password`: Change password
+- `POST /api/auth/logout`: Logout (client-side token disposal)
 
-- **Flutter**: Cross-platform framework
-- **Provider**: State management
-- **http/dio**: API integration
-- **fl_chart**: Interactive charts
-- **sqflite**: Local database for offline support
+### Expenses
 
-## Getting Started
+- `GET /api/expenses`: List expenses (with filtering)
+- `GET /api/expenses/<id>`: Get single expense
+- `POST /api/expenses`: Create expense
+- `PUT /api/expenses/<id>`: Update expense
+- `DELETE /api/expenses/<id>`: Delete expense
+- `POST /api/expenses/bulk`: Bulk actions on expenses
+- `GET /api/expenses/export`: Export expenses as CSV
+- `GET /api/expenses/stats`: Get expense statistics
+
+### Income
+
+- `GET /api/income`: List income entries (with filtering)
+- `GET /api/income/<id>`: Get single income entry
+- `POST /api/income`: Create income entry
+- `PUT /api/income/<id>`: Update income entry
+- `DELETE /api/income/<id>`: Delete income entry
+- `POST /api/income/bulk`: Bulk actions on income entries
+- `GET /api/income/export`: Export income entries as CSV
+- `GET /api/income/stats`: Get income statistics
+
+### Categories
+
+- `GET /api/categories`: List categories
+- `GET /api/categories/<id>`: Get single category
+- `POST /api/categories`: Create category
+- `PUT /api/categories/<id>`: Update category
+- `DELETE /api/categories/<id>`: Delete category
+- `POST /api/categories/bulk`: Bulk actions on categories
+- `PUT /api/categories/budgets`: Update category budgets
+- `GET /api/categories/<id>/expenses`: Get expenses for a category
+- `GET /api/categories/<id>/stats`: Get category statistics
+- `POST /api/categories/default`: Create default categories
+
+### Reports
+
+- `GET /api/reports/dashboard`: Get dashboard data
+- `GET /api/reports/monthly`: Get monthly report
+- `GET /api/reports/annual`: Get annual report
+- `GET /api/reports/cashflow`: Get cash flow report
+- `GET /api/reports/budget`: Get budget report
+
+### Settings
+
+- `GET /api/settings`: Get user settings
+- `PUT /api/settings`: Update user settings
+
+### Notifications
+
+- `GET /api/notifications`: Get user notifications
+- `POST /api/notifications/check`: Check budget limits
+- `POST /api/notifications/<id>/read`: Mark notification as read
+- `POST /api/notifications/read-all`: Mark all notifications as read
+
+### Currencies
+
+- `GET /api/currencies/convert`: Convert amount between currencies
+- `GET /api/currencies/rates`: Get exchange rates
+- `GET /api/currencies/list`: Get list of common currencies
+
+## Authentication
+
+The API uses JWT (JSON Web Tokens) for authentication. Most endpoints require a valid access token which should be included in the `Authorization` header using the Bearer scheme:
+
+```
+Authorization: Bearer <your_access_token>
+```
+
+Upon successful login, the client receives an access token that should be stored and used for subsequent requests.
+
+## Error Handling
+
+The API returns appropriate HTTP status codes and error messages:
+
+- `200 OK`: Request succeeded
+- `201 Created`: Resource created successfully
+- `400 Bad Request`: Invalid request data
+- `401 Unauthorized`: Missing or invalid authentication
+- `403 Forbidden`: Authenticated but not authorized
+- `404 Not Found`: Resource not found
+- `409 Conflict`: Request conflicts with current state
+- `500 Internal Server Error`: Server-side error
+
+All error responses include a JSON object with an `error` field containing a descriptive message.
+
+## Setup and Deployment
 
 ### Prerequisites
 
 - Python 3.9+
-- Flutter SDK
-- PostgreSQL
-- Docker (optional)
+- PostgreSQL 13+
+- Docker (optional, for containerized deployment)
 
-### Installation
+### Development Setup
 
-#### Using Docker (Recommended)
+1. Clone the repository
+2. Create and activate a virtual environment
+3. Install dependencies: `pip install -r requirements.txt`
+4. Configure environment variables in `.env` file
+5. Initialize the database: `python init_db.py`
+6. Run the application: `python run.py`
 
-```bash
-# Clone the repository
-git clone https://github.com/arcteryxxczxc/fin-arc.git
-cd fin-arc
+### Environment Variables
 
-# Start the application
-docker-compose up -d
+Create a `.env` file with the following variables:
+
+```
+SECRET_KEY=your-secret-key-change-in-production
+JWT_SECRET_KEY=your-jwt-secret-key-change-in-production
+DATABASE_URL=postgresql://username:password@localhost:5432/fin_arc
+FLASK_APP=run.py
+FLASK_ENV=development
+DEBUG=True
 ```
 
-#### Manual Setup
+### Production Deployment
 
-##### Backend Setup
+For production, set appropriate environment variables and use a WSGI server like Gunicorn:
 
-```bash
-# Navigate to backend directory
-cd backend
-
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Set environment variables
-export FLASK_APP=run.py
-export FLASK_ENV=development
-export DATABASE_URL=postgresql://postgres:postgres@localhost:5432/finance_app
-
-# Initialize database
-flask db upgrade
-
-# Run the application
-flask run
+```
+gunicorn --bind 0.0.0.0:5000 run:app
 ```
 
-##### Frontend Setup
+Or use Docker with the provided Dockerfile and docker-compose.yml.
 
-```bash
-# Navigate to frontend directory
-cd frontend
+## Flutter Integration
 
-# Get Flutter dependencies
-flutter pub get
+This API backend is designed to be consumed by a Flutter frontend. All endpoints return JSON data that can be easily parsed by the Flutter application. CORS is configured to allow requests from the Flutter frontend.
 
-# Run the application
-flutter run
-```
+## Testing
 
-## Database Schema
-
-The application uses the following main database models:
-
-- **User**: Authentication and user information
-- **Category**: Expense and income categories
-- **Expense**: Transaction records for expenses
-- **Income**: Transaction records for income sources
-- **UserSettings**: User preferences and settings
-
-## API Endpoints
-
-The backend provides a RESTful API with the following main endpoints:
-
-- **Auth**: `/api/auth/` - Authentication endpoints
-- **Expenses**: `/api/expenses/` - Expense management
-- **Income**: `/api/income/` - Income management
-- **Categories**: `/api/categories/` - Category management
-- **Reports**: `/api/reports/` - Financial reports and statistics
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Acknowledgments
-- Created by Albert Jidebayev
+All API endpoints can be tested using tools like Postman or curl. Sample requests and responses for each endpoint are documented in the API documentation.

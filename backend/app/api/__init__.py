@@ -25,7 +25,7 @@ except ImportError:
     pass
 
 try:
-    from app.api import incomes
+    from app.api import income  # Исправлено с incomes на income
 except ImportError:
     pass
 

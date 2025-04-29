@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:finarc/utils/constants.dart';
-import 'package:finarc/utils/theme.dart';
-
+import '../utils/constants.dart';
+import '../utils/theme.dart';  
 class ThemeProvider with ChangeNotifier {
   bool _isDarkMode = true;
   

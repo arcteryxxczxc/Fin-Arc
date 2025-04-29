@@ -1,9 +1,9 @@
 from flask import jsonify
 from app.api import api_bp
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import jwt_required, get_jwt_identity
 
 # Import all routes
-from app.api import categories, expenses, incomes, reports, currencies, settings, notifications
+from app.api import categories, expenses, income, reports, currencies, settings, notifications
 
 @api_bp.route('/test', methods=['GET'])
 @jwt_required()

@@ -2,10 +2,11 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../models/user.dart';
+import '../utils/constants.dart';
 
 class AuthService {
-  // API base URL - update this with your actual server URL
-  static const String baseUrl = 'http://localhost:5000/api';
+  // API base URL
+  final String baseUrl = AppConstants.baseUrl;
   
   // Secure storage for tokens
   final FlutterSecureStorage _storage = FlutterSecureStorage();

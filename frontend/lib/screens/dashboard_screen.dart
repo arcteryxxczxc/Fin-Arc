@@ -1,6 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 import '../providers/auth_provider.dart';
+import '../providers/expense_provider.dart';
+import '../providers/income_provider.dart';
+import '../providers/category_provider.dart';
+import 'add_expense_screen.dart';
+import 'add_income_screen.dart';
+import 'profile_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   @override
@@ -9,20 +16,97 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   int _selectedIndex = 0;
+  final currencyFormatter = NumberFormat.currency(symbol: '\$');
+  
+  @override
+  void initState() {
+    super.initState();
+    // Fetch initial data
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final expenseProvider = Provider.of<ExpenseProvider>(context, listen: false);
+      final incomeProvider = Provider.of<IncomeProvider>(context, listen: false);
+      
+      // Fetch recent expenses and income
+      expenseProvider.fetchExpenses(refresh: true);
+      incomeProvider.fetchIncomes(refresh: true);
+    });
+  }
   
   // Define pages for the bottom navigation
-  final List<Widget> _pages = [
-    DashboardHomePage(),
-    ExpensesPage(),
-    IncomePage(),
-    ReportsPage(),
-    ProfilePage(),
-  ];
+  Widget _getPage(int index) {
+    switch (index) {
+      case 0:
+        return _buildDashboardHome();
+      case 1:
+        return _buildExpensesPage();
+      case 2:
+        return _buildIncomePage();
+      case 3:
+        return _buildReportsPage();
+      case 4:
+        return ProfileScreen();
+      default:
+        return _buildDashboardHome();
+    }
+  }
   
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
+  }
+  
+  void _showAddTransactionDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Add Transaction'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ElevatedButton.icon(
+              icon: Icon(Icons.money_off),
+              label: Text('Add Expense'),
+              onPressed: () {
+                Navigator.of(ctx).pop();
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => AddExpenseScreen(),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                minimumSize: Size(double.infinity, 50),
+              ),
+            ),
+            SizedBox(height: 10),
+            ElevatedButton.icon(
+              icon: Icon(Icons.attach_money),
+              label: Text('Add Income'),
+              onPressed: () {
+                Navigator.of(ctx).pop();
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => AddIncomeScreen(),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                minimumSize: Size(double.infinity, 50),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            child: Text('Cancel'),
+            onPressed: () {
+              Navigator.of(ctx).pop();
+            },
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -34,12 +118,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
           IconButton(
             icon: Icon(Icons.notifications),
             onPressed: () {
-              // Open notifications
+              // Show notifications
             },
           ),
         ],
       ),
-      body: _pages[_selectedIndex],
+      body: _getPage(_selectedIndex),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         currentIndex: _selectedIndex,
@@ -73,175 +157,196 @@ class _DashboardScreenState extends State<DashboardScreen> {
         backgroundColor: Theme.of(context).primaryColor,
         child: Icon(Icons.add),
         onPressed: () {
-          // Show dialog to add expense or income
           _showAddTransactionDialog(context);
         },
       ),
     );
   }
   
-  void _showAddTransactionDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text('Add Transaction'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
+  // Dashboard home page
+  Widget _buildDashboardHome() {
+    final authProvider = Provider.of<AuthProvider>(context);
+    final expenseProvider = Provider.of<ExpenseProvider>(context);
+    final incomeProvider = Provider.of<IncomeProvider>(context);
+    
+    return RefreshIndicator(
+      onRefresh: () async {
+        await expenseProvider.fetchExpenses(refresh: true);
+        await incomeProvider.fetchIncomes(refresh: true);
+      },
+      child: SingleChildScrollView(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            ElevatedButton.icon(
-              icon: Icon(Icons.money_off),
-              label: Text('Add Expense'),
-              onPressed: () {
-                Navigator.of(ctx).pop();
-                // Navigate to add expense screen
-              },
-              style: ElevatedButton.styleFrom(
-                minimumSize: Size(double.infinity, 50),
+            // Welcome message
+            Card(
+              elevation: 4,
+              child: Padding(
+                padding: EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Welcome, ${authProvider.user?.firstName ?? authProvider.user?.username ?? 'User'}!',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      'Today is ${DateFormat('EEEE, MMMM d, yyyy').format(DateTime.now())}',
+                      style: TextStyle(
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            SizedBox(height: 20),
+            
+            // Financial summary card
+            Card(
+              elevation: 4,
+              child: Padding(
+                padding: EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Financial Summary',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        _buildSummaryItem(
+                          context,
+                          'Income',
+                          currencyFormatter.format(2500),
+                          Colors.green,
+                        ),
+                        _buildSummaryItem(
+                          context,
+                          'Expenses',
+                          currencyFormatter.format(1800),
+                          Colors.red,
+                        ),
+                        _buildSummaryItem(
+                          context,
+                          'Balance',
+                          currencyFormatter.format(700),
+                          Theme.of(context).primaryColor,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            SizedBox(height: 20),
+            
+            // Recent transactions
+            Text(
+              'Recent Transactions',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
               ),
             ),
             SizedBox(height: 10),
-            ElevatedButton.icon(
-              icon: Icon(Icons.attach_money),
-              label: Text('Add Income'),
-              onPressed: () {
-                Navigator.of(ctx).pop();
-                // Navigate to add income screen
-              },
-              style: ElevatedButton.styleFrom(
-                minimumSize: Size(double.infinity, 50),
+            
+            if (expenseProvider.isLoading || incomeProvider.isLoading)
+              Center(child: CircularProgressIndicator())
+            else if (expenseProvider.expenses.isEmpty && incomeProvider.incomes.isEmpty)
+              Card(
+                elevation: 4,
+                child: Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Center(
+                    child: Column(
+                      children: [
+                        Icon(Icons.info_outline, size: 48, color: Colors.grey),
+                        SizedBox(height: 8),
+                        Text(
+                          'No transactions yet',
+                          style: TextStyle(fontSize: 16),
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          'Add your first expense or income to get started',
+                          style: TextStyle(color: Colors.grey),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              )
+            else
+              Card(
+                elevation: 4,
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  physics: NeverScrollableScrollPhysics(),
+                  itemCount: 5, // Show max 5 recent transactions
+                  separatorBuilder: (context, index) => Divider(),
+                  itemBuilder: (context, index) {
+                    // Combine and sort expenses and income
+                    // This is a simplified example - you would need to combine and sort the actual data
+                    bool isExpense = index % 2 == 0;
+                    
+                    return ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: isExpense ? Colors.red[100] : Colors.green[100],
+                        child: Icon(
+                          isExpense ? Icons.money_off : Icons.attach_money,
+                          color: isExpense ? Colors.red : Colors.green,
+                        ),
+                      ),
+                      title: Text(isExpense ? 'Expense Example' : 'Income Example'),
+                      subtitle: Text('Category • ${DateFormat('MMM d, yyyy').format(DateTime.now().subtract(Duration(days: index)))}'),
+                      trailing: Text(
+                        isExpense ? '-${currencyFormatter.format((index + 1) * 50)}' : '+${currencyFormatter.format((index + 1) * 100)}',
+                        style: TextStyle(
+                          color: isExpense ? Colors.red : Colors.green,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            
+            SizedBox(height: 20),
+            
+            // Chart placeholder
+            Text(
+              'Spending by Category',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 10),
+            Card(
+              elevation: 4,
+              child: Container(
+                height: 200,
+                padding: EdgeInsets.all(16),
+                child: Center(
+                  child: Text('Chart will be displayed here'),
+                ),
               ),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            child: Text('Cancel'),
-            onPressed: () {
-              Navigator.of(ctx).pop();
-            },
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// Dashboard home page
-class DashboardHomePage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Financial summary card
-          Card(
-            elevation: 4,
-            child: Padding(
-              padding: EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Summary',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _buildSummaryItem(
-                        context, 
-                        'Income', 
-                        '\$2,500.00', 
-                        Colors.green
-                      ),
-                      _buildSummaryItem(
-                        context, 
-                        'Expenses', 
-                        '\$1,800.00', 
-                        Colors.red
-                      ),
-                      _buildSummaryItem(
-                        context, 
-                        'Balance', 
-                        '\$700.00', 
-                        Theme.of(context).primaryColor
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-          SizedBox(height: 20),
-          
-          // Recent transactions
-          Text(
-            'Recent Transactions',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          SizedBox(height: 10),
-          Card(
-            elevation: 4,
-            child: ListView.separated(
-              shrinkWrap: true,
-              physics: NeverScrollableScrollPhysics(),
-              itemCount: 5, // Placeholder for 5 recent transactions
-              separatorBuilder: (context, index) => Divider(),
-              itemBuilder: (context, index) {
-                // Placeholder transaction data
-                bool isExpense = index % 2 == 0;
-                return ListTile(
-                  leading: CircleAvatar(
-                    backgroundColor: isExpense ? Colors.red[100] : Colors.green[100],
-                    child: Icon(
-                      isExpense ? Icons.money_off : Icons.attach_money,
-                      color: isExpense ? Colors.red : Colors.green,
-                    ),
-                  ),
-                  title: Text('Transaction ${index + 1}'),
-                  subtitle: Text('Category • April ${20 + index}, 2025'),
-                  trailing: Text(
-                    isExpense ? '-\$${(index + 1) * 50}.00' : '+\$${(index + 1) * 100}.00',
-                    style: TextStyle(
-                      color: isExpense ? Colors.red : Colors.green,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-          SizedBox(height: 20),
-          
-          // Placeholder for charts/graphs
-          Text(
-            'Spending by Category',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          SizedBox(height: 10),
-          Card(
-            elevation: 4,
-            child: Container(
-              height: 200,
-              padding: EdgeInsets.all(16),
-              child: Center(
-                child: Text('Chart will be displayed here'),
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -261,118 +366,106 @@ class DashboardHomePage extends StatelessWidget {
           amount,
           style: TextStyle(
             color: color,
-            fontSize: 20,
+            fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
         ),
       ],
     );
   }
-}
-
-// Placeholder pages for bottom navigation
-class ExpensesPage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Center(child: Text('Expenses Page - Implementation in progress'));
-  }
-}
-
-class IncomePage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Center(child: Text('Income Page - Implementation in progress'));
-  }
-}
-
-class ReportsPage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Center(child: Text('Reports Page - Implementation in progress'));
-  }
-}
-
-class ProfilePage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context);
-    
-    return Padding(
-      padding: EdgeInsets.all(16),
+  
+  // Expenses page placeholder
+  Widget _buildExpensesPage() {
+    return Center(
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Profile header
-          CircleAvatar(
-            radius: 50,
-            backgroundColor: Theme.of(context).primaryColor,
-            child: Icon(
-              Icons.person,
-              size: 50,
-              color: Colors.white,
-            ),
-          ),
+          Icon(Icons.money_off, size: 64, color: Colors.grey),
           SizedBox(height: 16),
           Text(
-            authProvider.user?.fullName ?? 'User',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
+            'Expenses Page',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
+          SizedBox(height: 8),
           Text(
-            authProvider.user?.email ?? 'user@example.com',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey,
-            ),
+            'View and manage your expenses here',
+            style: TextStyle(color: Colors.grey),
           ),
-          SizedBox(height: 32),
-          
-          // Profile options
-          ListTile(
-            leading: Icon(Icons.edit),
-            title: Text('Edit Profile'),
-            trailing: Icon(Icons.chevron_right),
-            onTap: () {
-              // Navigate to edit profile screen
+          SizedBox(height: 24),
+          ElevatedButton.icon(
+            icon: Icon(Icons.add),
+            label: Text('Add New Expense'),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => AddExpenseScreen(),
+                ),
+              );
             },
           ),
-          Divider(),
-          ListTile(
-            leading: Icon(Icons.lock),
-            title: Text('Change Password'),
-            trailing: Icon(Icons.chevron_right),
-            onTap: () {
-              // Navigate to change password screen
-            },
-          ),
-          Divider(),
-          ListTile(
-            leading: Icon(Icons.settings),
-            title: Text('Settings'),
-            trailing: Icon(Icons.chevron_right),
-            onTap: () {
-              // Navigate to settings screen
-            },
-          ),
-          Divider(),
+        ],
+      ),
+    );
+  }
+  
+  // Income page placeholder
+  Widget _buildIncomePage() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.attach_money, size: 64, color: Colors.grey),
           SizedBox(height: 16),
-          
-          // Logout button
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              icon: Icon(Icons.logout),
-              label: Text('Logout'),
-              onPressed: () async {
-                await authProvider.logout();
-                Navigator.of(context).pushReplacementNamed('/login');
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                padding: EdgeInsets.symmetric(vertical: 12),
-              ),
-            ),
+          Text(
+            'Income Page',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          SizedBox(height: 8),
+          Text(
+            'View and manage your income here',
+            style: TextStyle(color: Colors.grey),
+          ),
+          SizedBox(height: 24),
+          ElevatedButton.icon(
+            icon: Icon(Icons.add),
+            label: Text('Add New Income'),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => AddIncomeScreen(),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+  
+  // Reports page placeholder
+  Widget _buildReportsPage() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.bar_chart, size: 64, color: Colors.grey),
+          SizedBox(height: 16),
+          Text(
+            'Reports Page',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          SizedBox(height: 8),
+          Text(
+            'View financial reports and analytics',
+            style: TextStyle(color: Colors.grey),
+          ),
+          SizedBox(height: 24),
+          ElevatedButton.icon(
+            icon: Icon(Icons.analytics),
+            label: Text('Generate Reports'),
+            onPressed: () {
+              // Navigate to detailed reports
+            },
           ),
         ],
       ),

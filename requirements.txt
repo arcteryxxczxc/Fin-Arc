@@ -16,6 +16,7 @@ psycopg2
 # Validation
 email-validator==2.1.0.post1
 WTForms==3.0.1
+jsonschema==4.19.0
 
 # Security
 passlib==1.7.4

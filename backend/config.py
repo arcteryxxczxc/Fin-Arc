@@ -9,9 +9,19 @@ class Config:
     # Comma-separated list of allowed Flutter Web URLs in production
     FLUTTER_WEB_URLS = os.environ.get('FLUTTER_WEB_URLS', '')
 
-    # Database configuration
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-        'postgresql://postgres:postgres@localhost/fin_arc'
+    # Database configuration - improved parameterization
+    DB_USER = os.environ.get('DB_USER', 'postgres')
+    DB_PASSWORD = os.environ.get('DB_PASSWORD', 'postgres')
+    DB_HOST = os.environ.get('DB_HOST', 'localhost')
+    DB_PORT = os.environ.get('DB_PORT', '5432')
+    DB_NAME = os.environ.get('DB_NAME', 'fin_arc')
+    
+    # Full database URL constructed from parameters
+    DATABASE_URL = os.environ.get('DATABASE_URL')
+    if not DATABASE_URL:
+        DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+    
+    SQLALCHEMY_DATABASE_URI = DATABASE_URL
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # Connection pool settings
@@ -80,19 +90,20 @@ class DevelopmentConfig(Config):
     TESTING = False
     SESSION_COOKIE_SECURE = False  # Allow HTTP in development
     
-    # Override database URI for development
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-        'postgresql://postgres:postgres@localhost/fin_arc'
-    
     # More verbose logging for development
     LOG_LEVEL = 'DEBUG'
+
 
 class TestingConfig(Config):
     """Testing configuration"""
     TESTING = True
     DEBUG = True
+    
+    # Testing database configuration
+    TEST_DB_NAME = os.environ.get('TEST_DB_NAME', 'fin_arc_test')
     SQLALCHEMY_DATABASE_URI = os.environ.get('TEST_DATABASE_URL') or \
-        'postgresql://postgres:postgres@localhost/fin_arc_test'
+        f"postgresql://{Config.DB_USER}:{Config.DB_PASSWORD}@{Config.DB_HOST}:{Config.DB_PORT}/{TEST_DB_NAME}"
+    
     WTF_CSRF_ENABLED = False  # Disable CSRF during tests
     SESSION_COOKIE_SECURE = False
     
@@ -105,10 +116,29 @@ class ProductionConfig(Config):
     DEBUG = False
     TESTING = False
     
-    # In production, ensure these are set as environment variables
-    SECRET_KEY = os.environ.get('SECRET_KEY')
-    JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY')
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
+    # In production, ensure secret keys are set as environment variables
+    # and will cause an error if not set
+    @property
+    def SECRET_KEY(self):
+        key = os.environ.get('SECRET_KEY')
+        if not key:
+            raise ValueError("SECRET_KEY environment variable is not set")
+        return key
+        
+    @property
+    def JWT_SECRET_KEY(self):
+        key = os.environ.get('JWT_SECRET_KEY')
+        if not key:
+            raise ValueError("JWT_SECRET_KEY environment variable is not set")
+        return key
+    
+    # Ensure database URL is set
+    @property
+    def SQLALCHEMY_DATABASE_URI(self):
+        uri = os.environ.get('DATABASE_URL')
+        if not uri:
+            raise ValueError("DATABASE_URL environment variable is not set")
+        return uri
     
     # Enhanced security for production
     SESSION_COOKIE_SECURE = True  # Require HTTPS

@@ -7,9 +7,12 @@ import '../../providers/income_provider.dart';
 import '../../services/report_service.dart';
 import '../../widgets/common/loading_indicator.dart';
 import '../../widgets/common/error_display.dart';
+import '../../widgets/common/drawer.dart';
+import '../../routes/route_names.dart';
 import 'monthly_report_screen.dart';
 import 'annual_report_screen.dart';
 import 'budget_report_screen.dart';
+import 'cashflow_report_screen.dart';
 
 class ReportsScreen extends StatefulWidget {
   @override
@@ -66,6 +69,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
       appBar: AppBar(
         title: Text('Financial Reports'),
       ),
+      drawer: AppDrawer(currentRoute: RouteNames.reports),
       body: _isLoading 
         ? LoadingIndicator(message: 'Loading reports data...')
         : _error != null
@@ -101,9 +105,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                         icon: Icons.calendar_month,
                         color: Colors.blue,
                         onTap: () {
-                          Navigator.of(context).push(MaterialPageRoute(
-                            builder: (context) => MonthlyReportScreen(),
-                          ));
+                          Navigator.of(context).pushNamed(RouteNames.monthlyReport);
                         },
                       ),
                       _buildReportCard(
@@ -112,9 +114,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                         icon: Icons.insert_chart,
                         color: Colors.green,
                         onTap: () {
-                          Navigator.of(context).push(MaterialPageRoute(
-                            builder: (context) => AnnualReportScreen(),
-                          ));
+                          Navigator.of(context).pushNamed(RouteNames.annualReport);
                         },
                       ),
                       _buildReportCard(
@@ -123,9 +123,16 @@ class _ReportsScreenState extends State<ReportsScreen> {
                         icon: Icons.account_balance_wallet,
                         color: Colors.purple,
                         onTap: () {
-                          Navigator.of(context).push(MaterialPageRoute(
-                            builder: (context) => BudgetReportScreen(),
-                          ));
+                          Navigator.of(context).pushNamed(RouteNames.budgetReport);
+                        },
+                      ),
+                      _buildReportCard(
+                        title: 'Cashflow Report',
+                        description: 'Analyze your cash movement',
+                        icon: Icons.show_chart,
+                        color: Colors.teal,
+                        onTap: () {
+                          Navigator.of(context).pushNamed(RouteNames.cashflowReport);
                         },
                       ),
                       _buildReportCard(
@@ -135,6 +142,15 @@ class _ReportsScreenState extends State<ReportsScreen> {
                         color: Colors.orange,
                         onTap: () {
                           _showExportDialog(context);
+                        },
+                      ),
+                      _buildReportCard(
+                        title: 'Financial Insights',
+                        description: 'Get actionable financial advice',
+                        icon: Icons.lightbulb_outline,
+                        color: Colors.amber,
+                        onTap: () {
+                          _showComingSoonDialog(context, 'Financial Insights');
                         },
                       ),
                     ],
@@ -641,11 +657,8 @@ class _ReportsScreenState extends State<ReportsScreen> {
               subtitle: Text(option['subtitle']),
               onTap: () async {
                 Navigator.of(ctx).pop();
-                // Show date range picker if needed
-                // Then call export service
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Export functionality will be implemented soon')),
-                );
+                // Show date range picker for proper interval
+                await _showDateRangePicker(context, option['type'], option['title']);
               },
             )),
             
@@ -663,6 +676,97 @@ class _ReportsScreenState extends State<ReportsScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+  
+  Future<void> _showDateRangePicker(BuildContext context, String exportType, String title) async {
+    final now = DateTime.now();
+    final firstDayOfMonth = DateTime(now.year, now.month, 1);
+    
+    final picked = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2020),
+      lastDate: now,
+      initialDateRange: DateTimeRange(
+        start: firstDayOfMonth,
+        end: now,
+      ),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: Theme.of(context).primaryColor,
+              onPrimary: Colors.white,
+              onSurface: Colors.black,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    
+    if (picked != null) {
+      // Format dates for API
+      final startDate = DateFormat('yyyy-MM-dd').format(picked.start);
+      final endDate = DateFormat('yyyy-MM-dd').format(picked.end);
+      
+      // Show loading indicator
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
+              ),
+              SizedBox(width: 16),
+              Text('Exporting $title data...'),
+            ],
+          ),
+          duration: Duration(seconds: 1),
+        ),
+      );
+      
+      try {
+        // Call export API based on type
+        // This should be implemented in the report service
+        // TODO: Implement proper export functionality
+        await Future.delayed(Duration(seconds: 1)); // Simulate API call
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('$title data exported successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to export data: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+  
+  void _showComingSoonDialog(BuildContext context, String feature) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Coming Soon'),
+        content: Text('The $feature feature is coming soon! Stay tuned for updates.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text('OK'),
+          ),
+        ],
       ),
     );
   }

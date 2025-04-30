@@ -17,6 +17,8 @@ import '../../screens/income/add_income_screen.dart';
 import '../../widgets/common/loading_indicator.dart';
 import '../../widgets/common/error_display.dart';
 import '../../widgets/charts/fin_arc_charts.dart';
+import '../../widgets/common/drawer.dart';
+import '../../routes/route_names.dart';
 
 class DashboardScreen extends StatefulWidget {
   @override
@@ -137,6 +139,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ],
       ),
+      drawer: AppDrawer(currentRoute: RouteNames.dashboard),
       body: _isLoading 
         ? LoadingIndicator(message: 'Loading dashboard data...')
         : _error != null
@@ -625,7 +628,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
                 TextButton(
                   onPressed: () {
-                    // Navigate to budget screen
+                    Navigator.of(context).pushNamed(RouteNames.budgetReport);
                   },
                   child: Text('View all'),
                 ),
@@ -772,7 +775,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
                 TextButton(
                   onPressed: () {
-                    // Navigate to categories screen
+                    Navigator.of(context).pushNamed(RouteNames.categoryList);
                   },
                   child: Text('View all'),
                 ),
@@ -882,7 +885,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
                 TextButton(
                   onPressed: () {
-                    // Navigate to transactions screen
+                    // Navigate to transactions screen - choose expense or income list
+                    Navigator.of(context).pushNamed(RouteNames.expenseList);
                   },
                   child: Text('View all'),
                 ),
@@ -939,6 +943,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
+                  onTap: () {
+                    // Navigate to transaction detail
+                    if (isExpense) {
+                      Navigator.of(context).pushNamed(
+                        RouteNames.expenseDetail,
+                        arguments: {'expenseId': transaction['id']},
+                      );
+                    } else {
+                      Navigator.of(context).pushNamed(
+                        RouteNames.incomeDetail,
+                        arguments: {'incomeId': transaction['id']},
+                      );
+                    }
+                  },
                 );
               },
             ),

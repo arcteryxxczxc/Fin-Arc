@@ -1,14 +1,15 @@
+// lib/screens/dashboard/updated_dashboard_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
-import '../providers/auth_provider.dart';
-import '../services/report_service.dart';
-import '../utils/constants.dart';
-import '../widgets/common/loading_indicator.dart';
-import '../widgets/common/error_display.dart';
-import '../widgets/common/drawer.dart';
-import '../routes/route_names.dart';
+import '../../providers/auth_provider.dart';
+import '../../services/report_service.dart';
+import '../../utils/constants.dart';
+import '../../widgets/common/loading_indicator.dart';
+import '../../widgets/common/error_display.dart';
+import '../../widgets/layout/screen_wrapper.dart';
+import '../../routes/route_names.dart';
 
 class DashboardScreen extends StatefulWidget {
   @override
@@ -72,73 +73,75 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final authProvider = Provider.of<AuthProvider>(context);
     final user = authProvider.user;
     
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'Fin-Arc Dashboard',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.refresh),
-            onPressed: _fetchDashboardData,
-            tooltip: 'Refresh data',
+    return ScreenWrapper(
+      currentRoute: RouteNames.dashboard,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(
+            'Fin-Arc Dashboard',
+            style: TextStyle(fontWeight: FontWeight.bold),
           ),
-          IconButton(
-            icon: Stack(
-              children: [
-                Icon(Icons.notifications_outlined),
-                Positioned(
-                  right: 0,
-                  top: 0,
-                  child: Container(
-                    padding: EdgeInsets.all(1),
-                    decoration: BoxDecoration(
-                      color: Colors.red,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    constraints: BoxConstraints(
-                      minWidth: 12,
-                      minHeight: 12,
-                    ),
-                    child: Text(
-                      '3',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 8,
+          actions: [
+            IconButton(
+              icon: Icon(Icons.refresh),
+              onPressed: _fetchDashboardData,
+              tooltip: 'Refresh data',
+            ),
+            IconButton(
+              icon: Stack(
+                children: [
+                  Icon(Icons.notifications_outlined),
+                  Positioned(
+                    right: 0,
+                    top: 0,
+                    child: Container(
+                      padding: EdgeInsets.all(1),
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        borderRadius: BorderRadius.circular(6),
                       ),
-                      textAlign: TextAlign.center,
+                      constraints: BoxConstraints(
+                        minWidth: 12,
+                        minHeight: 12,
+                      ),
+                      child: Text(
+                        '3',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 8,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
+              onPressed: () {
+                // Show notifications
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Notifications coming soon')),
+                );
+              },
+              tooltip: 'Notifications',
             ),
-            onPressed: () {
-              // Show notifications
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Notifications coming soon')),
-              );
-            },
-            tooltip: 'Notifications',
-          ),
-        ],
-      ),
-      drawer: AppDrawer(currentRoute: RouteNames.dashboard),
-      body: _isLoading 
-        ? LoadingIndicator(message: 'Loading dashboard data...')
-        : _error != null
-          ? ErrorDisplay(
-              error: _error!,
-              onRetry: _fetchDashboardData,
-            )
-          : RefreshIndicator(
-              onRefresh: _fetchDashboardData,
-              child: _buildDashboardContent(themeData, user),
-            ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddTransactionDialog(context),
-        child: Icon(Icons.add),
-        tooltip: 'Add transaction',
+          ],
+        ),
+        body: _isLoading 
+          ? LoadingIndicator(message: 'Loading dashboard data...')
+          : _error != null
+            ? ErrorDisplay(
+                error: _error!,
+                onRetry: _fetchDashboardData,
+              )
+            : RefreshIndicator(
+                onRefresh: _fetchDashboardData,
+                child: _buildDashboardContent(themeData, user),
+              ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () => _showAddTransactionDialog(context),
+          child: Icon(Icons.add),
+          tooltip: 'Add transaction',
+        ),
       ),
     );
   }
@@ -194,6 +197,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
           
           // Recent transactions
           _buildRecentTransactions(recentTransactions, themeData),
+          
+          // Add bottom padding for floating action button
+          SizedBox(height: 80),
         ],
       ),
     );

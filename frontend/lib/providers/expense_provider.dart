@@ -118,6 +118,45 @@ class ExpenseProvider with ChangeNotifier {
     await fetchExpenses();
   }
   
+  // Get expense details by ID
+  Future<Map<String, dynamic>> getExpenseDetails(int expenseId) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+    
+    try {
+      final result = await _expenseService.getExpenseDetails(expenseId);
+      
+      _isLoading = false;
+      
+      if (result['success']) {
+        // Parse expense data
+        final expenseData = result['data']['expense'];
+        final expense = Expense.fromJson(expenseData);
+        
+        return {
+          'success': true,
+          'expense': expense,
+        };
+      } else {
+        _error = result['message'];
+        notifyListeners();
+        return {
+          'success': false,
+          'message': _error,
+        };
+      }
+    } catch (e) {
+      _error = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      return {
+        'success': false,
+        'message': _error,
+      };
+    }
+  }
+  
   // Add a new expense
   Future<bool> addExpense({
     required double amount,
@@ -232,71 +271,3 @@ class ExpenseProvider with ChangeNotifier {
       final result = await _expenseService.deleteExpense(expenseId);
       
       _isLoading = false;
-      
-      if (result['success']) {
-        // Remove the expense from the list
-        _expenses.removeWhere((expense) => expense.id == expenseId);
-        notifyListeners();
-        return true;
-      } else {
-        _error = result['message'];
-        notifyListeners();
-        return false;
-      }
-    } catch (e) {
-      _error = e.toString();
-      _isLoading = false;
-      notifyListeners();
-      return false;
-    }
-  }
-  
-  // Get expense statistics
-  Future<void> fetchExpenseStats({
-    String period = 'month',
-    String? startDate,
-    String? endDate,
-  }) async {
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
-    
-    try {
-      final result = await _expenseService.getExpenseStats(
-        period: period,
-        startDate: startDate,
-        endDate: endDate,
-      );
-      
-      if (result['success']) {
-        _expenseStats = result['data'];
-      } else {
-        _error = result['message'];
-      }
-    } catch (e) {
-      _error = e.toString();
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-  
-  // Reset filters
-  void resetFilters() {
-    _categoryId = null;
-    _startDate = null;
-    _endDate = null;
-    _minAmount = null;
-    _maxAmount = null;
-    _paymentMethod = null;
-    _search = null;
-    
-    fetchExpenses(refresh: true);
-  }
-  
-  // Clear error
-  void clearError() {
-    _error = null;
-    notifyListeners();
-  }
-}

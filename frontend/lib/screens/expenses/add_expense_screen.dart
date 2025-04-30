@@ -6,6 +6,10 @@ import '../../providers/expense_provider.dart';
 import '../../models/category.dart';
 
 class AddExpenseScreen extends StatefulWidget {
+  final int? expenseId; // If editing existing expense
+  
+  const AddExpenseScreen({Key? key, this.expenseId}) : super(key: key);
+  
   @override
   _AddExpenseScreenState createState() => _AddExpenseScreenState();
 }
@@ -23,6 +27,9 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
   String? _selectedPaymentMethod;
   bool _isRecurring = false;
   String? _recurringType;
+  
+  bool _isEditing = false;
+  bool _isLoading = false;
   
   final List<String> _paymentMethods = [
     'Cash',
@@ -43,6 +50,13 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
   @override
   void initState() {
     super.initState();
+    _isEditing = widget.expenseId != null;
+    
+    // Load expense data if editing
+    if (_isEditing) {
+      _loadExpenseData();
+    }
+    
     // Load categories if not already loaded
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final categoryProvider = Provider.of<CategoryProvider>(context, listen: false);
@@ -50,6 +64,74 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
         categoryProvider.fetchCategories();
       }
     });
+  }
+  
+  Future<void> _loadExpenseData() async {
+    setState(() {
+      _isLoading = true;
+    });
+    
+    try {
+      final expenseProvider = Provider.of<ExpenseProvider>(context, listen: false);
+      final result = await expenseProvider.getExpenseDetails(widget.expenseId!);
+      
+      if (result['success']) {
+        final expense = result['expense'];
+        
+        // Set form values
+        _amountController.text = expense.amount.toString();
+        if (expense.description != null) {
+          _descriptionController.text = expense.description;
+        }
+        if (expense.location != null) {
+          _locationController.text = expense.location;
+        }
+        if (expense.notes != null) {
+          _notesController.text = expense.notes;
+        }
+        
+        // Parse date
+        _selectedDate = DateTime.parse(expense.date);
+        
+        // Parse time if available
+        if (expense.time != null && expense.time.isNotEmpty) {
+          final parts = expense.time.split(':');
+          if (parts.length >= 2) {
+            _selectedTime = TimeOfDay(
+              hour: int.parse(parts[0]), 
+              minute: int.parse(parts[1])
+            );
+          }
+        }
+        
+        // Set payment method
+        _selectedPaymentMethod = expense.paymentMethod;
+        
+        // Set recurring info
+        _isRecurring = expense.isRecurring;
+        _recurringType = expense.recurringType;
+        
+        // Find category
+        if (expense.categoryId != null) {
+          final categoryProvider = Provider.of<CategoryProvider>(context, listen: false);
+          if (categoryProvider.categories.isNotEmpty) {
+            _selectedCategory = categoryProvider.categories.firstWhere(
+              (c) => c.id == expense.categoryId,
+              orElse: () => null,
+            );
+          }
+        }
+      }
+    } catch (e) {
+      // Show error
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error loading expense data: $e')),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
   
   @override
@@ -102,31 +184,50 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
       // Parse amount as double
       final amount = double.tryParse(_amountController.text.replaceAll(',', '.')) ?? 0.0;
       
-      // Add expense
-      final success = await expenseProvider.addExpense(
-        amount: amount,
-        date: date,
-        description: _descriptionController.text,
-        categoryId: _selectedCategory?.id,
-        paymentMethod: _selectedPaymentMethod,
-        location: _locationController.text,
-        time: time,
-        isRecurring: _isRecurring,
-        recurringType: _isRecurring ? _recurringType?.toLowerCase() : null,
-        notes: _notesController.text,
-      );
+      bool success;
+      
+      if (_isEditing) {
+        // Update expense
+        success = await expenseProvider.updateExpense(
+          expenseId: widget.expenseId!,
+          amount: amount,
+          date: date,
+          description: _descriptionController.text,
+          categoryId: _selectedCategory?.id,
+          paymentMethod: _selectedPaymentMethod,
+          location: _locationController.text,
+          time: time,
+          isRecurring: _isRecurring,
+          recurringType: _isRecurring ? _recurringType?.toLowerCase() : null,
+          notes: _notesController.text,
+        );
+      } else {
+        // Add expense
+        success = await expenseProvider.addExpense(
+          amount: amount,
+          date: date,
+          description: _descriptionController.text,
+          categoryId: _selectedCategory?.id,
+          paymentMethod: _selectedPaymentMethod,
+          location: _locationController.text,
+          time: time,
+          isRecurring: _isRecurring,
+          recurringType: _isRecurring ? _recurringType?.toLowerCase() : null,
+          notes: _notesController.text,
+        );
+      }
       
       if (success && mounted) {
         // Show success message and navigate back
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Expense added successfully')),
+          SnackBar(content: Text(_isEditing ? 'Expense updated successfully' : 'Expense added successfully')),
         );
         Navigator.of(context).pop();
       } else if (mounted) {
         // Show error message
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(expenseProvider.error ?? 'Failed to add expense'),
+            content: Text(expenseProvider.error ?? 'Failed to ${_isEditing ? 'update' : 'add'} expense'),
             backgroundColor: Colors.red,
           ),
         );
@@ -139,9 +240,20 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     final categoryProvider = Provider.of<CategoryProvider>(context);
     final expenseProvider = Provider.of<ExpenseProvider>(context);
     
+    if (_isLoading) {
+      return Scaffold(
+        appBar: AppBar(
+          title: Text(_isEditing ? 'Edit Expense' : 'Add Expense'),
+        ),
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+    
     return Scaffold(
       appBar: AppBar(
-        title: Text('Add Expense'),
+        title: Text(_isEditing ? 'Edit Expense' : 'Add Expense'),
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(16),
@@ -229,6 +341,9 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                 ),
                 value: _selectedCategory,
                 items: categoryProvider.expenseCategories.map((category) {
+                  // Parse color
+                  final categoryColor = Color(int.parse(category.colorCode.substring(1, 7), radix: 16) + 0xFF000000);
+                  
                   return DropdownMenuItem(
                     value: category,
                     child: Row(
@@ -237,7 +352,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                           width: 20,
                           height: 20,
                           decoration: BoxDecoration(
-                            color: Color(int.parse(category.colorCode.substring(1, 7), radix: 16) + 0xFF000000),
+                            color: categoryColor,
                             shape: BoxShape.circle,
                           ),
                         ),
@@ -351,7 +466,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                   onPressed: expenseProvider.isLoading ? null : _submitForm,
                   child: expenseProvider.isLoading
                       ? CircularProgressIndicator(color: Colors.white)
-                      : Text('Add Expense', style: TextStyle(fontSize: 16)),
+                      : Text(_isEditing ? 'Update Expense' : 'Add Expense', style: TextStyle(fontSize: 16)),
                 ),
               ),
             ],

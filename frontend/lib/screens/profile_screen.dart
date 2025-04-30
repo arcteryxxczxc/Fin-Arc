@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../providers/auth_provider.dart';
 import '../providers/theme_provider.dart';
-import 'change_password_screen.dart';
+import 'auth/change_password_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   @override

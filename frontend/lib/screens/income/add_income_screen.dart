@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import '../providers/category_provider.dart';
-import '../providers/income_provider.dart';
-import '../models/category.dart';
+import '../../providers/category_provider.dart';
+import '../../providers/income_provider.dart';
+import '../../models/category.dart';
 
 class AddIncomeScreen extends StatefulWidget {
   @override

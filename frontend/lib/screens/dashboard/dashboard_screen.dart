@@ -7,50 +7,50 @@ import '../../providers/expense_provider.dart';
 import '../../providers/income_provider.dart';
 import '../../providers/category_provider.dart';
 import '../../services/report_service.dart';
-import '../expenses/add_expense_screen.dart';
-import '../income/add_income_screen.dart';
-import '../profile_screen.dart';
+import '../../models/expense.dart';
+import '../../models/income.dart';
+import '../../models/category.dart';
+import '../../utils/constants.dart';
+import '../../utils/data_utils.dart';
+import '../../screens/expenses/add_expense_screen.dart';
+import '../../screens/income/add_income_screen.dart';
+import '../../widgets/common/loading_indicator.dart';
+import '../../widgets/common/error_display.dart';
+import '../../widgets/charts/fin_arc_charts.dart';
 
 class DashboardScreen extends StatefulWidget {
   @override
   _DashboardScreenState createState() => _DashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProviderStateMixin {
-  int _selectedIndex = 0;
-  final currencyFormatter = NumberFormat.currency(symbol: '\$');
+class _DashboardScreenState extends State<DashboardScreen> {
   final ReportService _reportService = ReportService();
   
   bool _isLoading = false;
   String? _error;
   Map<String, dynamic>? _dashboardData;
+  final currencyFormatter = NumberFormat.currency(symbol: '\$');
   
-  late TabController _tabController;
+  int _selectedPeriod = 1; // 0: Today, 1: Week, 2: Month, 3: Year
+  final List<String> _periods = ['Today', 'This Week', 'This Month', 'This Year'];
   
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
     
     // Fetch initial data
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _fetchDashboardData();
       
+      // Initialize other data
       final expenseProvider = Provider.of<ExpenseProvider>(context, listen: false);
       final incomeProvider = Provider.of<IncomeProvider>(context, listen: false);
       final categoryProvider = Provider.of<CategoryProvider>(context, listen: false);
       
-      // Fetch recent expenses, income, and categories
       expenseProvider.fetchExpenses(refresh: true);
       incomeProvider.fetchIncomes(refresh: true);
       categoryProvider.fetchCategories();
     });
-  }
-  
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
   }
   
   Future<void> _fetchDashboardData() async {
@@ -80,317 +80,534 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
       });
     }
   }
-  
-  // Define pages for the bottom navigation
-  Widget _getPage(int index) {
-    switch (index) {
-      case 0:
-        return _buildDashboardHome();
-      case 1:
-        return _buildExpensesPage();
-      case 2:
-        return _buildIncomePage();
-      case 3:
-        return _buildReportsPage();
-      case 4:
-        return ProfileScreen();
-      default:
-        return _buildDashboardHome();
-    }
-  }
-  
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-  }
-  
-  void _showAddTransactionDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text('Add Transaction'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ElevatedButton.icon(
-              icon: Icon(Icons.money_off),
-              label: Text('Add Expense'),
-              onPressed: () {
-                Navigator.of(ctx).pop();
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => AddExpenseScreen(),
-                  ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                minimumSize: Size(double.infinity, 50),
-              ),
-            ),
-            SizedBox(height: 10),
-            ElevatedButton.icon(
-              icon: Icon(Icons.attach_money),
-              label: Text('Add Income'),
-              onPressed: () {
-                Navigator.of(ctx).pop();
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => AddIncomeScreen(),
-                  ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                minimumSize: Size(double.infinity, 50),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            child: Text('Cancel'),
-            onPressed: () {
-              Navigator.of(ctx).pop();
-            },
-          ),
-        ],
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
+    final themeData = Theme.of(context);
+    final authProvider = Provider.of<AuthProvider>(context);
+    
     return Scaffold(
       appBar: AppBar(
-        title: Text('Fin-Arc Dashboard'),
+        title: Text(
+          'Fin-Arc Dashboard',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         actions: [
           IconButton(
             icon: Icon(Icons.refresh),
             onPressed: _fetchDashboardData,
+            tooltip: 'Refresh data',
           ),
           IconButton(
-            icon: Icon(Icons.notifications),
+            icon: Stack(
+              children: [
+                Icon(Icons.notifications_outlined),
+                Positioned(
+                  right: 0,
+                  top: 0,
+                  child: Container(
+                    padding: EdgeInsets.all(1),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    constraints: BoxConstraints(
+                      minWidth: 12,
+                      minHeight: 12,
+                    ),
+                    child: Text(
+                      '3',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 8,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+              ],
+            ),
             onPressed: () {
               // Show notifications
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Notifications coming soon')),
+              );
             },
+            tooltip: 'Notifications',
           ),
         ],
       ),
-      body: _getPage(_selectedIndex),
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
-        selectedItemColor: Theme.of(context).primaryColor,
-        unselectedItemColor: Colors.grey,
-        items: [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard),
-            label: 'Dashboard',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.money_off),
-            label: 'Expenses',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.attach_money),
-            label: 'Income',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.bar_chart),
-            label: 'Reports',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profile',
-          ),
-        ],
-      ),
+      body: _isLoading 
+        ? LoadingIndicator(message: 'Loading dashboard data...')
+        : _error != null
+          ? ErrorDisplay(
+              error: _error!,
+              onRetry: _fetchDashboardData,
+            )
+          : _buildDashboardContent(themeData, authProvider),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: Theme.of(context).primaryColor,
+        onPressed: () => _showAddTransactionDialog(context),
         child: Icon(Icons.add),
-        onPressed: () {
-          _showAddTransactionDialog(context);
-        },
+        tooltip: 'Add transaction',
       ),
     );
   }
   
-  // Dashboard home page
-  Widget _buildDashboardHome() {
-    final authProvider = Provider.of<AuthProvider>(context);
-    final expenseProvider = Provider.of<ExpenseProvider>(context);
-    final incomeProvider = Provider.of<IncomeProvider>(context);
-    final categoryProvider = Provider.of<CategoryProvider>(context);
-    
+  Widget _buildDashboardContent(ThemeData themeData, AuthProvider authProvider) {
     // Use dashboard data or defaults
     final stats = _dashboardData?['stats'] ?? {
-      'today': {'expenses': 35, 'income': 0, 'balance': -35},
-      'week': {'expenses': 250, 'income': 100, 'balance': -150},
-      'month': {'expenses': 1800, 'income': 2500, 'balance': 700},
-      'year': {'expenses': 22000, 'income': 30000, 'balance': 8000}
+      'today': {'expenses': 0, 'income': 0, 'balance': 0},
+      'week': {'expenses': 0, 'income': 0, 'balance': 0},
+      'month': {'expenses': 0, 'income': 0, 'balance': 0},
+      'year': {'expenses': 0, 'income': 0, 'balance': 0}
     };
     
     final categories = _dashboardData?['categories'] ?? [];
+    
+    final trend = _dashboardData?['trend'] ?? [];
     
     final recentTransactions = _dashboardData?['recent_transactions'] ?? {
       'expenses': [],
       'income': []
     };
     
+    final budgetOverview = _dashboardData?['budget_overview'] ?? [];
+    
     return RefreshIndicator(
-      onRefresh: () async {
-        await _fetchDashboardData();
-        await expenseProvider.fetchExpenses(refresh: true);
-        await incomeProvider.fetchIncomes(refresh: true);
-      },
+      onRefresh: _fetchDashboardData,
       child: SingleChildScrollView(
         padding: EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Welcome message
-            Card(
-              elevation: 4,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              child: Padding(
-                padding: EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Welcome, ${authProvider.user?.firstName ?? authProvider.user?.username ?? 'User'}!',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    SizedBox(height: 8),
-                    Text(
-                      'Today is ${DateFormat('EEEE, MMMM d, yyyy').format(DateTime.now())}',
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            // Welcome message and date
+            _buildWelcomeCard(authProvider, themeData),
             SizedBox(height: 20),
             
-            // Financial summary cards
-            _buildSummaryCards(stats),
-            SizedBox(height: 20),
+            // Financial summary
+            _buildFinancialSummary(stats, themeData),
+            SizedBox(height: 24),
+            
+            // Main charts section
+            _buildFinancialCharts(trend, themeData),
+            SizedBox(height: 24),
+            
+            // Budget progress
+            _buildBudgetProgress(budgetOverview, themeData),
+            SizedBox(height: 24),
+            
+            // Spending breakdown
+            _buildSpendingBreakdown(categories, themeData),
+            SizedBox(height: 24),
             
             // Recent transactions
-            Text(
-              'Recent Transactions',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            SizedBox(height: 10),
-            
-            if (_isLoading)
-              Center(child: CircularProgressIndicator())
-            else if (_error != null)
-              Card(
-                elevation: 4,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                child: Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Column(
-                    children: [
-                      Icon(Icons.error_outline, size: 48, color: Colors.red),
-                      SizedBox(height: 8),
-                      Text(
-                        'Error loading data',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                      SizedBox(height: 8),
-                      Text(_error!, textAlign: TextAlign.center),
-                      SizedBox(height: 8),
-                      ElevatedButton(
-                        onPressed: _fetchDashboardData,
-                        child: Text('Try Again'),
-                      ),
-                    ],
-                  ),
-                ),
-              )
-            else if ((recentTransactions['expenses'] as List).isEmpty && 
-                     (recentTransactions['income'] as List).isEmpty)
-              Card(
-                elevation: 4,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                child: Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Center(
-                    child: Column(
-                      children: [
-                        Icon(Icons.info_outline, size: 48, color: Colors.grey),
-                        SizedBox(height: 8),
-                        Text(
-                          'No transactions yet',
-                          style: TextStyle(fontSize: 16),
-                        ),
-                        SizedBox(height: 8),
-                        Text(
-                          'Add your first expense or income to get started',
-                          style: TextStyle(color: Colors.grey),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              )
-            else
-              _buildRecentTransactions(recentTransactions),
-            
-            SizedBox(height: 20),
-            
-            // Spending by Category
-            Text(
-              'Spending by Category',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            SizedBox(height: 10),
-            
-            _buildCategoryChart(categories, categoryProvider),
+            _buildRecentTransactions(recentTransactions, themeData),
           ],
         ),
       ),
     );
   }
   
-  Widget _buildSummaryCards(Map<String, dynamic> stats) {
-    return GridView.count(
-      crossAxisCount: 2,
-      crossAxisSpacing: 16,
-      mainAxisSpacing: 16,
-      shrinkWrap: true,
-      physics: NeverScrollableScrollPhysics(),
+  Widget _buildWelcomeCard(AuthProvider authProvider, ThemeData themeData) {
+    final user = authProvider.user;
+    final now = DateTime.now();
+    String greeting;
+    
+    // Determine greeting based on time of day
+    final hour = now.hour;
+    if (hour < 12) {
+      greeting = "Good Morning";
+    } else if (hour < 17) {
+      greeting = "Good Afternoon";
+    } else {
+      greeting = "Good Evening";
+    }
+    
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "$greeting, ${user?.firstName ?? user?.username ?? 'User'}!",
+                    style: themeData.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    DateFormat('EEEE, MMMM d, yyyy').format(now),
+                    style: themeData.textTheme.bodyMedium,
+                  ),
+                ],
+              ),
+            ),
+            CircleAvatar(
+              radius: 24,
+              backgroundColor: themeData.primaryColor,
+              child: Text(
+                user?.initials ?? 'U',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildFinancialSummary(Map<String, dynamic> stats, ThemeData themeData) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSummaryCard('Today', stats['today']),
-        _buildSummaryCard('This Week', stats['week']),
-        _buildSummaryCard('This Month', stats['month']),
-        _buildSummaryCard('This Year', stats['year']),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Financial Summary',
+              style: themeData.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            DropdownButton<int>(
+              value: _selectedPeriod,
+              underline: SizedBox(),
+              icon: Icon(Icons.keyboard_arrow_down),
+              onChanged: (value) {
+                if (value != null) {
+                  setState(() {
+                    _selectedPeriod = value;
+                  });
+                }
+              },
+              items: _periods.asMap().entries.map((entry) {
+                return DropdownMenuItem<int>(
+                  value: entry.key,
+                  child: Text(entry.value),
+                );
+              }).toList(),
+            ),
+          ],
+        ),
+        SizedBox(height: 12),
+        
+        // Summary cards based on selected period
+        _buildSummaryCards(stats, _selectedPeriod, themeData),
       ],
     );
   }
   
-  Widget _buildSummaryCard(String title, Map<String, dynamic> data) {
-    final balance = data['balance'] ?? 0.0;
-    final income = data['income'] ?? 0.0;
-    final expenses = data['expenses'] ?? 0.0;
+  Widget _buildSummaryCards(Map<String, dynamic> stats, int selectedPeriod, ThemeData themeData) {
+    final Map<String, dynamic> periodData;
+    switch (selectedPeriod) {
+      case 0:
+        periodData = stats['today'];
+        break;
+      case 1:
+        periodData = stats['week'];
+        break;
+      case 2:
+        periodData = stats['month'];
+        break;
+      case 3:
+        periodData = stats['year'];
+        break;
+      default:
+        periodData = stats['month'];
+    }
+    
+    final income = (periodData['income'] as num?)?.toDouble() ?? 0.0;
+    final expenses = (periodData['expenses'] as num?)?.toDouble() ?? 0.0;
+    final balance = (periodData['balance'] as num?)?.toDouble() ?? 0.0;
+    
+    return Row(
+      children: [
+        Expanded(
+          child: _buildSummaryCard(
+            'Income',
+            income,
+            Icons.arrow_upward,
+            Colors.green,
+            themeData,
+          ),
+        ),
+        SizedBox(width: 12),
+        Expanded(
+          child: _buildSummaryCard(
+            'Expenses',
+            expenses,
+            Icons.arrow_downward,
+            Colors.red,
+            themeData,
+          ),
+        ),
+        SizedBox(width: 12),
+        Expanded(
+          child: _buildSummaryCard(
+            'Balance',
+            balance,
+            balance >= 0 ? Icons.account_balance_wallet : Icons.warning,
+            balance >= 0 ? Colors.blue : Colors.orange,
+            themeData,
+          ),
+        ),
+      ],
+    );
+  }
+  
+  Widget _buildSummaryCard(
+    String title,
+    double amount,
+    IconData icon,
+    Color color,
+    ThemeData themeData,
+  ) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    icon,
+                    color: color,
+                    size: 18,
+                  ),
+                ),
+                SizedBox(width: 8),
+                Text(
+                  title,
+                  style: themeData.textTheme.bodyMedium,
+                ),
+              ],
+            ),
+            SizedBox(height: 12),
+            Text(
+              currencyFormatter.format(amount),
+              style: themeData.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: title == 'Balance' ? (amount >= 0 ? null : Colors.red) : null,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildFinancialCharts(List<dynamic> trend, ThemeData themeData) {
+    // Extract data for the chart
+    final List<FlSpot> incomeSpots = [];
+    final List<FlSpot> expenseSpots = [];
+    final List<String> months = [];
+    
+    if (trend.isNotEmpty) {
+      for (int i = 0; i < trend.length; i++) {
+        final monthData = trend[i];
+        final income = (monthData['income'] as num?)?.toDouble() ?? 0.0;
+        final expenses = (monthData['expenses'] as num?)?.toDouble() ?? 0.0;
+        
+        incomeSpots.add(FlSpot(i.toDouble(), income));
+        expenseSpots.add(FlSpot(i.toDouble(), expenses));
+        months.add(monthData['month'] ?? '');
+      }
+    } else {
+      // Sample data if no trend data is available
+      final now = DateTime.now();
+      for (int i = 5; i >= 0; i--) {
+        final month = DateTime(now.year, now.month - i, 1);
+        months.add(DateFormat('MMM').format(month));
+        
+        // Random sample data
+        incomeSpots.add(FlSpot((5 - i).toDouble(), 0));
+        expenseSpots.add(FlSpot((5 - i).toDouble(), 0));
+      }
+    }
     
     return Card(
-      elevation: 4,
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Income & Expenses Trend',
+              style: themeData.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Last 6 months',
+              style: themeData.textTheme.bodySmall,
+            ),
+            SizedBox(height: 24),
+            
+            // Chart
+            Container(
+              height: 200,
+              child: LineChart(
+                LineChartData(
+                  gridData: FlGridData(
+                    show: true,
+                    drawVerticalLine: false,
+                    horizontalInterval: 1000,
+                    getDrawingHorizontalLine: (value) {
+                      return FlLine(
+                        color: themeData.dividerColor.withOpacity(0.2),
+                        strokeWidth: 1,
+                      );
+                    },
+                  ),
+                  titlesData: FlTitlesData(
+                    show: true,
+                    leftTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 40,
+                        getTitlesWidget: (value, meta) {
+                          if (value == 0) return Text('');
+                          return Text(
+                            '\$${value.toInt()}',
+                            style: TextStyle(
+                              color: themeData.textTheme.bodySmall?.color,
+                              fontSize: 10,
+                            ),
+                          );
+                        },
+                        interval: 2000,
+                      ),
+                    ),
+                    bottomTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 30,
+                        getTitlesWidget: (value, meta) {
+                          final index = value.toInt();
+                          if (index >= 0 && index < months.length) {
+                            return Text(
+                              months[index],
+                              style: TextStyle(
+                                color: themeData.textTheme.bodySmall?.color,
+                                fontSize: 10,
+                              ),
+                            );
+                          }
+                          return Text('');
+                        },
+                      ),
+                    ),
+                    rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  ),
+                  borderData: FlBorderData(show: false),
+                  minX: 0,
+                  maxX: months.length - 1.0,
+                  minY: 0,
+                  lineBarsData: [
+                    // Income line
+                    LineChartBarData(
+                      spots: incomeSpots,
+                      isCurved: true,
+                      color: Colors.green,
+                      barWidth: 3,
+                      isStrokeCapRound: true,
+                      dotData: FlDotData(show: false),
+                      belowBarData: BarAreaData(
+                        show: true,
+                        color: Colors.green.withOpacity(0.1),
+                      ),
+                    ),
+                    // Expense line
+                    LineChartBarData(
+                      spots: expenseSpots,
+                      isCurved: true,
+                      color: Colors.red,
+                      barWidth: 3,
+                      isStrokeCapRound: true,
+                      dotData: FlDotData(show: false),
+                      belowBarData: BarAreaData(
+                        show: true,
+                        color: Colors.red.withOpacity(0.1),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            
+            SizedBox(height: 16),
+            
+            // Legend
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 12,
+                      height: 12,
+                      decoration: BoxDecoration(
+                        color: Colors.green,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    SizedBox(width: 4),
+                    Text('Income', style: themeData.textTheme.bodySmall),
+                  ],
+                ),
+                SizedBox(width: 24),
+                Row(
+                  children: [
+                    Container(
+                      width: 12,
+                      height: 12,
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    SizedBox(width: 4),
+                    Text('Expenses', style: themeData.textTheme.bodySmall),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildBudgetProgress(List<dynamic> budgetOverview, ThemeData themeData) {
+    if (budgetOverview.isEmpty) {
+      return SizedBox.shrink(); // Don't show if no budget data
+    }
+    
+    return Card(
+      elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: EdgeInsets.all(16),
@@ -401,54 +618,90 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  title,
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 14,
+                  'Budget Progress',
+                  style: themeData.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-                Icon(
-                  Icons.calendar_today_outlined,
-                  size: 16,
-                  color: Colors.grey[400],
+                TextButton(
+                  onPressed: () {
+                    // Navigate to budget screen
+                  },
+                  child: Text('View all'),
                 ),
               ],
             ),
-            SizedBox(height: 8),
-            Text(
-              currencyFormatter.format(balance),
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: balance >= 0 ? Colors.green[700] : Colors.red[700],
-              ),
-            ),
-            SizedBox(height: 4),
-            Row(
-              children: [
-                Text(
-                  '+${currencyFormatter.format(income)}',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.green[600],
-                  ),
-                ),
-                SizedBox(width: 4),
-                Text(
-                  '|',
-                  style: TextStyle(
-                    color: Colors.grey[300],
-                  ),
-                ),
-                SizedBox(width: 4),
-                Text(
-                  '-${currencyFormatter.format(expenses)}',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.red[600],
-                  ),
-                ),
-              ],
+            SizedBox(height: 16),
+            
+            // Budget progress bars
+            ListView.separated(
+              shrinkWrap: true,
+              physics: NeverScrollableScrollPhysics(),
+              itemCount: budgetOverview.length > 3 ? 3 : budgetOverview.length,
+              separatorBuilder: (context, index) => SizedBox(height: 16),
+              itemBuilder: (context, index) {
+                final budget = budgetOverview[index];
+                final name = budget['name'] ?? 'Category';
+                final spent = (budget['spent'] as num?)?.toDouble() ?? 0.0;
+                final total = (budget['budget'] as num?)?.toDouble() ?? 0.0;
+                final percentage = (budget['percentage'] as num?)?.toDouble() ?? 0.0;
+                final status = budget['status'] ?? '';
+                
+                // Determine color based on budget status
+                Color progressColor;
+                if (status == 'over') {
+                  progressColor = Colors.red;
+                } else if (status == 'warning' || percentage > 80) {
+                  progressColor = Colors.orange;
+                } else {
+                  progressColor = Colors.green;
+                }
+                
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(name, style: themeData.textTheme.bodyMedium),
+                        Text(
+                          '${currencyFormatter.format(spent)} / ${currencyFormatter.format(total)}',
+                          style: themeData.textTheme.bodySmall,
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 8),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: LinearProgressIndicator(
+                        value: percentage / 100,
+                        minHeight: 8,
+                        backgroundColor: themeData.dividerColor.withOpacity(0.2),
+                        valueColor: AlwaysStoppedAnimation<Color>(progressColor),
+                      ),
+                    ),
+                    SizedBox(height: 4),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '${percentage.toInt()}%',
+                          style: themeData.textTheme.bodySmall,
+                        ),
+                        if (status == 'over')
+                          Text(
+                            'Over budget!',
+                            style: TextStyle(
+                              color: Colors.red,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                );
+              },
             ),
           ],
         ),
@@ -456,11 +709,142 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
     );
   }
   
-  Widget _buildRecentTransactions(Map<String, dynamic> recentTransactions) {
+  Widget _buildSpendingBreakdown(List<dynamic> categories, ThemeData themeData) {
+    if (categories.isEmpty) {
+      return SizedBox.shrink(); // Don't show if no category data
+    }
+    
+    // Prepare data for pie chart
+    List<PieChartSectionData> sections = [];
+    double totalSpent = 0;
+    
+    // Calculate total spending
+    for (final category in categories) {
+      totalSpent += (category['total'] as num?)?.toDouble() ?? 0.0;
+    }
+    
+    // Create pie sections
+    for (final category in categories) {
+      final name = category['name'] ?? 'Category';
+      final spent = (category['total'] as num?)?.toDouble() ?? 0.0;
+      final colorHex = category['color'] ?? '#757575';
+      
+      // Skip categories with no spending
+      if (spent <= 0) continue;
+      
+      // Calculate percentage
+      final percentage = totalSpent > 0 ? (spent / totalSpent) * 100 : 0;
+      
+      // Parse color from hex string
+      final color = Color(int.parse(colorHex.replaceFirst('#', '0xFF')));
+      
+      sections.add(
+        PieChartSectionData(
+          color: color,
+          value: spent,
+          title: '${percentage.toInt()}%',
+          radius: 80,
+          titleStyle: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+          ),
+        ),
+      );
+    }
+    
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Spending by Category',
+                  style: themeData.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                TextButton(
+                  onPressed: () {
+                    // Navigate to categories screen
+                  },
+                  child: Text('View all'),
+                ),
+              ],
+            ),
+            SizedBox(height: 16),
+            
+            // Pie chart
+            Container(
+              height: 200,
+              child: sections.isEmpty
+                ? Center(child: Text('No spending data available'))
+                : PieChart(
+                    PieChartData(
+                      sections: sections,
+                      centerSpaceRadius: 40,
+                      sectionsSpace: 2,
+                    ),
+                  ),
+            ),
+            
+            SizedBox(height: 16),
+            
+            // Categories legend
+            Wrap(
+              spacing: 16,
+              runSpacing: 8,
+              children: categories.map((category) {
+                final name = category['name'] ?? 'Category';
+                final spent = (category['total'] as num?)?.toDouble() ?? 0.0;
+                final colorHex = category['color'] ?? '#757575';
+                
+                // Skip categories with no spending
+                if (spent <= 0) return SizedBox.shrink();
+                
+                // Parse color from hex string
+                final color = Color(int.parse(colorHex.replaceFirst('#', '0xFF')));
+                
+                return Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 12,
+                      height: 12,
+                      decoration: BoxDecoration(
+                        color: color,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    SizedBox(width: 4),
+                    Flexible(
+                      child: Text(
+                        '$name: ${currencyFormatter.format(spent)}',
+                        style: themeData.textTheme.bodySmall,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                );
+              }).toList(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildRecentTransactions(Map<String, dynamic> recentTransactions, ThemeData themeData) {
     final expenses = List<Map<String, dynamic>>.from(recentTransactions['expenses'] ?? []);
     final income = List<Map<String, dynamic>>.from(recentTransactions['income'] ?? []);
     
-    // Combine expenses and income, sort by date (newest first)
+    // Combine and sort by date (newest first)
     final allTransactions = [
       ...expenses.map((e) => {...e, 'type': 'expense'}),
       ...income.map((i) => {...i, 'type': 'income'}),
@@ -475,45 +859,78 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
     // Take only the first 5 transactions
     final recentList = allTransactions.take(5).toList();
     
+    if (recentList.isEmpty) {
+      return SizedBox.shrink();
+    }
+    
     return Card(
-      elevation: 4,
+      elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Recent Transactions',
+                  style: themeData.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                TextButton(
+                  onPressed: () {
+                    // Navigate to transactions screen
+                  },
+                  child: Text('View all'),
+                ),
+              ],
+            ),
+            SizedBox(height: 16),
+            
             // Transactions list
             ListView.separated(
               shrinkWrap: true,
               physics: NeverScrollableScrollPhysics(),
               itemCount: recentList.length,
-              separatorBuilder: (context, index) => Divider(),
+              separatorBuilder: (context, index) => Divider(height: 1),
               itemBuilder: (context, index) {
                 final transaction = recentList[index];
                 final isExpense = transaction['type'] == 'expense';
                 final title = isExpense 
-                  ? transaction['description'] ?? 'Expense'
-                  : transaction['source'] ?? 'Income';
+                  ? (transaction['description'] ?? 'Expense')
+                  : (transaction['source'] ?? 'Income');
                 final category = isExpense 
-                  ? transaction['category'] ?? 'Uncategorized'
+                  ? (transaction['category'] ?? 'Uncategorized')
                   : '';
-                final amount = (transaction['amount'] ?? 0.0).toDouble();
+                final amount = (transaction['amount'] as num?)?.toDouble() ?? 0.0;
                 final date = transaction['date'] ?? '';
                 
                 return ListTile(
+                  contentPadding: EdgeInsets.symmetric(vertical: 4, horizontal: 0),
                   leading: CircleAvatar(
-                    backgroundColor: isExpense ? Colors.red[100] : Colors.green[100],
+                    backgroundColor: isExpense ? Colors.red.withOpacity(0.2) : Colors.green.withOpacity(0.2),
                     child: Icon(
-                      isExpense ? Icons.money_off : Icons.attach_money,
+                      isExpense ? Icons.arrow_downward : Icons.arrow_upward,
                       color: isExpense ? Colors.red : Colors.green,
+                      size: 20,
                     ),
                   ),
-                  title: Text(title),
+                  title: Text(
+                    title,
+                    style: themeData.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w500,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                   subtitle: Text(
-                    isExpense 
-                      ? '${category} • ${DateFormat('MMM d, yyyy').format(DateTime.parse(date))}'
-                      : DateFormat('MMM d, yyyy').format(DateTime.parse(date))
+                    isExpense
+                      ? '${category} • ${DateFormat('MMM d').format(DateTime.parse(date))}'
+                      : DateFormat('MMM d').format(DateTime.parse(date)),
+                    style: themeData.textTheme.bodySmall,
                   ),
                   trailing: Text(
                     isExpense ? '-${currencyFormatter.format(amount)}' : '+${currencyFormatter.format(amount)}',
@@ -525,343 +942,118 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                 );
               },
             ),
-            
-            SizedBox(height: 16),
-            Center(
-              child: TextButton.icon(
-                onPressed: () {
-                  // Navigate to transactions list
-                  if (_selectedIndex != 1 && _selectedIndex != 2) {
-                    setState(() {
-                      _selectedIndex = 1; // Go to expenses page
-                    });
-                  }
-                },
-                icon: Icon(Icons.list),
-                label: Text('View All Transactions'),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  void _showAddTransactionDialog(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => Container(
+        padding: EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Add Transaction',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
               ),
             ),
-          ],
-        ),
-      ),
-    );
-  }
-  
-  Widget _buildCategoryChart(List<dynamic> categories, CategoryProvider categoryProvider) {
-    // If no categories data from API, use categories from provider
-    if (categories.isEmpty && categoryProvider.expenseCategories.isNotEmpty) {
-      categories = categoryProvider.expenseCategories.map((cat) {
-        // Create a map with the format expected by the chart
-        return {
-          'id': cat.id,
-          'name': cat.name, 
-          'color': cat.colorCode,
-          'total': cat.currentSpending ?? 0.0,
-        };
-      }).toList();
-    }
-    
-    // If still no data, show placeholder
-    if (categories.isEmpty) {
-      return Card(
-        elevation: 4,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: Container(
-          height: 200,
-          padding: EdgeInsets.all(16),
-          child: Center(
-            child: Text('No category data available'),
-          ),
-        ),
-      );
-    }
-    
-    // Convert categories to data for pie chart
-    final List<PieChartSectionData> sections = [];
-    double totalSpending = 0;
-    
-    // Calculate total spending
-    for (final category in categories) {
-      totalSpending += (category['total'] ?? 0.0).toDouble();
-    }
-    
-    // Create pie sections
-    for (final category in categories) {
-      final name = category['name'] ?? 'Uncategorized';
-      final color = category['color'] ?? '#CCCCCC';
-      final total = (category['total'] ?? 0.0).toDouble();
-      
-      // Skip categories with no spending
-      if (total <= 0) continue;
-      
-      // Calculate percentage
-      final percentage = totalSpending > 0 ? (total / totalSpending) * 100 : 0;
-      
-      // Parse color from hex string
-      final colorValue = int.parse(color.replaceFirst('#', '0xFF'));
-      
-      sections.add(
-        PieChartSectionData(
-          color: Color(colorValue),
-          value: total,
-          title: '${percentage.round()}%',
-          radius: 80,
-          titleStyle: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 14,
-          ),
-        ),
-      );
-    }
-    
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              height: 250,
-              child: sections.isEmpty
-                ? Center(child: Text('No spending data'))
-                : PieChart(
-                    PieChartData(
-                      sections: sections,
-                      centerSpaceRadius: 40,
-                      sectionsSpace: 2,
-                    ),
+            SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildAddButton(
+                    context: ctx,
+                    icon: Icons.arrow_downward,
+                    label: 'Add Expense',
+                    color: Colors.red,
+                    onTap: () {
+                      Navigator.of(ctx).pop();
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => AddExpenseScreen(),
+                        ),
+                      );
+                    },
                   ),
+                ),
+                SizedBox(width: 16),
+                Expanded(
+                  child: _buildAddButton(
+                    context: ctx,
+                    icon: Icons.arrow_upward,
+                    label: 'Add Income',
+                    color: Colors.green,
+                    onTap: () {
+                      Navigator.of(ctx).pop();
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => AddIncomeScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
             ),
             SizedBox(height: 16),
-            
-            // Legend
-            Wrap(
-              spacing: 16,
-              runSpacing: 8,
-              children: categories.map((category) {
-                final name = category['name'] ?? 'Uncategorized';
-                final color = category['color'] ?? '#CCCCCC';
-                final total = (category['total'] ?? 0.0).toDouble();
-                
-                // Skip categories with no spending
-                if (total <= 0) return SizedBox.shrink();
-                
-                // Parse color from hex string
-                final colorValue = int.parse(color.replaceFirst('#', '0xFF'));
-                
-                return Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 12,
-                      height: 12,
-                      decoration: BoxDecoration(
-                        color: Color(colorValue),
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    SizedBox(width: 4),
-                    Text(
-                      '$name: ${currencyFormatter.format(total)}',
-                      style: TextStyle(
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                );
-              }).toList(),
-            ),
           ],
         ),
       ),
     );
   }
   
-  // Expenses page placeholder
-  Widget _buildExpensesPage() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.money_off, size: 64, color: Colors.grey),
-          SizedBox(height: 16),
-          Text(
-            'Expenses Page',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
-          SizedBox(height: 8),
-          Text(
-            'View and manage your expenses here',
-            style: TextStyle(color: Colors.grey),
-          ),
-          SizedBox(height: 24),
-          ElevatedButton.icon(
-            icon: Icon(Icons.add),
-            label: Text('Add New Expense'),
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => AddExpenseScreen(),
-                ),
-              );
-            },
-          ),
-        ],
+  Widget _buildAddButton({
+    required BuildContext context,
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withOpacity(0.5)),
       ),
-    );
-  }
-  
-  // Income page placeholder
-  Widget _buildIncomePage() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.attach_money, size: 64, color: Colors.grey),
-          SizedBox(height: 16),
-          Text(
-            'Income Page',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
-          SizedBox(height: 8),
-          Text(
-            'View and manage your income here',
-            style: TextStyle(color: Colors.grey),
-          ),
-          SizedBox(height: 24),
-          ElevatedButton.icon(
-            icon: Icon(Icons.add),
-            label: Text('Add New Income'),
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => AddIncomeScreen(),
-                ),
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-  
-  // Reports page
-  Widget _buildReportsPage() {
-    return DefaultTabController(
-      length: 3,
-      child: Scaffold(
-        appBar: AppBar(
-          automaticallyImplyLeading: false,
-          flexibleSpace: Column(
-            mainAxisAlignment: MainAxisAlignment.end,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              TabBar(
-                tabs: [
-                  Tab(text: 'Monthly'),
-                  Tab(text: 'Annual'),
-                  Tab(text: 'Budget'),
-                ],
+              Container(
+                padding: EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  icon,
+                  color: color,
+                  size: 24,
+                ),
+              ),
+              SizedBox(height: 12),
+              Text(
+                label,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
               ),
             ],
           ),
         ),
-        body: TabBarView(
-          children: [
-            _buildMonthlyReportTab(),
-            _buildAnnualReportTab(),
-            _buildBudgetReportTab(),
-          ],
-        ),
-      ),
-    );
-  }
-  
-  Widget _buildMonthlyReportTab() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.calendar_month, size: 64, color: Colors.grey),
-          SizedBox(height: 16),
-          Text(
-            'Monthly Report',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
-          SizedBox(height: 8),
-          Text(
-            'Monthly financial reports coming soon',
-            style: TextStyle(color: Colors.grey),
-          ),
-          SizedBox(height: 24),
-          ElevatedButton.icon(
-            icon: Icon(Icons.analytics),
-            label: Text('Generate Monthly Report'),
-            onPressed: () {
-              // Generate monthly report
-            },
-          ),
-        ],
-      ),
-    );
-  }
-  
-  Widget _buildAnnualReportTab() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.calendar_today, size: 64, color: Colors.grey),
-          SizedBox(height: 16),
-          Text(
-            'Annual Report',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
-          SizedBox(height: 8),
-          Text(
-            'Annual financial reports coming soon',
-            style: TextStyle(color: Colors.grey),
-          ),
-          SizedBox(height: 24),
-          ElevatedButton.icon(
-            icon: Icon(Icons.analytics),
-            label: Text('Generate Annual Report'),
-            onPressed: () {
-              // Generate annual report
-            },
-          ),
-        ],
-      ),
-    );
-  }
-  
-  Widget _buildBudgetReportTab() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.account_balance_wallet, size: 64, color: Colors.grey),
-          SizedBox(height: 16),
-          Text(
-            'Budget Report',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
-          SizedBox(height: 8),
-          Text(
-            'Budget reports coming soon',
-            style: TextStyle(color: Colors.grey),
-          ),
-          SizedBox(height: 24),
-          ElevatedButton.icon(
-            icon: Icon(Icons.analytics),
-            label: Text('Generate Budget Report'),
-            onPressed: () {
-              // Generate budget report
-            },
-          ),
-        ],
       ),
     );
   }

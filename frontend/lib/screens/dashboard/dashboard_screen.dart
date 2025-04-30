@@ -2,23 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
-import '../../providers/auth_provider.dart';
-import '../../providers/expense_provider.dart';
-import '../../providers/income_provider.dart';
-import '../../providers/category_provider.dart';
-import '../../services/report_service.dart';
-import '../../models/expense.dart';
-import '../../models/income.dart';
-import '../../models/category.dart';
-import '../../utils/constants.dart';
-import '../../utils/data_utils.dart';
-import '../../screens/expenses/add_expense_screen.dart';
-import '../../screens/income/add_income_screen.dart';
-import '../../widgets/common/loading_indicator.dart';
-import '../../widgets/common/error_display.dart';
-import '../../widgets/charts/fin_arc_charts.dart';
-import '../../widgets/common/drawer.dart';
-import '../../routes/route_names.dart';
+import '../providers/auth_provider.dart';
+import '../services/report_service.dart';
+import '../utils/constants.dart';
+import '../widgets/common/loading_indicator.dart';
+import '../widgets/common/error_display.dart';
+import '../widgets/common/drawer.dart';
+import '../routes/route_names.dart';
 
 class DashboardScreen extends StatefulWidget {
   @override
@@ -28,7 +18,7 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   final ReportService _reportService = ReportService();
   
-  bool _isLoading = false;
+  bool _isLoading = true;
   String? _error;
   Map<String, dynamic>? _dashboardData;
   final currencyFormatter = NumberFormat.currency(symbol: '\$');
@@ -39,23 +29,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void initState() {
     super.initState();
-    
-    // Fetch initial data
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _fetchDashboardData();
-      
-      // Initialize other data
-      final expenseProvider = Provider.of<ExpenseProvider>(context, listen: false);
-      final incomeProvider = Provider.of<IncomeProvider>(context, listen: false);
-      final categoryProvider = Provider.of<CategoryProvider>(context, listen: false);
-      
-      expenseProvider.fetchExpenses(refresh: true);
-      incomeProvider.fetchIncomes(refresh: true);
-      categoryProvider.fetchCategories();
-    });
+    _fetchDashboardData();
   }
   
   Future<void> _fetchDashboardData() async {
+    if (!mounted) return;
+    
     setState(() {
       _isLoading = true;
       _error = null;
@@ -63,6 +42,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     
     try {
       final result = await _reportService.getDashboardData();
+      
+      if (!mounted) return;
       
       if (result['success']) {
         setState(() {
@@ -76,6 +57,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         });
       }
     } catch (e) {
+      if (!mounted) return;
+      
       setState(() {
         _error = 'Failed to load dashboard data: $e';
         _isLoading = false;
@@ -87,6 +70,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     final themeData = Theme.of(context);
     final authProvider = Provider.of<AuthProvider>(context);
+    final user = authProvider.user;
     
     return Scaffold(
       appBar: AppBar(
@@ -147,7 +131,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
               error: _error!,
               onRetry: _fetchDashboardData,
             )
-          : _buildDashboardContent(themeData, authProvider),
+          : RefreshIndicator(
+              onRefresh: _fetchDashboardData,
+              child: _buildDashboardContent(themeData, user),
+            ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddTransactionDialog(context),
         child: Icon(Icons.add),
@@ -156,7 +143,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
   
-  Widget _buildDashboardContent(ThemeData themeData, AuthProvider authProvider) {
+  Widget _buildDashboardContent(ThemeData themeData, user) {
     // Use dashboard data or defaults
     final stats = _dashboardData?['stats'] ?? {
       'today': {'expenses': 0, 'income': 0, 'balance': 0},
@@ -176,43 +163,43 @@ class _DashboardScreenState extends State<DashboardScreen> {
     
     final budgetOverview = _dashboardData?['budget_overview'] ?? [];
     
-    return RefreshIndicator(
-      onRefresh: _fetchDashboardData,
-      child: SingleChildScrollView(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Welcome message and date
-            _buildWelcomeCard(authProvider, themeData),
-            SizedBox(height: 20),
-            
-            // Financial summary
-            _buildFinancialSummary(stats, themeData),
-            SizedBox(height: 24),
-            
-            // Main charts section
-            _buildFinancialCharts(trend, themeData),
-            SizedBox(height: 24),
-            
-            // Budget progress
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Welcome message and date
+          _buildWelcomeCard(user, themeData),
+          SizedBox(height: 20),
+          
+          // Financial summary
+          _buildFinancialSummary(stats, themeData),
+          SizedBox(height: 24),
+          
+          // Main charts section
+          _buildFinancialCharts(trend, themeData),
+          SizedBox(height: 24),
+          
+          // Budget progress
+          if (budgetOverview.isNotEmpty) ...[
             _buildBudgetProgress(budgetOverview, themeData),
             SizedBox(height: 24),
-            
-            // Spending breakdown
+          ],
+          
+          // Spending breakdown
+          if (categories.isNotEmpty) ...[
             _buildSpendingBreakdown(categories, themeData),
             SizedBox(height: 24),
-            
-            // Recent transactions
-            _buildRecentTransactions(recentTransactions, themeData),
           ],
-        ),
+          
+          // Recent transactions
+          _buildRecentTransactions(recentTransactions, themeData),
+        ],
       ),
     );
   }
   
-  Widget _buildWelcomeCard(AuthProvider authProvider, ThemeData themeData) {
-    final user = authProvider.user;
+  Widget _buildWelcomeCard(user, ThemeData themeData) {
     final now = DateTime.now();
     String greeting;
     
@@ -441,11 +428,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
         final month = DateTime(now.year, now.month - i, 1);
         months.add(DateFormat('MMM').format(month));
         
-        // Random sample data
+        // Zero data
         incomeSpots.add(FlSpot((5 - i).toDouble(), 0));
         expenseSpots.add(FlSpot((5 - i).toDouble(), 0));
       }
     }
+    
+    // Find max Y value for chart scaling
+    double maxY = 0;
+    for (final spot in incomeSpots) {
+      if (spot.y > maxY) maxY = spot.y;
+    }
+    for (final spot in expenseSpots) {
+      if (spot.y > maxY) maxY = spot.y;
+    }
+    
+    // Round up max value for nice chart scaling
+    maxY = ((maxY / 500).ceil() * 500).toDouble();
+    if (maxY < 1000) maxY = 1000;
     
     return Card(
       elevation: 2,
@@ -469,14 +469,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
             SizedBox(height: 24),
             
             // Chart
-            Container(
+            SizedBox(
               height: 200,
               child: LineChart(
                 LineChartData(
                   gridData: FlGridData(
                     show: true,
                     drawVerticalLine: false,
-                    horizontalInterval: 1000,
+                    horizontalInterval: maxY / 5,
                     getDrawingHorizontalLine: (value) {
                       return FlLine(
                         color: themeData.dividerColor.withOpacity(0.2),
@@ -491,7 +491,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         showTitles: true,
                         reservedSize: 40,
                         getTitlesWidget: (value, meta) {
-                          if (value == 0) return Text('');
+                          if (value == 0) return const Text('');
                           return Text(
                             '\$${value.toInt()}',
                             style: TextStyle(
@@ -500,7 +500,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ),
                           );
                         },
-                        interval: 2000,
+                        interval: maxY / 5,
                       ),
                     ),
                     bottomTitles: AxisTitles(
@@ -518,7 +518,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               ),
                             );
                           }
-                          return Text('');
+                          return const Text('');
                         },
                       ),
                     ),
@@ -529,6 +529,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   minX: 0,
                   maxX: months.length - 1.0,
                   minY: 0,
+                  maxY: maxY,
                   lineBarsData: [
                     // Income line
                     LineChartBarData(
@@ -605,10 +606,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
   
   Widget _buildBudgetProgress(List<dynamic> budgetOverview, ThemeData themeData) {
-    if (budgetOverview.isEmpty) {
-      return SizedBox.shrink(); // Don't show if no budget data
-    }
-    
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -677,7 +674,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ClipRRect(
                       borderRadius: BorderRadius.circular(4),
                       child: LinearProgressIndicator(
-                        value: percentage / 100,
+                        value: percentage > 0 ? (percentage / 100 > 1 ? 1 : percentage / 100) : 0,
                         minHeight: 8,
                         backgroundColor: themeData.dividerColor.withOpacity(0.2),
                         valueColor: AlwaysStoppedAnimation<Color>(progressColor),
@@ -713,20 +710,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
   
   Widget _buildSpendingBreakdown(List<dynamic> categories, ThemeData themeData) {
-    if (categories.isEmpty) {
-      return SizedBox.shrink(); // Don't show if no category data
-    }
-    
-    // Prepare data for pie chart
-    List<PieChartSectionData> sections = [];
-    double totalSpent = 0;
-    
     // Calculate total spending
+    double totalSpent = 0;
     for (final category in categories) {
       totalSpent += (category['total'] as num?)?.toDouble() ?? 0.0;
     }
     
-    // Create pie sections
+    // Prepare data for pie chart
+    List<PieChartSectionData> sections = [];
+    
     for (final category in categories) {
       final name = category['name'] ?? 'Category';
       final spent = (category['total'] as num?)?.toDouble() ?? 0.0;
@@ -746,7 +738,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           color: color,
           value: spent,
           title: '${percentage.toInt()}%',
-          radius: 80,
+          radius: 70,
           titleStyle: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
@@ -783,60 +775,67 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
             SizedBox(height: 16),
             
-            // Pie chart
-            Container(
-              height: 200,
-              child: sections.isEmpty
-                ? Center(child: Text('No spending data available'))
-                : PieChart(
-                    PieChartData(
-                      sections: sections,
-                      centerSpaceRadius: 40,
-                      sectionsSpace: 2,
-                    ),
+            if (sections.isEmpty) ...[
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Text('No spending data available'),
+                ),
+              ),
+            ] else ...[
+              // Pie chart
+              SizedBox(
+                height: 200,
+                child: PieChart(
+                  PieChartData(
+                    sections: sections,
+                    centerSpaceRadius: 40,
+                    sectionsSpace: 2,
                   ),
-            ),
-            
-            SizedBox(height: 16),
-            
-            // Categories legend
-            Wrap(
-              spacing: 16,
-              runSpacing: 8,
-              children: categories.map((category) {
-                final name = category['name'] ?? 'Category';
-                final spent = (category['total'] as num?)?.toDouble() ?? 0.0;
-                final colorHex = category['color'] ?? '#757575';
-                
-                // Skip categories with no spending
-                if (spent <= 0) return SizedBox.shrink();
-                
-                // Parse color from hex string
-                final color = Color(int.parse(colorHex.replaceFirst('#', '0xFF')));
-                
-                return Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 12,
-                      height: 12,
-                      decoration: BoxDecoration(
-                        color: color,
-                        shape: BoxShape.circle,
+                ),
+              ),
+              
+              SizedBox(height: 16),
+              
+              // Categories legend
+              Wrap(
+                spacing: 16,
+                runSpacing: 8,
+                children: categories.map((category) {
+                  final name = category['name'] ?? 'Category';
+                  final spent = (category['total'] as num?)?.toDouble() ?? 0.0;
+                  final colorHex = category['color'] ?? '#757575';
+                  
+                  // Skip categories with no spending
+                  if (spent <= 0) return SizedBox.shrink();
+                  
+                  // Parse color from hex string
+                  final color = Color(int.parse(colorHex.replaceFirst('#', '0xFF')));
+                  
+                  return Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 12,
+                        height: 12,
+                        decoration: BoxDecoration(
+                          color: color,
+                          shape: BoxShape.circle,
+                        ),
                       ),
-                    ),
-                    SizedBox(width: 4),
-                    Flexible(
-                      child: Text(
-                        '$name: ${currencyFormatter.format(spent)}',
-                        style: themeData.textTheme.bodySmall,
-                        overflow: TextOverflow.ellipsis,
+                      SizedBox(width: 4),
+                      Flexible(
+                        child: Text(
+                          '$name: ${currencyFormatter.format(spent)}',
+                          style: themeData.textTheme.bodySmall,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                    ),
-                  ],
-                );
-              }).toList(),
-            ),
+                    ],
+                  );
+                }).toList(),
+              ),
+            ],
           ],
         ),
       ),
@@ -861,10 +860,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     
     // Take only the first 5 transactions
     final recentList = allTransactions.take(5).toList();
-    
-    if (recentList.isEmpty) {
-      return SizedBox.shrink();
-    }
     
     return Card(
       elevation: 2,
@@ -894,72 +889,79 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
             SizedBox(height: 16),
             
-            // Transactions list
-            ListView.separated(
-              shrinkWrap: true,
-              physics: NeverScrollableScrollPhysics(),
-              itemCount: recentList.length,
-              separatorBuilder: (context, index) => Divider(height: 1),
-              itemBuilder: (context, index) {
-                final transaction = recentList[index];
-                final isExpense = transaction['type'] == 'expense';
-                final title = isExpense 
-                  ? (transaction['description'] ?? 'Expense')
-                  : (transaction['source'] ?? 'Income');
-                final category = isExpense 
-                  ? (transaction['category'] ?? 'Uncategorized')
-                  : '';
-                final amount = (transaction['amount'] as num?)?.toDouble() ?? 0.0;
-                final date = transaction['date'] ?? '';
-                
-                return ListTile(
-                  contentPadding: EdgeInsets.symmetric(vertical: 4, horizontal: 0),
-                  leading: CircleAvatar(
-                    backgroundColor: isExpense ? Colors.red.withOpacity(0.2) : Colors.green.withOpacity(0.2),
-                    child: Icon(
-                      isExpense ? Icons.arrow_downward : Icons.arrow_upward,
-                      color: isExpense ? Colors.red : Colors.green,
-                      size: 20,
+            if (recentList.isEmpty) ...[
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Text('No recent transactions'),
+                ),
+              ),
+            ] else ...[
+              // Transactions list
+              ListView.separated(
+                shrinkWrap: true,
+                physics: NeverScrollableScrollPhysics(),
+                itemCount: recentList.length,
+                separatorBuilder: (context, index) => Divider(height: 1),
+                itemBuilder: (context, index) {
+                  final transaction = recentList[index];
+                  final isExpense = transaction['type'] == 'expense';
+                  final title = isExpense 
+                    ? (transaction['description'] ?? 'Expense')
+                    : (transaction['source'] ?? 'Income');
+                  final category = transaction['category'] ?? 'Uncategorized';
+                  final amount = (transaction['amount'] as num?)?.toDouble() ?? 0.0;
+                  final date = transaction['date'] ?? '';
+                  
+                  return ListTile(
+                    contentPadding: EdgeInsets.symmetric(vertical: 4, horizontal: 0),
+                    leading: CircleAvatar(
+                      backgroundColor: isExpense ? Colors.red.withOpacity(0.2) : Colors.green.withOpacity(0.2),
+                      child: Icon(
+                        isExpense ? Icons.arrow_downward : Icons.arrow_upward,
+                        color: isExpense ? Colors.red : Colors.green,
+                        size: 20,
+                      ),
                     ),
-                  ),
-                  title: Text(
-                    title,
-                    style: themeData.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w500,
+                    title: Text(
+                      title,
+                      style: themeData.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w500,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  subtitle: Text(
-                    isExpense
-                      ? '${category} • ${DateFormat('MMM d').format(DateTime.parse(date))}'
-                      : DateFormat('MMM d').format(DateTime.parse(date)),
-                    style: themeData.textTheme.bodySmall,
-                  ),
-                  trailing: Text(
-                    isExpense ? '-${currencyFormatter.format(amount)}' : '+${currencyFormatter.format(amount)}',
-                    style: TextStyle(
-                      color: isExpense ? Colors.red : Colors.green,
-                      fontWeight: FontWeight.bold,
+                    subtitle: Text(
+                      isExpense
+                        ? '${category} • ${DateFormat('MMM d').format(DateTime.parse(date))}'
+                        : DateFormat('MMM d').format(DateTime.parse(date)),
+                      style: themeData.textTheme.bodySmall,
                     ),
-                  ),
-                  onTap: () {
-                    // Navigate to transaction detail
-                    if (isExpense) {
-                      Navigator.of(context).pushNamed(
-                        RouteNames.expenseDetail,
-                        arguments: {'expenseId': transaction['id']},
-                      );
-                    } else {
-                      Navigator.of(context).pushNamed(
-                        RouteNames.incomeDetail,
-                        arguments: {'incomeId': transaction['id']},
-                      );
-                    }
-                  },
-                );
-              },
-            ),
+                    trailing: Text(
+                      isExpense ? '-${currencyFormatter.format(amount)}' : '+${currencyFormatter.format(amount)}',
+                      style: TextStyle(
+                        color: isExpense ? Colors.red : Colors.green,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    onTap: () {
+                      // Navigate to transaction detail
+                      if (isExpense) {
+                        Navigator.of(context).pushNamed(
+                          RouteNames.expenseDetail,
+                          arguments: {'expenseId': transaction['id']},
+                        );
+                      } else {
+                        Navigator.of(context).pushNamed(
+                          RouteNames.incomeDetail,
+                          arguments: {'incomeId': transaction['id']},
+                        );
+                      }
+                    },
+                  );
+                },
+              ),
+            ],
           ],
         ),
       ),
@@ -995,11 +997,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     color: Colors.red,
                     onTap: () {
                       Navigator.of(ctx).pop();
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => AddExpenseScreen(),
-                        ),
-                      );
+                      Navigator.of(context).pushNamed(RouteNames.addExpense);
                     },
                   ),
                 ),
@@ -1012,11 +1010,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     color: Colors.green,
                     onTap: () {
                       Navigator.of(ctx).pop();
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => AddIncomeScreen(),
-                        ),
-                      );
+                      Navigator.of(context).pushNamed(RouteNames.addIncome);
                     },
                   ),
                 ),

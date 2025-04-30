@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
-import '../../services/report_service.dart';
-import '../../widgets/common/loading_indicator.dart';
-import '../../widgets/common/error_display.dart';
-import '../../utils/data_utils.dart';
+import '../services/report_service.dart';
+import '../widgets/common/loading_indicator.dart';
+import '../widgets/common/error_display.dart';
+import '../widgets/common/drawer.dart';
+import '../routes/route_names.dart';
+import '../utils/error_handler.dart';
 
 class MonthlyReportScreen extends StatefulWidget {
   @override
@@ -19,15 +21,18 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
   Map<String, dynamic>? _reportData;
   
   // Selected date
-  DateTime _selectedDate = DateTime.now();
+  late DateTime _selectedDate;
   
   @override
   void initState() {
     super.initState();
+    _selectedDate = DateTime.now();
     _fetchMonthlyReport();
   }
   
   Future<void> _fetchMonthlyReport() async {
+    if (!mounted) return;
+    
     setState(() {
       _isLoading = true;
       _error = null;
@@ -38,6 +43,8 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
         month: _selectedDate.month,
         year: _selectedDate.year,
       );
+      
+      if (!mounted) return;
       
       if (result['success']) {
         setState(() {
@@ -51,6 +58,8 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
         });
       }
     } catch (e) {
+      if (!mounted) return;
+      
       setState(() {
         _error = 'Failed to load monthly report: $e';
         _isLoading = false;
@@ -68,6 +77,12 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
   
   // Navigate to next month
   void _nextMonth() {
+    // Don't allow going to future months
+    if (_selectedDate.year == DateTime.now().year && 
+        _selectedDate.month == DateTime.now().month) {
+      return;
+    }
+    
     setState(() {
       _selectedDate = DateTime(_selectedDate.year, _selectedDate.month + 1, 1);
     });
@@ -82,7 +97,15 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Monthly Report'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.calendar_today),
+            onPressed: () => _showMonthPicker(context),
+            tooltip: 'Choose Month',
+          ),
+        ],
       ),
+      drawer: AppDrawer(currentRoute: RouteNames.monthlyReport),
       body: _isLoading 
         ? LoadingIndicator(message: 'Loading monthly report...')
         : _error != null
@@ -92,44 +115,167 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
             )
           : _reportData == null
             ? Center(child: Text('No report data available'))
-            : SingleChildScrollView(
-                padding: EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Month selector
-                    _buildMonthSelector(theme),
-                    SizedBox(height: 24),
-                    
-                    // Monthly summary
-                    _buildMonthlySummary(theme, currencyFormatter),
-                    SizedBox(height: 24),
-                    
-                    // Daily trends
-                    _buildDailyTrendsChart(theme),
-                    SizedBox(height: 24),
-                    
-                    // Expense categories
-                    _buildExpenseCategories(theme, currencyFormatter),
-                    SizedBox(height: 24),
-                    
-                    // Income sources
-                    _buildIncomeSources(theme, currencyFormatter),
-                  ],
+            : RefreshIndicator(
+                onRefresh: _fetchMonthlyReport,
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Month selector
+                      _buildMonthSelector(theme),
+                      SizedBox(height: 24),
+                      
+                      // Monthly summary
+                      _buildMonthlySummary(theme, currencyFormatter),
+                      SizedBox(height: 24),
+                      
+                      // Daily trends
+                      _buildDailyTrendsChart(theme),
+                      SizedBox(height: 24),
+                      
+                      // Expense categories
+                      _buildExpenseCategories(theme, currencyFormatter),
+                      SizedBox(height: 24),
+                      
+                      // Income sources
+                      _buildIncomeSources(theme, currencyFormatter),
+                    ],
+                  ),
                 ),
               ),
     );
   }
   
-  Widget _buildMonthSelector(ThemeData theme) {
-    // Get month name and year from report data
-    final monthName = _reportData!['month_name'] as String;
-    final year = _reportData!['year'] as int;
+  // Allow user to pick a month from a dialog
+  Future<void> _showMonthPicker(BuildContext context) async {
+    final now = DateTime.now();
+    final firstYear = 2020; // First available year
     
-    // Get navigation data
-    final navigation = _reportData!['navigation'] as Map<String, dynamic>;
-    final hasNext = DateTime(navigation['next_year'], navigation['next_month'], 1)
-                    .isBefore(DateTime.now().add(Duration(days: 1)));
+    final years = List<int>.generate(now.year - firstYear + 1, (i) => firstYear + i);
+    final months = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    
+    int selectedYear = _selectedDate.year;
+    int selectedMonth = _selectedDate.month;
+    
+    await showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: Text('Select Month'),
+          content: Container(
+            width: double.maxFinite,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Year selection
+                DropdownButton<int>(
+                  isExpanded: true,
+                  value: selectedYear,
+                  items: years.map((year) {
+                    return DropdownMenuItem<int>(
+                      value: year,
+                      child: Text('$year'),
+                    );
+                  }).toList(),
+                  onChanged: (year) {
+                    if (year != null) {
+                      setState(() {
+                        selectedYear = year;
+                      });
+                    }
+                  },
+                ),
+                SizedBox(height: 16),
+                
+                // Month grid
+                GridView.builder(
+                  shrinkWrap: true,
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                    childAspectRatio: 2.5,
+                    crossAxisSpacing: 10,
+                    mainAxisSpacing: 10,
+                  ),
+                  itemCount: 12,
+                  itemBuilder: (context, index) {
+                    final month = index + 1;
+                    final isSelected = selectedMonth == month;
+                    final isAfterCurrentMonth = selectedYear == now.year && month > now.month;
+                    
+                    return InkWell(
+                      onTap: isAfterCurrentMonth ? null : () {
+                        setState(() {
+                          selectedMonth = month;
+                        });
+                      },
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: isSelected 
+                              ? Theme.of(context).primaryColor.withOpacity(0.2)
+                              : null,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: isSelected
+                                ? Theme.of(context).primaryColor
+                                : Colors.grey.withOpacity(0.3),
+                            width: isSelected ? 2 : 1,
+                          ),
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          months[index].substring(0, 3),
+                          style: TextStyle(
+                            color: isAfterCurrentMonth
+                                ? Colors.grey
+                                : isSelected
+                                    ? Theme.of(context).primaryColor
+                                    : null,
+                            fontWeight: isSelected ? FontWeight.bold : null,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('CANCEL'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                setState(() {
+                  _selectedDate = DateTime(selectedYear, selectedMonth, 1);
+                });
+                _fetchMonthlyReport();
+              },
+              child: Text('SELECT'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildMonthSelector(ThemeData theme) {
+    // Get month name and year from report data or use current selection
+    final monthName = _reportData?['month_name'] as String? ?? 
+                      DateFormat('MMMM').format(_selectedDate);
+    final year = _reportData?['year'] as int? ?? _selectedDate.year;
+    
+    // Check if we can go to next month (not beyond current month)
+    final now = DateTime.now();
+    final canGoNext = _selectedDate.year < now.year || 
+                     (_selectedDate.year == now.year && _selectedDate.month < now.month);
     
     return Card(
       elevation: 2,
@@ -152,8 +298,8 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
             ),
             IconButton(
               icon: Icon(Icons.chevron_right),
-              onPressed: hasNext ? _nextMonth : null,
-              tooltip: 'Next month',
+              onPressed: canGoNext ? _nextMonth : null,
+              tooltip: canGoNext ? 'Next month' : 'Cannot go to future months',
             ),
           ],
         ),
@@ -265,10 +411,34 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
   }
   
   Widget _buildDailyTrendsChart(ThemeData theme) {
-    final dailyData = _reportData!['daily_data'] as List<dynamic>;
+    final dailyData = _reportData!['daily_data'] as List<dynamic>? ?? [];
     
     if (dailyData.isEmpty) {
-      return SizedBox.shrink();
+      return Card(
+        elevation: 2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Daily Trends',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 24),
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Text('No daily data available for this month'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
     }
     
     // Extract data for the chart
@@ -476,10 +646,34 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
   }
   
   Widget _buildExpenseCategories(ThemeData theme, NumberFormat currencyFormatter) {
-    final categories = _reportData!['categories'] as List<dynamic>;
+    final categories = _reportData!['categories'] as List<dynamic>? ?? [];
     
     if (categories.isEmpty) {
-      return SizedBox.shrink();
+      return Card(
+        elevation: 2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Expense Categories',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 16),
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Text('No expense data available for this month'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
     }
     
     // Prepare data for pie chart
@@ -528,58 +722,65 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
             ),
             SizedBox(height: 16),
             
-            // Pie chart
-            Container(
-              height: 200,
-              child: sections.isEmpty
-                ? Center(child: Text('No spending data available'))
-                : PieChart(
-                    PieChartData(
-                      sections: sections,
-                      centerSpaceRadius: 40,
-                      sectionsSpace: 2,
+            if (sections.isEmpty) ...[
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Text('No spending data available'),
+                ),
+              ),
+            ] else ...[
+              // Pie chart
+              Container(
+                height: 200,
+                child: PieChart(
+                  PieChartData(
+                    sections: sections,
+                    centerSpaceRadius: 40,
+                    sectionsSpace: 2,
+                  ),
+                ),
+              ),
+              
+              SizedBox(height: 16),
+              
+              // Category list
+              ListView.builder(
+                shrinkWrap: true,
+                physics: NeverScrollableScrollPhysics(),
+                itemCount: categories.length,
+                itemBuilder: (context, index) {
+                  final category = categories[index];
+                  final name = category['name'] as String;
+                  final color = category['color'] as String;
+                  final total = (category['total'] as num).toDouble();
+                  final percentage = (category['percentage'] as num).toDouble();
+                  
+                  // Skip categories with no spending
+                  if (total <= 0) return SizedBox.shrink();
+                  
+                  // Parse color from hex string
+                  final colorValue = Color(int.parse(color.replaceFirst('#', '0xFF')));
+                  
+                  return ListTile(
+                    contentPadding: EdgeInsets.symmetric(vertical: 4),
+                    leading: Container(
+                      width: 16,
+                      height: 16,
+                      decoration: BoxDecoration(
+                        color: colorValue,
+                        shape: BoxShape.circle,
+                      ),
                     ),
-                  ),
-            ),
-            
-            SizedBox(height: 16),
-            
-            // Category list
-            ListView.builder(
-              shrinkWrap: true,
-              physics: NeverScrollableScrollPhysics(),
-              itemCount: categories.length,
-              itemBuilder: (context, index) {
-                final category = categories[index];
-                final name = category['name'] as String;
-                final color = category['color'] as String;
-                final total = (category['total'] as num).toDouble();
-                final percentage = (category['percentage'] as num).toDouble();
-                
-                // Skip categories with no spending
-                if (total <= 0) return SizedBox.shrink();
-                
-                // Parse color from hex string
-                final colorValue = Color(int.parse(color.replaceFirst('#', '0xFF')));
-                
-                return ListTile(
-                  contentPadding: EdgeInsets.symmetric(vertical: 4),
-                  leading: Container(
-                    width: 16,
-                    height: 16,
-                    decoration: BoxDecoration(
-                      color: colorValue,
-                      shape: BoxShape.circle,
+                    title: Text(name),
+                    trailing: Text(
+                      '${currencyFormatter.format(total)} (${percentage.toInt()}%)',
+                      style: TextStyle(fontWeight: FontWeight.bold),
                     ),
-                  ),
-                  title: Text(name),
-                  trailing: Text(
-                    '${currencyFormatter.format(total)} (${percentage.toInt()}%)',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                );
-              },
-            ),
+                  );
+                },
+              ),
+            ],
           ],
         ),
       ),
@@ -587,10 +788,34 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
   }
   
   Widget _buildIncomeSources(ThemeData theme, NumberFormat currencyFormatter) {
-    final sources = _reportData!['income_sources'] as List<dynamic>;
+    final sources = _reportData!['income_sources'] as List<dynamic>? ?? [];
     
     if (sources.isEmpty) {
-      return SizedBox.shrink();
+      return Card(
+        elevation: 2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Income Sources',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 16),
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Text('No income data available for this month'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
     }
     
     // Prepare data for bar chart
@@ -655,121 +880,128 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
             ),
             SizedBox(height: 16),
             
-            // Bar chart
-            Container(
-              height: 200,
-              child: barGroups.isEmpty
-                ? Center(child: Text('No income data available'))
-                : BarChart(
-                    BarChartData(
-                      alignment: BarChartAlignment.center,
-                      maxY: maxAmount,
-                      minY: 0,
-                      gridData: FlGridData(
-                        show: true,
-                        horizontalInterval: maxAmount / 5,
-                        getDrawingHorizontalLine: (value) {
-                          return FlLine(
-                            color: theme.dividerColor.withOpacity(0.2),
-                            strokeWidth: 1,
-                          );
-                        },
-                        drawVerticalLine: false,
-                      ),
-                      titlesData: FlTitlesData(
-                        show: true,
-                        bottomTitles: AxisTitles(
-                          sideTitles: SideTitles(
-                            showTitles: true,
-                            reservedSize: 30,
-                            getTitlesWidget: (value, meta) {
-                              final index = value.toInt();
-                              if (index >= 0 && index < sourceNames.length) {
-                                return Padding(
-                                  padding: EdgeInsets.only(top: 8),
-                                  child: Text(
-                                    sourceNames[index],
-                                    style: TextStyle(
-                                      color: theme.textTheme.bodySmall?.color,
-                                      fontSize: 10,
-                                    ),
-                                    textAlign: TextAlign.center,
-                                    overflow: TextOverflow.ellipsis,
+            if (barGroups.isEmpty) ...[
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Text('No income data available'),
+                ),
+              ),
+            ] else ...[
+              // Bar chart
+              Container(
+                height: 200,
+                child: BarChart(
+                  BarChartData(
+                    alignment: BarChartAlignment.center,
+                    maxY: maxAmount,
+                    minY: 0,
+                    gridData: FlGridData(
+                      show: true,
+                      horizontalInterval: maxAmount / 5,
+                      getDrawingHorizontalLine: (value) {
+                        return FlLine(
+                          color: theme.dividerColor.withOpacity(0.2),
+                          strokeWidth: 1,
+                        );
+                      },
+                      drawVerticalLine: false,
+                    ),
+                    titlesData: FlTitlesData(
+                      show: true,
+                      bottomTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          reservedSize: 30,
+                          getTitlesWidget: (value, meta) {
+                            final index = value.toInt();
+                            if (index >= 0 && index < sourceNames.length) {
+                              return Padding(
+                                padding: EdgeInsets.only(top: 8),
+                                child: Text(
+                                  sourceNames[index],
+                                  style: TextStyle(
+                                    color: theme.textTheme.bodySmall?.color,
+                                    fontSize: 10,
                                   ),
-                                );
-                              }
-                              return Text('');
-                            },
-                          ),
-                        ),
-                        leftTitles: AxisTitles(
-                          sideTitles: SideTitles(
-                            showTitles: true,
-                            reservedSize: 40,
-                            getTitlesWidget: (value, meta) {
-                              if (value == 0) return Text('');
-                              return Text(
-                                '\$${value.toInt()}',
-                                style: TextStyle(
-                                  color: theme.textTheme.bodySmall?.color,
-                                  fontSize: 10,
+                                  textAlign: TextAlign.center,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               );
-                            },
-                            interval: maxAmount / 5,
-                          ),
-                        ),
-                        topTitles: AxisTitles(
-                          sideTitles: SideTitles(showTitles: false),
-                        ),
-                        rightTitles: AxisTitles(
-                          sideTitles: SideTitles(showTitles: false),
+                            }
+                            return Text('');
+                          },
                         ),
                       ),
-                      borderData: FlBorderData(show: false),
-                      barGroups: barGroups,
+                      leftTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          reservedSize: 40,
+                          getTitlesWidget: (value, meta) {
+                            if (value == 0) return Text('');
+                            return Text(
+                              '\$${value.toInt()}',
+                              style: TextStyle(
+                                color: theme.textTheme.bodySmall?.color,
+                                fontSize: 10,
+                              ),
+                            );
+                          },
+                          interval: maxAmount / 5,
+                        ),
+                      ),
+                      topTitles: AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                      rightTitles: AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
                     ),
+                    borderData: FlBorderData(show: false),
+                    barGroups: barGroups,
                   ),
-            ),
-            
-            SizedBox(height: 16),
-            
-            // Income sources list
-            ListView.builder(
-              shrinkWrap: true,
-              physics: NeverScrollableScrollPhysics(),
-              itemCount: sources.length,
-              itemBuilder: (context, index) {
-                final source = sources[index];
-                final name = source['name'] as String;
-                final color = source['color'] as String;
-                final total = (source['total'] as num).toDouble();
-                final percentage = (source['percentage'] as num).toDouble();
-                
-                // Skip sources with no income
-                if (total <= 0) return SizedBox.shrink();
-                
-                // Parse color from hex string
-                final colorValue = Color(int.parse(color.replaceFirst('#', '0xFF')));
-                
-                return ListTile(
-                  contentPadding: EdgeInsets.symmetric(vertical: 4),
-                  leading: Container(
-                    width: 16,
-                    height: 16,
-                    decoration: BoxDecoration(
-                      color: colorValue,
-                      shape: BoxShape.circle,
+                ),
+              ),
+              
+              SizedBox(height: 16),
+              
+              // Income sources list
+              ListView.builder(
+                shrinkWrap: true,
+                physics: NeverScrollableScrollPhysics(),
+                itemCount: sources.length,
+                itemBuilder: (context, index) {
+                  final source = sources[index];
+                  final name = source['name'] as String;
+                  final color = source['color'] as String;
+                  final total = (source['total'] as num).toDouble();
+                  final percentage = (source['percentage'] as num).toDouble();
+                  
+                  // Skip sources with no income
+                  if (total <= 0) return SizedBox.shrink();
+                  
+                  // Parse color from hex string
+                  final colorValue = Color(int.parse(color.replaceFirst('#', '0xFF')));
+                  
+                  return ListTile(
+                    contentPadding: EdgeInsets.symmetric(vertical: 4),
+                    leading: Container(
+                      width: 16,
+                      height: 16,
+                      decoration: BoxDecoration(
+                        color: colorValue,
+                        shape: BoxShape.circle,
+                      ),
                     ),
-                  ),
-                  title: Text(name),
-                  trailing: Text(
-                    '${currencyFormatter.format(total)} (${percentage.toInt()}%)',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                );
-              },
-            ),
+                    title: Text(name),
+                    trailing: Text(
+                      '${currencyFormatter.format(total)} (${percentage.toInt()}%)',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  );
+                },
+              ),
+            ],
           ],
         ),
       ),

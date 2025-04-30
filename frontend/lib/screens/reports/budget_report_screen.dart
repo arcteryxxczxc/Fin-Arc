@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import '../../providers/auth_provider.dart';
-import '../../providers/category_provider.dart';
-import '../../services/report_service.dart';
-import '../../widgets/common/loading_indicator.dart';
-import '../../widgets/common/error_display.dart';
-import '../../widgets/charts/fin_arc_charts.dart';
+import '../services/report_service.dart';
+import '../widgets/common/loading_indicator.dart';
+import '../widgets/common/error_display.dart';
+import '../widgets/common/drawer.dart';
+import '../routes/route_names.dart';
+import '../utils/error_handler.dart';
 
 class BudgetReportScreen extends StatefulWidget {
   @override
@@ -21,15 +21,18 @@ class _BudgetReportScreenState extends State<BudgetReportScreen> {
   Map<String, dynamic>? _budgetData;
   
   // Selected date
-  DateTime _selectedDate = DateTime.now();
+  late DateTime _selectedDate;
   
   @override
   void initState() {
     super.initState();
+    _selectedDate = DateTime.now();
     _fetchBudgetReport();
   }
   
   Future<void> _fetchBudgetReport() async {
+    if (!mounted) return;
+    
     setState(() {
       _isLoading = true;
       _error = null;
@@ -40,6 +43,8 @@ class _BudgetReportScreenState extends State<BudgetReportScreen> {
         month: _selectedDate.month,
         year: _selectedDate.year,
       );
+      
+      if (!mounted) return;
       
       if (result['success']) {
         setState(() {
@@ -53,6 +58,8 @@ class _BudgetReportScreenState extends State<BudgetReportScreen> {
         });
       }
     } catch (e) {
+      if (!mounted) return;
+      
       setState(() {
         _error = 'Failed to load budget report: $e';
         _isLoading = false;
@@ -70,10 +77,135 @@ class _BudgetReportScreenState extends State<BudgetReportScreen> {
   
   // Navigate to next month
   void _nextMonth() {
+    // Don't allow going to future months
+    if (_selectedDate.year == DateTime.now().year && 
+        _selectedDate.month == DateTime.now().month) {
+      return;
+    }
+    
     setState(() {
       _selectedDate = DateTime(_selectedDate.year, _selectedDate.month + 1, 1);
     });
     _fetchBudgetReport();
+  }
+  
+  // Allow user to pick a month/year
+  void _showMonthPicker(BuildContext context) {
+    final now = DateTime.now();
+    final firstYear = 2020; // First available year
+    
+    final years = List<int>.generate(now.year - firstYear + 1, (i) => firstYear + i);
+    final months = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    
+    int selectedYear = _selectedDate.year;
+    int selectedMonth = _selectedDate.month;
+    
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: Text('Select Month'),
+          content: Container(
+            width: double.maxFinite,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Year selection
+                DropdownButton<int>(
+                  isExpanded: true,
+                  value: selectedYear,
+                  items: years.map((year) {
+                    return DropdownMenuItem<int>(
+                      value: year,
+                      child: Text('$year'),
+                    );
+                  }).toList(),
+                  onChanged: (year) {
+                    if (year != null) {
+                      setDialogState(() {
+                        selectedYear = year;
+                      });
+                    }
+                  },
+                ),
+                SizedBox(height: 16),
+                
+                // Month grid
+                GridView.builder(
+                  shrinkWrap: true,
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                    childAspectRatio: 2.5,
+                    crossAxisSpacing: 10,
+                    mainAxisSpacing: 10,
+                  ),
+                  itemCount: 12,
+                  itemBuilder: (context, index) {
+                    final month = index + 1;
+                    final isSelected = selectedMonth == month;
+                    final isAfterCurrentMonth = selectedYear == now.year && month > now.month;
+                    
+                    return InkWell(
+                      onTap: isAfterCurrentMonth ? null : () {
+                        setDialogState(() {
+                          selectedMonth = month;
+                        });
+                      },
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: isSelected 
+                              ? Theme.of(context).primaryColor.withOpacity(0.2)
+                              : null,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: isSelected
+                                ? Theme.of(context).primaryColor
+                                : Colors.grey.withOpacity(0.3),
+                            width: isSelected ? 2 : 1,
+                          ),
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          months[index].substring(0, 3),
+                          style: TextStyle(
+                            color: isAfterCurrentMonth
+                                ? Colors.grey
+                                : isSelected
+                                    ? Theme.of(context).primaryColor
+                                    : null,
+                            fontWeight: isSelected ? FontWeight.bold : null,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('CANCEL'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                setState(() {
+                  _selectedDate = DateTime(selectedYear, selectedMonth, 1);
+                });
+                _fetchBudgetReport();
+              },
+              child: Text('SELECT'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
   
   @override
@@ -84,7 +216,15 @@ class _BudgetReportScreenState extends State<BudgetReportScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Budget Report'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.calendar_today),
+            onPressed: () => _showMonthPicker(context),
+            tooltip: 'Choose Month',
+          ),
+        ],
       ),
+      drawer: AppDrawer(currentRoute: RouteNames.budgetReport),
       body: _isLoading 
         ? LoadingIndicator(message: 'Loading budget report...')
         : _error != null
@@ -94,26 +234,29 @@ class _BudgetReportScreenState extends State<BudgetReportScreen> {
             )
           : _budgetData == null
             ? Center(child: Text('No budget data available'))
-            : SingleChildScrollView(
-                padding: EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Month selector
-                    _buildMonthSelector(theme),
-                    SizedBox(height: 24),
-                    
-                    // Budget summary
-                    _buildBudgetSummary(theme, currencyFormatter),
-                    SizedBox(height: 24),
-                    
-                    // Categories with budget
-                    _buildBudgetCategoriesList(theme, currencyFormatter),
-                    SizedBox(height: 24),
-                    
-                    // Categories without budget
-                    _buildNonBudgetCategoriesList(theme, currencyFormatter),
-                  ],
+            : RefreshIndicator(
+                onRefresh: _fetchBudgetReport,
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Month selector
+                      _buildMonthSelector(theme),
+                      SizedBox(height: 24),
+                      
+                      // Budget summary
+                      _buildBudgetSummary(theme, currencyFormatter),
+                      SizedBox(height: 24),
+                      
+                      // Categories with budget
+                      _buildBudgetCategoriesList(theme, currencyFormatter),
+                      SizedBox(height: 24),
+                      
+                      // Categories without budget
+                      _buildNonBudgetCategoriesList(theme, currencyFormatter),
+                    ],
+                  ),
                 ),
               ),
     );
@@ -121,7 +264,14 @@ class _BudgetReportScreenState extends State<BudgetReportScreen> {
   
   Widget _buildMonthSelector(ThemeData theme) {
     // Get month name and year
-    final monthYear = DateFormat('MMMM yyyy').format(_selectedDate);
+    final monthName = _budgetData?['month_name'] as String? ?? 
+                      DateFormat('MMMM').format(_selectedDate);
+    final year = _budgetData?['year'] as int? ?? _selectedDate.year;
+    
+    // Check if we can go to next month (not beyond current month)
+    final now = DateTime.now();
+    final canGoNext = _selectedDate.year < now.year || 
+                     (_selectedDate.year == now.year && _selectedDate.month < now.month);
     
     return Card(
       elevation: 2,
@@ -136,18 +286,19 @@ class _BudgetReportScreenState extends State<BudgetReportScreen> {
               onPressed: _previousMonth,
               tooltip: 'Previous month',
             ),
-            Text(
-              monthYear,
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
+            GestureDetector(
+              onTap: () => _showMonthPicker(context),
+              child: Text(
+                '$monthName $year',
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
             IconButton(
               icon: Icon(Icons.chevron_right),
-              onPressed: DateTime(_selectedDate.year, _selectedDate.month, 1).isAfter(DateTime.now())
-                ? null // Disable if future month
-                : _nextMonth,
-              tooltip: 'Next month',
+              onPressed: canGoNext ? _nextMonth : null,
+              tooltip: canGoNext ? 'Next month' : 'Cannot go to future months',
             ),
           ],
         ),
@@ -156,7 +307,7 @@ class _BudgetReportScreenState extends State<BudgetReportScreen> {
   }
   
   Widget _buildBudgetSummary(ThemeData theme, NumberFormat currencyFormatter) {
-    final summary = _budgetData!['budget_summary'];
+    final summary = _budgetData!['budget_summary'] as Map<String, dynamic>;
     final totalBudget = (summary['total_budget'] as num?)?.toDouble() ?? 0.0;
     final totalSpent = (summary['total_spent'] as num?)?.toDouble() ?? 0.0;
     final remaining = (summary['remaining'] as num?)?.toDouble() ?? 0.0;
@@ -301,10 +452,34 @@ class _BudgetReportScreenState extends State<BudgetReportScreen> {
   }
   
   Widget _buildBudgetCategoriesList(ThemeData theme, NumberFormat currencyFormatter) {
-    final budgetCategories = _budgetData!['budget_categories'] as List<dynamic>;
+    final budgetCategories = _budgetData!['budget_categories'] as List<dynamic>? ?? [];
     
     if (budgetCategories.isEmpty) {
-      return SizedBox.shrink();
+      return Card(
+        elevation: 2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Categories with Budget',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 16),
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Text('No budget categories found for this month'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
     }
     
     return Card(
@@ -336,7 +511,7 @@ class _BudgetReportScreenState extends State<BudgetReportScreen> {
                 final spent = (category['spent'] as num).toDouble();
                 final remaining = (category['remaining'] as num).toDouble();
                 final percentage = (category['percentage'] as num).toDouble();
-                final status = category['status'] as String;
+                final status = category['status'] as String? ?? '';
                 
                 // Determine color based on status
                 Color progressColor;
@@ -431,7 +606,7 @@ class _BudgetReportScreenState extends State<BudgetReportScreen> {
   }
   
   Widget _buildNonBudgetCategoriesList(ThemeData theme, NumberFormat currencyFormatter) {
-    final nonBudgetCategories = _budgetData!['non_budget_categories'] as List<dynamic>;
+    final nonBudgetCategories = _budgetData!['non_budget_categories'] as List<dynamic>? ?? [];
     final uncategorizedExpenses = (_budgetData!['uncategorized_expenses'] as num?)?.toDouble() ?? 0.0;
     
     if (nonBudgetCategories.isEmpty && uncategorizedExpenses <= 0) {
@@ -464,6 +639,9 @@ class _BudgetReportScreenState extends State<BudgetReportScreen> {
                 final name = category['name'] as String;
                 final colorCode = category['color_code'] as String;
                 final spent = (category['spent'] as num).toDouble();
+                
+                // Skip categories with no spending
+                if (spent <= 0) return SizedBox.shrink();
                 
                 // Parse color from hex string
                 final color = Color(int.parse(colorCode.replaceFirst('#', '0xFF')));

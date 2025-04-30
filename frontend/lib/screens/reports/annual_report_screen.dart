@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
-import '../../services/report_service.dart';
-import '../../widgets/common/loading_indicator.dart';
-import '../../widgets/common/error_display.dart';
-import '../../utils/data_utils.dart';
+import '../services/report_service.dart';
+import '../widgets/common/loading_indicator.dart';
+import '../widgets/common/error_display.dart';
+import '../widgets/common/drawer.dart';
+import '../routes/route_names.dart';
+import '../utils/error_handler.dart';
 
 class AnnualReportScreen extends StatefulWidget {
   @override
@@ -19,15 +21,18 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
   Map<String, dynamic>? _reportData;
   
   // Selected year
-  int _selectedYear = DateTime.now().year;
+  late int _selectedYear;
   
   @override
   void initState() {
     super.initState();
+    _selectedYear = DateTime.now().year;
     _fetchAnnualReport();
   }
   
   Future<void> _fetchAnnualReport() async {
+    if (!mounted) return;
+    
     setState(() {
       _isLoading = true;
       _error = null;
@@ -37,6 +42,8 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
       final result = await _reportService.getAnnualReport(
         year: _selectedYear,
       );
+      
+      if (!mounted) return;
       
       if (result['success']) {
         setState(() {
@@ -50,6 +57,8 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
         });
       }
     } catch (e) {
+      if (!mounted) return;
+      
       setState(() {
         _error = 'Failed to load annual report: $e';
         _isLoading = false;
@@ -67,10 +76,61 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
   
   // Navigate to next year
   void _nextYear() {
+    // Don't allow going beyond current year
+    if (_selectedYear >= DateTime.now().year) {
+      return;
+    }
+    
     setState(() {
       _selectedYear++;
     });
     _fetchAnnualReport();
+  }
+  
+  // Allow user to pick a year from a dialog
+  void _showYearPicker(BuildContext context) {
+    final now = DateTime.now();
+    final firstYear = 2020; // First available year
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Select Year'),
+        content: Container(
+          width: double.maxFinite,
+          height: 300,
+          child: ListView.builder(
+            itemCount: now.year - firstYear + 1,
+            itemBuilder: (context, index) {
+              final year = firstYear + index;
+              final isSelected = year == _selectedYear;
+              
+              return ListTile(
+                title: Text('$year'),
+                tileColor: isSelected ? Theme.of(context).primaryColor.withOpacity(0.1) : null,
+                textColor: isSelected ? Theme.of(context).primaryColor : null,
+                trailing: isSelected ? Icon(Icons.check, color: Theme.of(context).primaryColor) : null,
+                onTap: () {
+                  Navigator.of(context).pop();
+                  if (year != _selectedYear) {
+                    setState(() {
+                      _selectedYear = year;
+                    });
+                    _fetchAnnualReport();
+                  }
+                },
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text('CANCEL'),
+          ),
+        ],
+      ),
+    );
   }
   
   @override
@@ -81,7 +141,15 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Annual Report'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.calendar_today),
+            onPressed: () => _showYearPicker(context),
+            tooltip: 'Choose Year',
+          ),
+        ],
       ),
+      drawer: AppDrawer(currentRoute: RouteNames.annualReport),
       body: _isLoading 
         ? LoadingIndicator(message: 'Loading annual report...')
         : _error != null
@@ -91,43 +159,46 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
             )
           : _reportData == null
             ? Center(child: Text('No report data available'))
-            : SingleChildScrollView(
-                padding: EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Year selector
-                    _buildYearSelector(theme),
-                    SizedBox(height: 24),
-                    
-                    // Annual summary
-                    _buildAnnualSummary(theme, currencyFormatter),
-                    SizedBox(height: 24),
-                    
-                    // Monthly trends
-                    _buildMonthlyTrendsChart(theme),
-                    SizedBox(height: 24),
-                    
-                    // Quarterly data
-                    _buildQuarterlyData(theme, currencyFormatter),
-                    SizedBox(height: 24),
-                    
-                    // Expense categories
-                    _buildExpenseCategories(theme, currencyFormatter),
-                    SizedBox(height: 24),
-                    
-                    // Income sources
-                    _buildIncomeSources(theme, currencyFormatter),
-                  ],
+            : RefreshIndicator(
+                onRefresh: _fetchAnnualReport,
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Year selector
+                      _buildYearSelector(theme),
+                      SizedBox(height: 24),
+                      
+                      // Annual summary
+                      _buildAnnualSummary(theme, currencyFormatter),
+                      SizedBox(height: 24),
+                      
+                      // Monthly trends
+                      _buildMonthlyTrendsChart(theme),
+                      SizedBox(height: 24),
+                      
+                      // Quarterly data
+                      _buildQuarterlyData(theme, currencyFormatter),
+                      SizedBox(height: 24),
+                      
+                      // Expense categories
+                      _buildExpenseCategories(theme, currencyFormatter),
+                      SizedBox(height: 24),
+                      
+                      // Income sources
+                      _buildIncomeSources(theme, currencyFormatter),
+                    ],
+                  ),
                 ),
               ),
     );
   }
   
   Widget _buildYearSelector(ThemeData theme) {
-    // Get navigation data
-    final navigation = _reportData!['navigation'] as Map<String, dynamic>;
-    final hasNext = _selectedYear < DateTime.now().year;
+    // Check if we can go to next year (not beyond current year)
+    final now = DateTime.now();
+    final canGoNext = _selectedYear < now.year;
     
     return Card(
       elevation: 2,
@@ -142,16 +213,19 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
               onPressed: _previousYear,
               tooltip: 'Previous year',
             ),
-            Text(
-              '$_selectedYear',
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
+            GestureDetector(
+              onTap: () => _showYearPicker(context),
+              child: Text(
+                '$_selectedYear',
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
             IconButton(
               icon: Icon(Icons.chevron_right),
-              onPressed: hasNext ? _nextYear : null,
-              tooltip: 'Next year',
+              onPressed: canGoNext ? _nextYear : null,
+              tooltip: canGoNext ? 'Next year' : 'Cannot go to future years',
             ),
           ],
         ),
@@ -314,10 +388,34 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
   }
   
   Widget _buildMonthlyTrendsChart(ThemeData theme) {
-    final monthlyData = _reportData!['monthly_data'] as List<dynamic>;
+    final monthlyData = _reportData!['monthly_data'] as List<dynamic>? ?? [];
     
     if (monthlyData.isEmpty) {
-      return SizedBox.shrink();
+      return Card(
+        elevation: 2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Monthly Trends',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 24),
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Text('No monthly data available for this year'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
     }
     
     // Extract data for the chart
@@ -333,7 +431,7 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
       final income = (monthData['income'] as num).toDouble();
       final expenses = (monthData['expenses'] as num).toDouble();
       
-      months.add(monthName);
+      months.add(monthName.substring(0, 3)); // Abbreviate month name
       
       barGroups.add(
         BarChartGroupData(
@@ -342,14 +440,14 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
             BarChartRodData(
               toY: income,
               color: Colors.green,
-              width: 16,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(6)),
+              width: 12,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(4)),
             ),
             BarChartRodData(
               toY: expenses,
               color: Colors.red,
-              width: 16,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(6)),
+              width: 12,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(4)),
             ),
           ],
           barsSpace: 4,
@@ -388,7 +486,7 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
                   alignment: BarChartAlignment.center,
                   maxY: maxY,
                   minY: 0,
-                  groupsSpace: 16,
+                  groupsSpace: 12,
                   barTouchData: BarTouchData(enabled: false),
                   gridData: FlGridData(
                     show: true,
@@ -503,10 +601,34 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
   }
   
   Widget _buildQuarterlyData(ThemeData theme, NumberFormat currencyFormatter) {
-    final quarterlyData = _reportData!['quarterly_data'] as List<dynamic>;
+    final quarterlyData = _reportData!['quarterly_data'] as List<dynamic>? ?? [];
     
     if (quarterlyData.isEmpty) {
-      return SizedBox.shrink();
+      return Card(
+        elevation: 2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Quarterly Summary',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 16),
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Text('No quarterly data available for this year'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
     }
     
     return Card(
@@ -638,10 +760,34 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
   }
   
   Widget _buildExpenseCategories(ThemeData theme, NumberFormat currencyFormatter) {
-    final categories = _reportData!['categories'] as List<dynamic>;
+    final categories = _reportData!['categories'] as List<dynamic>? ?? [];
     
     if (categories.isEmpty) {
-      return SizedBox.shrink();
+      return Card(
+        elevation: 2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Expense Categories',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 16),
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Text('No expense data available for this year'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
     }
     
     // Prepare data for pie chart
@@ -690,58 +836,65 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
             ),
             SizedBox(height: 16),
             
-            // Pie chart
-            Container(
-              height: 200,
-              child: sections.isEmpty
-                ? Center(child: Text('No spending data available'))
-                : PieChart(
-                    PieChartData(
-                      sections: sections,
-                      centerSpaceRadius: 40,
-                      sectionsSpace: 2,
+            if (sections.isEmpty) ...[
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Text('No spending data available'),
+                ),
+              ),
+            ] else ...[
+              // Pie chart
+              Container(
+                height: 200,
+                child: PieChart(
+                  PieChartData(
+                    sections: sections,
+                    centerSpaceRadius: 40,
+                    sectionsSpace: 2,
+                  ),
+                ),
+              ),
+              
+              SizedBox(height: 16),
+              
+              // Category list
+              ListView.builder(
+                shrinkWrap: true,
+                physics: NeverScrollableScrollPhysics(),
+                itemCount: categories.length,
+                itemBuilder: (context, index) {
+                  final category = categories[index];
+                  final name = category['name'] as String;
+                  final color = category['color'] as String;
+                  final total = (category['total'] as num).toDouble();
+                  final percentage = (category['percentage'] as num).toDouble();
+                  
+                  // Skip categories with no spending
+                  if (total <= 0) return SizedBox.shrink();
+                  
+                  // Parse color from hex string
+                  final colorValue = Color(int.parse(color.replaceFirst('#', '0xFF')));
+                  
+                  return ListTile(
+                    contentPadding: EdgeInsets.symmetric(vertical: 4),
+                    leading: Container(
+                      width: 16,
+                      height: 16,
+                      decoration: BoxDecoration(
+                        color: colorValue,
+                        shape: BoxShape.circle,
+                      ),
                     ),
-                  ),
-            ),
-            
-            SizedBox(height: 16),
-            
-            // Category list
-            ListView.builder(
-              shrinkWrap: true,
-              physics: NeverScrollableScrollPhysics(),
-              itemCount: categories.length,
-              itemBuilder: (context, index) {
-                final category = categories[index];
-                final name = category['name'] as String;
-                final color = category['color'] as String;
-                final total = (category['total'] as num).toDouble();
-                final percentage = (category['percentage'] as num).toDouble();
-                
-                // Skip categories with no spending
-                if (total <= 0) return SizedBox.shrink();
-                
-                // Parse color from hex string
-                final colorValue = Color(int.parse(color.replaceFirst('#', '0xFF')));
-                
-                return ListTile(
-                  contentPadding: EdgeInsets.symmetric(vertical: 4),
-                  leading: Container(
-                    width: 16,
-                    height: 16,
-                    decoration: BoxDecoration(
-                      color: colorValue,
-                      shape: BoxShape.circle,
+                    title: Text(name),
+                    trailing: Text(
+                      '${currencyFormatter.format(total)} (${percentage.toInt()}%)',
+                      style: TextStyle(fontWeight: FontWeight.bold),
                     ),
-                  ),
-                  title: Text(name),
-                  trailing: Text(
-                    '${currencyFormatter.format(total)} (${percentage.toInt()}%)',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                );
-              },
-            ),
+                  );
+                },
+              ),
+            ],
           ],
         ),
       ),
@@ -749,10 +902,34 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
   }
   
   Widget _buildIncomeSources(ThemeData theme, NumberFormat currencyFormatter) {
-    final sources = _reportData!['income_sources'] as List<dynamic>;
+    final sources = _reportData!['income_sources'] as List<dynamic>? ?? [];
     
     if (sources.isEmpty) {
-      return SizedBox.shrink();
+      return Card(
+        elevation: 2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Income Sources',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 16),
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Text('No income data available for this year'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
     }
     
     // Prepare data for bar chart
@@ -817,124 +994,129 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
             ),
             SizedBox(height: 16),
             
-            // Bar chart
-            Container(
-              height: 200,
-              child: barGroups.isEmpty
-                ? Center(child: Text('No income data available'))
-                : BarChart(
-                    BarChartData(
-                      alignment: BarChartAlignment.center,
-                      maxY: maxAmount,
-                      minY: 0,
-                      gridData: FlGridData(
-                        show: true,
-                        horizontalInterval: maxAmount / 5,
-                        getDrawingHorizontalLine: (value) {
-                          return FlLine(
-                            color: theme.dividerColor.withOpacity(0.2),
-                            strokeWidth: 1,
-                          );
-                        },
-                        drawVerticalLine: false,
-                      ),
-                      titlesData: FlTitlesData(
-                        show: true,
-                        bottomTitles: AxisTitles(
-                          sideTitles: SideTitles(
-                            showTitles: true,
-                            reservedSize: 30,
-                            getTitlesWidget: (value, meta) {
-                              final index = value.toInt();
-                              if (index >= 0 && index < sourceNames.length) {
-                                return Padding(
-                                  padding: EdgeInsets.only(top: 8),
-                                  child: Text(
-                                    sourceNames[index],
-                                    style: TextStyle(
-                                      color: theme.textTheme.bodySmall?.color,
-                                      fontSize: 10,
-                                    ),
-                                    textAlign: TextAlign.center,
-                                    overflow: TextOverflow.ellipsis,
+            if (barGroups.isEmpty) ...[
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Text('No income data available'),
+                ),
+              ),
+            ] else ...[
+              // Bar chart
+              Container(
+                height: 200,
+                child: BarChart(
+                  BarChartData(
+                    alignment: BarChartAlignment.center,
+                    maxY: maxAmount,
+                    minY: 0,
+                    gridData: FlGridData(
+                      show: true,
+                      horizontalInterval: maxAmount / 5,
+                      getDrawingHorizontalLine: (value) {
+                        return FlLine(
+                          color: theme.dividerColor.withOpacity(0.2),
+                          strokeWidth: 1,
+                        );
+                      },
+                      drawVerticalLine: false,
+                    ),
+                    titlesData: FlTitlesData(
+                      show: true,
+                      bottomTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          reservedSize: 30,
+                          getTitlesWidget: (value, meta) {
+                            final index = value.toInt();
+                            if (index >= 0 && index < sourceNames.length) {
+                              return Padding(
+                                padding: EdgeInsets.only(top: 8),
+                                child: Text(
+                                  sourceNames[index],
+                                  style: TextStyle(
+                                    color: theme.textTheme.bodySmall?.color,
+                                    fontSize: 10,
                                   ),
-                                );
-                              }
-                              return Text('');
-                            },
-                          ),
-                        ),
-                        leftTitles: AxisTitles(
-                          sideTitles: SideTitles(
-                            showTitles: true,
-                            reservedSize: 40,
-                            getTitlesWidget: (value, meta) {
-                              if (value == 0) return Text('');
-                              return Text(
-                                '\${(value / 1000).toInt()}K',
-                                style: TextStyle(
-                                  color: theme.textTheme.bodySmall?.color,
-                                  fontSize: 10,
+                                  textAlign: TextAlign.center,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               );
-                            },
-                            interval: maxAmount / 5,
-                          ),
-                        ),
-                        topTitles: AxisTitles(
-                          sideTitles: SideTitles(showTitles: false),
-                        ),
-                        rightTitles: AxisTitles(
-                          sideTitles: SideTitles(showTitles: false),
+                            }
+                            return Text('');
+                          },
                         ),
                       ),
-                      borderData: FlBorderData(show: false),
-                      barGroups: barGroups,
+                      leftTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          reservedSize: 40,
+                          getTitlesWidget: (value, meta) {
+                            if (value == 0) return Text('');
+                            return Text(
+                              '\${(value / 1000).toInt()}K',
+                              style: TextStyle(
+                                color: theme.textTheme.bodySmall?.color,
+                                fontSize: 10,
+                              ),
+                            );
+                          },
+                          interval: maxAmount / 5,
+                        ),
+                      ),
+                      topTitles: AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                      rightTitles: AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
                     ),
+                    borderData: FlBorderData(show: false),
+                    barGroups: barGroups,
                   ),
-            ),
-            
-            SizedBox(height: 16),
-            
-            // Income sources list
-            ListView.builder(
-              shrinkWrap: true,
-              physics: NeverScrollableScrollPhysics(),
-              itemCount: sources.length,
-              itemBuilder: (context, index) {
-                final source = sources[index];
-                final name = source['name'] as String;
-                final color = source['color'] as String;
-                final total = (source['total'] as num).toDouble();
-                final percentage = (source['percentage'] as num).toDouble();
-                
-                // Skip sources with no income
-                if (total <= 0) return SizedBox.shrink();
-                
-                // Parse color from hex string
-                final colorValue = Color(int.parse(color.replaceFirst('#', '0xFF')));
-                
-                return ListTile(
-                  contentPadding: EdgeInsets.symmetric(vertical: 4),
-                  leading: Container(
-                    width: 16,
-                    height: 16,
-                    decoration: BoxDecoration(
-                      color: colorValue,
-                      shape: BoxShape.circle,
+                ),
+              ),
+              
+              SizedBox(height: 16),
+              
+              // Income sources list
+              ListView.builder(
+                shrinkWrap: true,
+                physics: NeverScrollableScrollPhysics(),
+                itemCount: sources.length,
+                itemBuilder: (context, index) {
+                  final source = sources[index];
+                  final name = source['name'] as String;
+                  final color = source['color'] as String;
+                  final total = (source['total'] as num).toDouble();
+                  final percentage = (source['percentage'] as num).toDouble();
+                  
+                  // Skip sources with no income
+                  if (total <= 0) return SizedBox.shrink();
+                  
+                  // Parse color from hex string
+                  final colorValue = Color(int.parse(color.replaceFirst('#', '0xFF')));
+                  
+                  return ListTile(
+                    contentPadding: EdgeInsets.symmetric(vertical: 4),
+                    leading: Container(
+                      width: 16,
+                      height: 16,
+                      decoration: BoxDecoration(
+                        color: colorValue,
+                        shape: BoxShape.circle,
+                      ),
                     ),
-                  ),
-                  title: Text(name),
-                  trailing: Text(
-                    '${currencyFormatter.format(total)} (${percentage.toInt()}%)',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                );
-              },
-            ),
+                    title: Text(name),
+                    trailing: Text(
+                      '${currencyFormatter.format(total)} (${percentage.toInt()}%)',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  );
+                },
+              ),
+            ],
           ],
         ),
       ),
     );
-  }
-}

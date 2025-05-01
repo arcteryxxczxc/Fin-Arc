@@ -8,6 +8,8 @@ import '../screens/auth/register_screen.dart';
 import '../screens/auth/change_password_screen.dart';
 import '../screens/dashboard/dashboard_screen.dart';
 import '../screens/profile_screen.dart';
+import '../screens/expenses/expense_list_screen.dart';
+import '../screens/income/income_list_screen.dart';
 import '../screens/reports/reports_screen.dart';
 import '../screens/reports/monthly_report_screen.dart';
 import '../screens/reports/annual_report_screen.dart';
@@ -86,7 +88,18 @@ class AppRouter {
           settings: settings,
           builder: (_) => CashflowReportScreen()
         );
+
+      case RouteNames.expenseList:
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => ExpenseListScreen()
+        );
         
+      case RouteNames.incomeList:
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => IncomeListScreen()
+        );  
       // When routes for expenses, income, and categories are created, they'll be added here
       
       default:

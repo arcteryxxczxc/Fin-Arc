@@ -6,6 +6,8 @@ import 'package:flutter/services.dart';
 // Providers
 import 'providers/auth_provider.dart';
 import 'providers/theme_provider.dart';
+import 'providers/expense_provider.dart';
+import 'providers/income_provider.dart';
 
 // Screens
 import 'screens/splash_screen.dart';
@@ -43,6 +45,10 @@ class MyApp extends StatelessWidget {
         
         // Theme provider
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
+
+        // Feature providers
+        ChangeNotifierProvider(create: (_) => ExpenseProvider()),
+        ChangeNotifierProvider(create: (_) => IncomeProvider()),
         
         // Route observer as a value notifier provider
         Provider<FinArcRouteObserver>.value(value: routeObserver),

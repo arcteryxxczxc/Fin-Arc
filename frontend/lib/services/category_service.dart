@@ -1,11 +1,8 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import '../utils/constants.dart';
-import 'auth_service.dart';
+import '../api/endpoints/category_api.dart';
+import '../models/category.dart';
 
 class CategoryService {
-  final AuthService _authService = AuthService();
-  final String baseUrl = AppConstants.baseUrl;
+  final CategoryApi _categoryApi = CategoryApi();
 
   // Get all categories
   Future<Map<String, dynamic>> getCategories({
@@ -13,36 +10,24 @@ class CategoryService {
     bool onlyExpense = true,
   }) async {
     try {
-      final token = await _authService.getToken();
-      if (token == null) {
-        return {'success': false, 'message': 'Not authenticated'};
-      }
-
-      // Build query parameters
-      final queryParams = {
-        'include_inactive': includeInactive.toString(),
-        'only_expense': onlyExpense.toString(),
-      };
-
-      final uri = Uri.parse('$baseUrl/categories').replace(queryParameters: queryParams);
-      
-      final response = await http.get(
-        uri,
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
+      final result = await _categoryApi.getCategories(
+        includeInactive: includeInactive,
+        onlyExpense: onlyExpense,
       );
 
-      final data = jsonDecode(response.body);
-
-      if (response.statusCode >= 200 && response.statusCode < 300) {
-        return {'success': true, 'data': data};
-      } else {
-        return {'success': false, 'message': data['msg'] ?? 'Failed to fetch categories'};
-      }
+      return result;
     } catch (e) {
-      return {'success': false, 'message': 'Network error: $e'};
+      return {'success': false, 'message': 'Service error: $e'};
+    }
+  }
+
+  // Get category details
+  Future<Map<String, dynamic>> getCategoryDetails(int categoryId) async {
+    try {
+      final result = await _categoryApi.getCategoryDetails(categoryId);
+      return result;
+    } catch (e) {
+      return {'success': false, 'message': 'Service error: $e'};
     }
   }
 
@@ -58,70 +43,20 @@ class CategoryService {
     bool isActive = true,
   }) async {
     try {
-      final token = await _authService.getToken();
-      if (token == null) {
-        return {'success': false, 'message': 'Not authenticated'};
-      }
-
-      final body = {
-        'name': name,
-        'color_code': colorCode,
-        'is_income': isIncome,
-        'is_active': isActive,
-      };
-
-      // Add optional fields if they exist
-      if (description != null) body['description'] = description;
-      if (icon != null) body['icon'] = icon;
-      if (budgetLimit != null) body['budget_limit'] = budgetLimit;
-      if (budgetStartDay != null) body['budget_start_day'] = budgetStartDay;
-
-      final response = await http.post(
-        Uri.parse('$baseUrl/categories'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode(body),
+      final result = await _categoryApi.addCategory(
+        name: name,
+        description: description,
+        colorCode: colorCode,
+        icon: icon,
+        budgetLimit: budgetLimit,
+        budgetStartDay: budgetStartDay,
+        isIncome: isIncome,
+        isActive: isActive,
       );
 
-      final data = jsonDecode(response.body);
-
-      if (response.statusCode >= 200 && response.statusCode < 300) {
-        return {'success': true, 'data': data};
-      } else {
-        return {'success': false, 'message': data['msg'] ?? 'Failed to add category'};
-      }
+      return result;
     } catch (e) {
-      return {'success': false, 'message': 'Network error: $e'};
-    }
-  }
-
-  // Get category details
-  Future<Map<String, dynamic>> getCategoryDetails(int categoryId) async {
-    try {
-      final token = await _authService.getToken();
-      if (token == null) {
-        return {'success': false, 'message': 'Not authenticated'};
-      }
-
-      final response = await http.get(
-        Uri.parse('$baseUrl/categories/$categoryId'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-      );
-
-      final data = jsonDecode(response.body);
-
-      if (response.statusCode >= 200 && response.statusCode < 300) {
-        return {'success': true, 'data': data};
-      } else {
-        return {'success': false, 'message': data['msg'] ?? 'Failed to get category details'};
-      }
-    } catch (e) {
-      return {'success': false, 'message': 'Network error: $e'};
+      return {'success': false, 'message': 'Service error: $e'};
     }
   }
 
@@ -138,97 +73,68 @@ class CategoryService {
     bool? isActive,
   }) async {
     try {
-      final token = await _authService.getToken();
-      if (token == null) {
-        return {'success': false, 'message': 'Not authenticated'};
-      }
-
-      // Only include fields that are being updated
-      final Map<String, dynamic> body = {};
-      if (name != null) body['name'] = name;
-      if (description != null) body['description'] = description;
-      if (colorCode != null) body['color_code'] = colorCode;
-      if (icon != null) body['icon'] = icon;
-      if (budgetLimit != null) body['budget_limit'] = budgetLimit;
-      if (budgetStartDay != null) body['budget_start_day'] = budgetStartDay;
-      if (isIncome != null) body['is_income'] = isIncome;
-      if (isActive != null) body['is_active'] = isActive;
-
-      final response = await http.put(
-        Uri.parse('$baseUrl/categories/$categoryId'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode(body),
+      final result = await _categoryApi.updateCategory(
+        categoryId: categoryId,
+        name: name,
+        description: description,
+        colorCode: colorCode,
+        icon: icon,
+        budgetLimit: budgetLimit,
+        budgetStartDay: budgetStartDay,
+        isIncome: isIncome,
+        isActive: isActive,
       );
 
-      final data = jsonDecode(response.body);
-
-      if (response.statusCode >= 200 && response.statusCode < 300) {
-        return {'success': true, 'data': data};
-      } else {
-        return {'success': false, 'message': data['msg'] ?? 'Failed to update category'};
-      }
+      return result;
     } catch (e) {
-      return {'success': false, 'message': 'Network error: $e'};
+      return {'success': false, 'message': 'Service error: $e'};
     }
   }
 
   // Delete a category
   Future<Map<String, dynamic>> deleteCategory(int categoryId) async {
     try {
-      final token = await _authService.getToken();
-      if (token == null) {
-        return {'success': false, 'message': 'Not authenticated'};
-      }
-
-      final response = await http.delete(
-        Uri.parse('$baseUrl/categories/$categoryId'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-      );
-
-      final data = jsonDecode(response.body);
-
-      if (response.statusCode >= 200 && response.statusCode < 300) {
-        return {'success': true, 'message': data['msg'] ?? 'Category deleted successfully'};
-      } else {
-        return {'success': false, 'message': data['msg'] ?? 'Failed to delete category'};
-      }
+      final result = await _categoryApi.deleteCategory(categoryId);
+      return result;
     } catch (e) {
-      return {'success': false, 'message': 'Network error: $e'};
+      return {'success': false, 'message': 'Service error: $e'};
     }
   }
 
   // Update budget limits for multiple categories
   Future<Map<String, dynamic>> updateBudgets(Map<int, double> budgetLimits) async {
     try {
-      final token = await _authService.getToken();
-      if (token == null) {
-        return {'success': false, 'message': 'Not authenticated'};
-      }
+      final result = await _categoryApi.updateBudgets(budgetLimits);
+      return result;
+    } catch (e) {
+      return {'success': false, 'message': 'Service error: $e'};
+    }
+  }
 
-      final response = await http.post(
-        Uri.parse('$baseUrl/categories/budgets'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({'budgets': budgetLimits}),
+  // Get expenses for a specific category
+  Future<Map<String, dynamic>> getCategoryExpenses(
+    int categoryId, {
+    int page = 1,
+    int perPage = 10,
+    String? startDate,
+    String? endDate,
+    String sort = 'date',
+    String order = 'desc',
+  }) async {
+    try {
+      final result = await _categoryApi.getCategoryExpenses(
+        categoryId,
+        page: page,
+        perPage: perPage,
+        startDate: startDate,
+        endDate: endDate,
+        sort: sort,
+        order: order,
       );
 
-      final data = jsonDecode(response.body);
-
-      if (response.statusCode >= 200 && response.statusCode < 300) {
-        return {'success': true, 'message': data['msg'] ?? 'Budgets updated successfully'};
-      } else {
-        return {'success': false, 'message': data['msg'] ?? 'Failed to update budgets'};
-      }
+      return result;
     } catch (e) {
-      return {'success': false, 'message': 'Network error: $e'};
+      return {'success': false, 'message': 'Service error: $e'};
     }
   }
 }

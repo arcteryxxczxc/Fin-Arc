@@ -1,18 +1,18 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../models/user.dart';
 import '../utils/constants.dart';
+import '../api/endpoints/auth_api.dart';
 
 class AuthService {
-  // API base URL
-  final String baseUrl = AppConstants.baseUrl;
+  final AuthApi _authApi = AuthApi();
   
   // Secure storage for tokens
   final FlutterSecureStorage _storage = FlutterSecureStorage();
   
   // Token storage keys
   static const String _tokenKey = 'access_token';
+  static const String _refreshTokenKey = 'refresh_token';
   static const String _userKey = 'user_data';
   
   // Register a new user
@@ -24,29 +24,23 @@ class AuthService {
     String? lastName,
   }) async {
     try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/auth/register'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'username': username,
-          'email': email,
-          'password': password,
-          'first_name': firstName ?? '',
-          'last_name': lastName ?? '',
-        }),
+      final result = await _authApi.register(
+        username: username,
+        email: email,
+        password: password,
+        firstName: firstName,
+        lastName: lastName,
       );
       
-      final data = jsonDecode(response.body);
-      
-      if (response.statusCode >= 200 && response.statusCode < 300) {
+      if (result['success']) {
         // Save token and user data to secure storage
-        await _saveAuthData(data['access_token'], data['user']);
-        return {'success': true, 'data': data};
-      } else {
-        return {'success': false, 'message': data['error'] ?? 'Registration failed'};
+        final data = result['data'];
+        await _saveAuthData(data['access_token'], data['refresh_token'], data['user']);
       }
+      
+      return result;
     } catch (e) {
-      return {'success': false, 'message': 'Network error: $e'};
+      return {'success': false, 'message': 'Service error: $e'};
     }
   }
   
@@ -56,49 +50,35 @@ class AuthService {
     required String password,
   }) async {
     try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/auth/login'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'username': username,
-          'password': password,
-        }),
+      final result = await _authApi.login(
+        username: username,
+        password: password,
       );
       
-      final data = jsonDecode(response.body);
-      
-      if (response.statusCode >= 200 && response.statusCode < 300) {
+      if (result['success']) {
         // Save token and user data to secure storage
-        await _saveAuthData(data['access_token'], data['user']);
-        return {'success': true, 'data': data};
-      } else {
-        return {'success': false, 'message': data['error'] ?? 'Login failed'};
+        final data = result['data'];
+        await _saveAuthData(data['access_token'], data['refresh_token'], data['user']);
       }
+      
+      return result;
     } catch (e) {
-      return {'success': false, 'message': 'Network error: $e'};
+      return {'success': false, 'message': 'Service error: $e'};
     }
   }
   
   // Logout user
   Future<void> logout() async {
     try {
-      final token = await getToken();
-      if (token != null) {
-        // Call logout endpoint to invalidate token on server
-        await http.post(
-          Uri.parse('$baseUrl/auth/logout'),
-          headers: {
-            'Authorization': 'Bearer $token',
-            'Content-Type': 'application/json',
-          },
-        );
-      }
+      // Call logout endpoint to invalidate token on server
+      await _authApi.logout();
     } catch (e) {
       // Even if server logout fails, clear local storage
       print('Logout error: $e');
     } finally {
       // Clear tokens from secure storage
       await _storage.delete(key: _tokenKey);
+      await _storage.delete(key: _refreshTokenKey);
       await _storage.delete(key: _userKey);
     }
   }
@@ -119,7 +99,32 @@ class AuthService {
   
   // Get auth token
   Future<String?> getToken() async {
-    return await _storage.read(key: _tokenKey);
+    final token = await _storage.read(key: _tokenKey);
+    if (token == null) {
+      // Try to refresh the token if we have a refresh token
+      return await _refreshToken();
+    }
+    return token;
+  }
+  
+  // Try to refresh the access token
+  Future<String?> _refreshToken() async {
+    final refreshToken = await _storage.read(key: _refreshTokenKey);
+    if (refreshToken == null) return null;
+    
+    try {
+      final result = await _authApi.refreshToken(refreshToken);
+      
+      if (result['success']) {
+        final newToken = result['data']['access_token'];
+        await _storage.write(key: _tokenKey, value: newToken);
+        return newToken;
+      }
+    } catch (e) {
+      print('Token refresh error: $e');
+    }
+    
+    return null;
   }
   
   // Check if user is authenticated
@@ -128,55 +133,34 @@ class AuthService {
     if (token == null) return false;
     
     try {
-      // Verify token by calling profile endpoint
-      final response = await http.get(
-        Uri.parse('$baseUrl/auth/profile'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-      );
-      
-      return response.statusCode >= 200 && response.statusCode < 300;
+      final result = await _authApi.getUserProfile();
+      return result['success'];
     } catch (e) {
-      print('Token validation error: $e');
+      print('Authentication check error: $e');
       return false;
     }
   }
   
   // Helper to save auth data
-  Future<void> _saveAuthData(String token, Map<String, dynamic> userData) async {
+  Future<void> _saveAuthData(String token, String refreshToken, Map<String, dynamic> userData) async {
     await _storage.write(key: _tokenKey, value: token);
+    await _storage.write(key: _refreshTokenKey, value: refreshToken);
     await _storage.write(key: _userKey, value: jsonEncode(userData));
   }
   
   // Get user profile
   Future<Map<String, dynamic>> getUserProfile() async {
     try {
-      final token = await getToken();
-      if (token == null) {
-        return {'success': false, 'message': 'Not authenticated'};
-      }
+      final result = await _authApi.getUserProfile();
       
-      final response = await http.get(
-        Uri.parse('$baseUrl/auth/profile'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-      );
-      
-      final data = jsonDecode(response.body);
-      
-      if (response.statusCode >= 200 && response.statusCode < 300) {
+      if (result['success']) {
         // Update stored user data
-        await _storage.write(key: _userKey, value: jsonEncode(data));
-        return {'success': true, 'data': data};
-      } else {
-        return {'success': false, 'message': data['error'] ?? 'Failed to fetch profile'};
+        await _storage.write(key: _userKey, value: jsonEncode(result['data']));
       }
+      
+      return result;
     } catch (e) {
-      return {'success': false, 'message': 'Network error: $e'};
+      return {'success': false, 'message': 'Service error: $e'};
     }
   }
   
@@ -186,32 +170,14 @@ class AuthService {
     required String newPassword,
   }) async {
     try {
-      final token = await getToken();
-      if (token == null) {
-        return {'success': false, 'message': 'Not authenticated'};
-      }
-      
-      final response = await http.post(
-        Uri.parse('$baseUrl/auth/change-password'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({
-          'current_password': currentPassword,
-          'new_password': newPassword,
-        }),
+      final result = await _authApi.changePassword(
+        currentPassword: currentPassword,
+        newPassword: newPassword,
       );
       
-      final data = jsonDecode(response.body);
-      
-      if (response.statusCode >= 200 && response.statusCode < 300) {
-        return {'success': true, 'message': data['message'] ?? 'Password changed successfully'};
-      } else {
-        return {'success': false, 'message': data['error'] ?? 'Failed to change password'};
-      }
+      return result;
     } catch (e) {
-      return {'success': false, 'message': 'Network error: $e'};
+      return {'success': false, 'message': 'Service error: $e'};
     }
   }
 }

@@ -7,6 +7,8 @@ import '../../models/income.dart';
 import '../../models/category.dart';
 import '../../widgets/common/loading_indicator.dart';
 import '../../widgets/common/error_display.dart';
+import 'edit_income_screen.dart';
+import '../../routes/route_names.dart';
 
 class IncomeDetailScreen extends StatefulWidget {
   final int incomeId;
@@ -89,10 +91,11 @@ class _IncomeDetailScreenState extends State<IncomeDetailScreen> {
   }
   
   void _editIncome() {
-    // TODO: Navigate to edit income screen
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Edit income feature coming soon')),
-    );
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => EditIncomeScreen(incomeId: widget.incomeId),
+      ),
+    ).then((_) => _loadIncomeDetails());
   }
   
   void _deleteIncome() {
@@ -101,7 +104,7 @@ class _IncomeDetailScreenState extends State<IncomeDetailScreen> {
       builder: (ctx) => AlertDialog(
         title: Text('Delete Income'),
         content: Text(
-          'Are you sure you want to delete this income? This action cannot be undone.',
+          'Are you sure you want to delete this income entry? This action cannot be undone.',
         ),
         actions: [
           TextButton(
@@ -111,10 +114,10 @@ class _IncomeDetailScreenState extends State<IncomeDetailScreen> {
             },
           ),
           TextButton(
-            child: Text('Delete'),
             style: TextButton.styleFrom(
               foregroundColor: Colors.red,
             ),
+            child: Text('Delete'),
             onPressed: () async {
               Navigator.of(ctx).pop();
               
@@ -145,6 +148,7 @@ class _IncomeDetailScreenState extends State<IncomeDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final currencyFormatter = NumberFormat.currency(symbol: '\$');
     
     if (_isLoading) {
       return Scaffold(
@@ -157,7 +161,7 @@ class _IncomeDetailScreenState extends State<IncomeDetailScreen> {
       return Scaffold(
         appBar: AppBar(title: Text('Income Details')),
         body: ErrorDisplay(
-          error: _error ?? 'Failed to load income',
+          error: _error ?? 'Failed to load income details',
           onRetry: _loadIncomeDetails,
         ),
       );
@@ -196,7 +200,7 @@ class _IncomeDetailScreenState extends State<IncomeDetailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Amount and category card
+            // Income amount and source card
             Card(
               elevation: 2,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -218,11 +222,11 @@ class _IncomeDetailScreenState extends State<IncomeDetailScreen> {
                     Text(
                       _income!.source,
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    SizedBox(height: 4),
+                    SizedBox(height: 8),
                     
                     // Category
                     if (_income!.categoryName != null) ...[
@@ -263,15 +267,6 @@ class _IncomeDetailScreenState extends State<IncomeDetailScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (_income!.description != null && _income!.description!.isNotEmpty) ...[
-                      _buildDetailItem(
-                        icon: Icons.description,
-                        title: 'Description',
-                        value: _income!.description!,
-                      ),
-                      Divider(),
-                    ],
-                    
                     _buildDetailItem(
                       icon: Icons.calendar_today,
                       title: 'Date',
@@ -285,10 +280,20 @@ class _IncomeDetailScreenState extends State<IncomeDetailScreen> {
                       value: _income!.source,
                     ),
                     
+                    if (_income!.description != null && _income!.description!.isNotEmpty) ...[
+                      Divider(),
+                      _buildDetailItem(
+                        icon: Icons.description,
+                        title: 'Description',
+                        value: _income!.description!,
+                        isMultiLine: true,
+                      ),
+                    ],
+                    
                     if (_income!.isTaxable) ...[
                       Divider(),
                       _buildDetailItem(
-                        icon: Icons.attach_money,
+                        icon: Icons.receipt,
                         title: 'Tax Information',
                         value: _income!.taxRate != null 
                           ? 'Taxable at ${_income!.taxRate!.toStringAsFixed(1)}%'
@@ -298,7 +303,7 @@ class _IncomeDetailScreenState extends State<IncomeDetailScreen> {
                       _buildDetailItem(
                         icon: Icons.account_balance_wallet,
                         title: 'After-Tax Amount',
-                        value: NumberFormat.currency(symbol: '\$').format(_income!.afterTaxAmount),
+                        value: currencyFormatter.format(_income!.afterTaxAmount),
                         valueColor: Colors.green,
                       ),
                     ],
@@ -333,9 +338,7 @@ class _IncomeDetailScreenState extends State<IncomeDetailScreen> {
                         _buildDetailItem(
                           icon: Icons.event,
                           title: 'Recurring Day',
-                          value: _income!.recurringType == 'monthly' || _income!.recurringType == 'yearly'
-                              ? 'Day ${_income!.recurringDay} of each ${_income!.recurringType == 'monthly' ? 'month' : 'year'}'
-                              : 'Day ${_income!.recurringDay}',
+                          value: _formatRecurringDay(_income!.recurringType, _income!.recurringDay),
                         ),
                       ],
                       Divider(),
@@ -399,7 +402,7 @@ class _IncomeDetailScreenState extends State<IncomeDetailScreen> {
             child: Icon(
               icon,
               color: iconColor ?? Theme.of(context).primaryColor,
-              size: 18,
+              size: 20,
             ),
           ),
           SizedBox(width: 16),
@@ -442,6 +445,18 @@ class _IncomeDetailScreenState extends State<IncomeDetailScreen> {
         return 'yearly';
       default:
         return type;
+    }
+  }
+  
+  String _formatRecurringDay(String? type, int? day) {
+    if (day == null) return 'Not specified';
+    
+    if (type?.toLowerCase() == 'monthly') {
+      return 'Day $day of each month';
+    } else if (type?.toLowerCase() == 'yearly') {
+      return 'Day $day of the month each year';
+    } else {
+      return 'Day $day';
     }
   }
   

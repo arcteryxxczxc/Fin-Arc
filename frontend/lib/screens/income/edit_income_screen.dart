@@ -22,6 +22,7 @@ class _EditIncomeScreenState extends State<EditIncomeScreen> {
   final _amountController = TextEditingController();
   final _sourceController = TextEditingController();
   final _descriptionController = TextEditingController();
+  final _taxRateController = TextEditingController(text: '0');
   
   DateTime _selectedDate = DateTime.now();
   Category? _selectedCategory;
@@ -29,9 +30,9 @@ class _EditIncomeScreenState extends State<EditIncomeScreen> {
   String? _recurringType;
   int _recurringDay = 1;
   bool _isTaxable = false;
-  final _taxRateController = TextEditingController(text: '0');
   
   bool _isLoading = true;
+  bool _isSaving = false;
   String? _error;
   Income? _income;
   
@@ -92,7 +93,7 @@ class _EditIncomeScreenState extends State<EditIncomeScreen> {
         
         // Set other fields
         _isRecurring = income.isRecurring;
-        _recurringType = income.recurringType;
+        _recurringType = income.recurringType?.capitalize();
         if (income.recurringDay != null) {
           _recurringDay = income.recurringDay!;
         }
@@ -152,50 +153,75 @@ class _EditIncomeScreenState extends State<EditIncomeScreen> {
   // Submit form
   Future<void> _submitForm() async {
     if (_formKey.currentState!.validate()) {
-      // Get providers
-      final incomeProvider = Provider.of<IncomeProvider>(context, listen: false);
+      setState(() {
+        _isSaving = true;
+      });
       
-      // Format date
-      final date = DateFormat('yyyy-MM-dd').format(_selectedDate);
-      
-      // Parse amount as double
-      final amount = double.tryParse(_amountController.text.replaceAll(',', '.')) ?? 0.0;
-      
-      // Parse tax rate if taxable
-      double? taxRate;
-      if (_isTaxable) {
-        taxRate = double.tryParse(_taxRateController.text.replaceAll(',', '.')) ?? 0.0;
-      }
-      
-      // Update income
-      final success = await incomeProvider.updateIncome(
-        incomeId: widget.incomeId,
-        amount: amount,
-        source: _sourceController.text,
-        date: date,
-        description: _descriptionController.text,
-        categoryId: _selectedCategory?.id,
-        isRecurring: _isRecurring,
-        recurringType: _isRecurring ? _recurringType?.toLowerCase() : null,
-        recurringDay: _isRecurring ? _recurringDay : null,
-        isTaxable: _isTaxable,
-        taxRate: taxRate,
-      );
-      
-      if (success && mounted) {
-        // Show success message and navigate back
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Income updated successfully')),
+      try {
+        // Get providers
+        final incomeProvider = Provider.of<IncomeProvider>(context, listen: false);
+        
+        // Format date
+        final date = DateFormat('yyyy-MM-dd').format(_selectedDate);
+        
+        // Parse amount as double
+        final amount = double.tryParse(_amountController.text.replaceAll(',', '.')) ?? 0.0;
+        
+        // Parse tax rate if taxable
+        double? taxRate;
+        if (_isTaxable) {
+          taxRate = double.tryParse(_taxRateController.text.replaceAll(',', '.')) ?? 0.0;
+        }
+        
+        // Update income
+        final success = await incomeProvider.updateIncome(
+          incomeId: widget.incomeId,
+          amount: amount,
+          source: _sourceController.text,
+          date: date,
+          description: _descriptionController.text,
+          categoryId: _selectedCategory?.id,
+          isRecurring: _isRecurring,
+          recurringType: _isRecurring ? _recurringType?.toLowerCase() : null,
+          recurringDay: _isRecurring ? _recurringDay : null,
+          isTaxable: _isTaxable,
+          taxRate: taxRate,
         );
-        Navigator.of(context).pop();
-      } else if (mounted) {
-        // Show error message
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(incomeProvider.error ?? 'Failed to update income'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        
+        if (success && mounted) {
+          // Show success message and navigate back
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Income updated successfully')),
+          );
+          Navigator.of(context).pop();
+        } else if (mounted) {
+          // Show error message
+          setState(() {
+            _isSaving = false;
+            _error = incomeProvider.error;
+          });
+          
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(_error ?? 'Failed to update income'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() {
+            _isSaving = false;
+            _error = 'Error updating income: $e';
+          });
+          
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(_error!),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     }
   }
@@ -203,7 +229,6 @@ class _EditIncomeScreenState extends State<EditIncomeScreen> {
   @override
   Widget build(BuildContext context) {
     final categoryProvider = Provider.of<CategoryProvider>(context);
-    final incomeProvider = Provider.of<IncomeProvider>(context);
     
     if (_isLoading) {
       return Scaffold(
@@ -214,7 +239,7 @@ class _EditIncomeScreenState extends State<EditIncomeScreen> {
       );
     }
     
-    if (_error != null) {
+    if (_error != null && _income == null) {
       return Scaffold(
         appBar: AppBar(
           title: Text('Edit Income'),
@@ -279,10 +304,11 @@ class _EditIncomeScreenState extends State<EditIncomeScreen> {
               TextFormField(
                 controller: _descriptionController,
                 decoration: InputDecoration(
-                  labelText: 'Description',
+                  labelText: 'Description (Optional)',
                   prefixIcon: Icon(Icons.description),
                   border: OutlineInputBorder(),
                 ),
+                maxLines: 2,
               ),
               SizedBox(height: 16),
               
@@ -303,32 +329,38 @@ class _EditIncomeScreenState extends State<EditIncomeScreen> {
               SizedBox(height: 16),
               
               // Category dropdown
-              DropdownButtonFormField<Category>(
+              DropdownButtonFormField<Category?>(
                 decoration: InputDecoration(
-                  labelText: 'Category',
+                  labelText: 'Category (Optional)',
                   prefixIcon: Icon(Icons.category),
                   border: OutlineInputBorder(),
                 ),
                 value: _selectedCategory,
-                items: categoryProvider.incomeCategories.map((category) {
-                  return DropdownMenuItem(
-                    value: category,
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 20,
-                          height: 20,
-                          decoration: BoxDecoration(
-                            color: Color(int.parse(category.colorCode.substring(1, 7), radix: 16) + 0xFF000000),
-                            shape: BoxShape.circle,
+                items: [
+                  DropdownMenuItem<Category?>(
+                    value: null,
+                    child: Text('No Category'),
+                  ),
+                  ...categoryProvider.incomeCategories.map((category) {
+                    return DropdownMenuItem(
+                      value: category,
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 20,
+                            height: 20,
+                            decoration: BoxDecoration(
+                              color: Color(int.parse(category.colorCode.substring(1, 7), radix: 16) + 0xFF000000),
+                              shape: BoxShape.circle,
+                            ),
                           ),
-                        ),
-                        SizedBox(width: 10),
-                        Text(category.name),
-                      ],
-                    ),
-                  );
-                }).toList(),
+                          SizedBox(width: 10),
+                          Text(category.name),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ],
                 onChanged: (Category? newValue) {
                   setState(() {
                     _selectedCategory = newValue;
@@ -459,8 +491,8 @@ class _EditIncomeScreenState extends State<EditIncomeScreen> {
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
-                  onPressed: incomeProvider.isLoading ? null : _submitForm,
-                  child: incomeProvider.isLoading
+                  onPressed: _isSaving ? null : _submitForm,
+                  child: _isSaving
                       ? CircularProgressIndicator(color: Colors.white)
                       : Text('Update Income', style: TextStyle(fontSize: 16)),
                 ),
@@ -470,5 +502,12 @@ class _EditIncomeScreenState extends State<EditIncomeScreen> {
         ),
       ),
     );
+  }
+}
+
+// Extension to capitalize first letter of a string
+extension StringExtension on String {
+  String capitalize() {
+    return "${this[0].toUpperCase()}${this.substring(1)}";
   }
 }

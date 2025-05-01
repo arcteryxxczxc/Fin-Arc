@@ -9,7 +9,12 @@ import '../screens/auth/change_password_screen.dart';
 import '../screens/dashboard/dashboard_screen.dart';
 import '../screens/profile_screen.dart';
 import '../screens/expenses/expense_list_screen.dart';
+import '../screens/expenses/expense_detail_screen.dart';
+import '../screens/expenses/add_expense_screen.dart';
 import '../screens/income/income_list_screen.dart';
+import '../screens/income/income_detail_screen.dart';
+import '../screens/income/add_income_screen.dart';
+import '../screens/income/edit_income_screen.dart';
 import '../screens/reports/reports_screen.dart';
 import '../screens/reports/monthly_report_screen.dart';
 import '../screens/reports/annual_report_screen.dart';
@@ -21,6 +26,9 @@ import 'route_names.dart';
 
 class AppRouter {
   static Route<dynamic> generateRoute(RouteSettings settings) {
+    // Extract arguments if available
+    final args = settings.arguments as Map<String, dynamic>? ?? {};
+    
     switch (settings.name) {
       case '/':
       case RouteNames.splash:
@@ -95,13 +103,51 @@ class AppRouter {
           builder: (_) => ExpenseListScreen()
         );
         
+      case RouteNames.expenseDetail:
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => ExpenseDetailScreen(
+            expenseId: args['expenseId'],
+          )
+        );
+        
+      case RouteNames.addExpense:
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => AddExpenseScreen()
+        );
+      
+      // Income Routes  
       case RouteNames.incomeList:
         return MaterialPageRoute(
           settings: settings,
           builder: (_) => IncomeListScreen()
-        );  
-      // When routes for expenses, income, and categories are created, they'll be added here
-      
+        );
+        
+      case RouteNames.incomeDetail:
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => IncomeDetailScreen(
+            incomeId: args['incomeId'],
+          )
+        );
+        
+      case RouteNames.addIncome:
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => AddIncomeScreen()
+        );
+        
+      case RouteNames.editIncome:
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => EditIncomeScreen(
+            incomeId: args['incomeId'],
+          )
+        );
+        
+      // Add more routes as needed for categories, etc.
+        
       default:
         // If the route doesn't exist, show an error page
         return MaterialPageRoute(

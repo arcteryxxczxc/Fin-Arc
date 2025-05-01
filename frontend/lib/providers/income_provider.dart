@@ -214,6 +214,33 @@ class IncomeProvider with ChangeNotifier {
     }
   }
   
+  // Get income details
+  Future<Map<String, dynamic>> getIncomeDetails(int incomeId) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+    
+    try {
+      final result = await _incomeService.getIncomeDetails(incomeId);
+      
+      _isLoading = false;
+      
+      if (result['success']) {
+        notifyListeners();
+        return result;
+      } else {
+        _error = result['message'];
+        notifyListeners();
+        return {'success': false, 'message': _error};
+      }
+    } catch (e) {
+      _error = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      return {'success': false, 'message': _error};
+    }
+  }
+  
   // Update an income
   Future<bool> updateIncome({
     required int incomeId,

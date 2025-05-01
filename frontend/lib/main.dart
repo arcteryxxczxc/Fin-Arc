@@ -1,3 +1,4 @@
+// lib/main.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
@@ -5,15 +6,17 @@ import 'package:flutter/services.dart';
 // Providers
 import 'providers/auth_provider.dart';
 import 'providers/theme_provider.dart';
-import 'providers/expense_provider.dart';
-import 'providers/income_provider.dart';
-import 'providers/category_provider.dart';
 
 // Screens
 import 'screens/splash_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
 import 'screens/dashboard/dashboard_screen.dart';
+
+// Routes
+import 'routes/app_router.dart';
+import 'routes/route_names.dart';
+import 'routes/route_observer.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,6 +31,9 @@ void main() {
 }
 
 class MyApp extends StatelessWidget {
+  // Create a route observer to track navigation
+  final FinArcRouteObserver routeObserver = FinArcRouteObserver();
+  
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
@@ -38,22 +44,24 @@ class MyApp extends StatelessWidget {
         // Theme provider
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         
-        // Data providers
-        ChangeNotifierProvider(create: (_) => CategoryProvider()),
-        ChangeNotifierProvider(create: (_) => ExpenseProvider()),
-        ChangeNotifierProvider(create: (_) => IncomeProvider()),
+        // Route observer as a value notifier provider
+        Provider<FinArcRouteObserver>.value(value: routeObserver),
+        
+        // Provide current route as a stream
+        StreamProvider<String>(
+          create: (_) => routeObserver.currentRoute.stream,
+          initialData: '/',
+        ),
       ],
       child: Consumer<ThemeProvider>(
         builder: (ctx, themeProvider, _) => MaterialApp(
           title: 'Fin-Arc',
           theme: themeProvider.themeData,
           debugShowCheckedModeBanner: false,
+          initialRoute: '/',
+          navigatorObservers: [routeObserver],
+          onGenerateRoute: AppRouter.generateRoute,
           home: AuthenticationWrapper(),
-          routes: {
-            '/login': (ctx) => LoginScreen(),
-            '/register': (ctx) => RegisterScreen(),
-            '/dashboard': (ctx) => DashboardScreen(),
-          },
         ),
       ),
     );
@@ -65,9 +73,6 @@ class AuthenticationWrapper extends StatelessWidget {
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
     
-    // Initialize other providers once authenticated
-    final categoryProvider = Provider.of<CategoryProvider>(context, listen: false);
-    
     return FutureBuilder(
       future: authProvider.initAuth(),
       builder: (ctx, snapshot) {
@@ -78,8 +83,7 @@ class AuthenticationWrapper extends StatelessWidget {
         
         // Load initial data if authenticated
         if (authProvider.isAuthenticated) {
-          // Preload categories for the app to use
-          categoryProvider.fetchCategories();
+          // Initialize other providers as needed
           return DashboardScreen();
         }
         

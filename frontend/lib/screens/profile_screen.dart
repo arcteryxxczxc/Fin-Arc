@@ -1,9 +1,10 @@
+// lib/screens/profile_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../providers/auth_provider.dart';
 import '../providers/theme_provider.dart';
-import '../widgets/common/drawer.dart';
+import '../widgets/layout/screen_wrapper.dart';
 import '../routes/route_names.dart';
 import '../utils/error_handler.dart';
 import 'auth/change_password_screen.dart';
@@ -52,201 +53,205 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final theme = Theme.of(context);
     
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('My Profile'),
-        actions: [
-          if (_isLoading)
-            Padding(
-              padding: const EdgeInsets.all(14.0),
-              child: SizedBox(
-                width: 20, 
-                height: 20, 
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    Colors.white
-                  ),
-                )
-              ),
-            ),
-          IconButton(
-            icon: Icon(Icons.refresh),
-            tooltip: 'Refresh',
-            onPressed: _isLoading ? null : _refreshUserProfile,
-          ),
-        ],
-      ),
-      drawer: AppDrawer(currentRoute: RouteNames.profile),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          children: [
-            // Profile header
-            _buildProfileHeader(context, authProvider),
-            SizedBox(height: 24),
-            
-            // Account settings
-            _buildSection(
-              title: 'Account Settings',
-              icon: Icons.person_outline,
-              children: [
-                _buildListTile(
-                  title: 'Edit Profile',
-                  icon: Icons.edit,
-                  onTap: () {
-                    // For now, just show a snackbar since this feature is coming soon
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Edit profile feature coming soon')),
-                    );
-                  },
-                ),
-                _buildListTile(
-                  title: 'Change Password',
-                  icon: Icons.lock_outline,
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => ChangePasswordScreen(),
-                      ),
-                    );
-                  },
-                ),
-                _buildListTile(
-                  title: 'Login History',
-                  icon: Icons.history,
-                  onTap: () {
-                    // For now, just show a snackbar since this feature is coming soon
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Login history feature coming soon')),
-                    );
-                  },
-                ),
-              ],
-            ),
-            SizedBox(height: 16),
-            
-            // App settings
-            _buildSection(
-              title: 'App Settings',
-              icon: Icons.settings_outlined,
-              children: [
-                SwitchListTile(
-                  title: Text('Dark Mode'),
-                  secondary: Icon(
-                    themeProvider.isDarkMode
-                        ? Icons.dark_mode
-                        : Icons.light_mode,
-                    color: Theme.of(context).primaryColor,
-                  ),
-                  value: themeProvider.isDarkMode,
-                  onChanged: (value) {
-                    themeProvider.toggleTheme();
-                  },
-                ),
-                _buildListTile(
-                  title: 'Default Currency',
-                  icon: Icons.attach_money,
-                  subtitle: 'USD',
-                  onTap: () {
-                    // For now, just show a snackbar since this feature is coming soon
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Currency settings coming soon')),
-                    );
-                  },
-                ),
-                _buildListTile(
-                  title: 'Notifications',
-                  icon: Icons.notifications_none,
-                  subtitle: 'Enabled',
-                  onTap: () {
-                    // For now, just show a snackbar since this feature is coming soon
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Notification settings coming soon')),
-                    );
-                  },
-                ),
-              ],
-            ),
-            SizedBox(height: 16),
-            
-            // About & Help
-            _buildSection(
-              title: 'About & Help',
-              icon: Icons.help_outline,
-              children: [
-                _buildListTile(
-                  title: 'About Fin-Arc',
-                  icon: Icons.info_outline,
-                  onTap: () {
-                    _showAboutDialog(context);
-                  },
-                ),
-                _buildListTile(
-                  title: 'Help & Support',
-                  icon: Icons.support_agent,
-                  onTap: () {
-                    // For now, just show a snackbar since this feature is coming soon
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Help feature coming soon')),
-                    );
-                  },
-                ),
-                _buildListTile(
-                  title: 'Privacy Policy',
-                  icon: Icons.privacy_tip_outlined,
-                  onTap: () {
-                    // For now, just show a snackbar since this feature is coming soon
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Privacy policy coming soon')),
-                    );
-                  },
-                ),
-              ],
-            ),
-            SizedBox(height: 24),
-            
-            // Logout button
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  foregroundColor: Colors.white,
-                  padding: EdgeInsets.symmetric(vertical: 12),
-                ),
-                onPressed: () async {
-                  // Show confirmation dialog
-                  bool confirm = await _showLogoutConfirmationDialog(context);
-                  if (confirm) {
-                    await authProvider.logout();
-                    if (mounted) {
-                      Navigator.of(context).pushReplacementNamed('/login');
-                    }
-                  }
-                },
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.logout),
-                    SizedBox(width: 8),
-                    Text('LOGOUT', style: TextStyle(fontSize: 16)),
-                  ],
+    return ScreenWrapper(
+      currentRoute: RouteNames.profile,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text('My Profile'),
+          actions: [
+            if (_isLoading)
+              Padding(
+                padding: const EdgeInsets.all(14.0),
+                child: SizedBox(
+                  width: 20, 
+                  height: 20, 
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      Colors.white
+                    ),
+                  )
                 ),
               ),
+            IconButton(
+              icon: Icon(Icons.refresh),
+              tooltip: 'Refresh',
+              onPressed: _isLoading ? null : _refreshUserProfile,
             ),
-            SizedBox(height: 16),
-            
-            // App version
-            Text(
-              'Version 1.0.0',
-              style: TextStyle(
-                color: Colors.grey,
-                fontSize: 12,
-              ),
-            ),
-            SizedBox(height: 16),
           ],
+        ),
+        body: SingleChildScrollView(
+          padding: EdgeInsets.all(16),
+          child: Column(
+            children: [
+              // Profile header
+              _buildProfileHeader(context, authProvider),
+              SizedBox(height: 24),
+              
+              // Account settings
+              _buildSection(
+                title: 'Account Settings',
+                icon: Icons.person_outline,
+                children: [
+                  _buildListTile(
+                    title: 'Edit Profile',
+                    icon: Icons.edit,
+                    onTap: () {
+                      // For now, just show a snackbar since this feature is coming soon
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Edit profile feature coming soon')),
+                      );
+                    },
+                  ),
+                  _buildListTile(
+                    title: 'Change Password',
+                    icon: Icons.lock_outline,
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => ChangePasswordScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildListTile(
+                    title: 'Login History',
+                    icon: Icons.history,
+                    onTap: () {
+                      // For now, just show a snackbar since this feature is coming soon
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Login history feature coming soon')),
+                      );
+                    },
+                  ),
+                ],
+              ),
+              SizedBox(height: 16),
+              
+              // App settings
+              _buildSection(
+                title: 'App Settings',
+                icon: Icons.settings_outlined,
+                children: [
+                  SwitchListTile(
+                    title: Text('Dark Mode'),
+                    secondary: Icon(
+                      themeProvider.isDarkMode
+                          ? Icons.dark_mode
+                          : Icons.light_mode,
+                      color: Theme.of(context).primaryColor,
+                    ),
+                    value: themeProvider.isDarkMode,
+                    onChanged: (value) {
+                      themeProvider.toggleTheme();
+                    },
+                  ),
+                  _buildListTile(
+                    title: 'Default Currency',
+                    icon: Icons.attach_money,
+                    subtitle: 'USD',
+                    onTap: () {
+                      // For now, just show a snackbar since this feature is coming soon
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Currency settings coming soon')),
+                      );
+                    },
+                  ),
+                  _buildListTile(
+                    title: 'Notifications',
+                    icon: Icons.notifications_none,
+                    subtitle: 'Enabled',
+                    onTap: () {
+                      // For now, just show a snackbar since this feature is coming soon
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Notification settings coming soon')),
+                      );
+                    },
+                  ),
+                ],
+              ),
+              SizedBox(height: 16),
+              
+              // About & Help
+              _buildSection(
+                title: 'About & Help',
+                icon: Icons.help_outline,
+                children: [
+                  _buildListTile(
+                    title: 'About Fin-Arc',
+                    icon: Icons.info_outline,
+                    onTap: () {
+                      _showAboutDialog(context);
+                    },
+                  ),
+                  _buildListTile(
+                    title: 'Help & Support',
+                    icon: Icons.support_agent,
+                    onTap: () {
+                      // For now, just show a snackbar since this feature is coming soon
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Help feature coming soon')),
+                      );
+                    },
+                  ),
+                  _buildListTile(
+                    title: 'Privacy Policy',
+                    icon: Icons.privacy_tip_outlined,
+                    onTap: () {
+                      // For now, just show a snackbar since this feature is coming soon
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Privacy policy coming soon')),
+                      );
+                    },
+                  ),
+                ],
+              ),
+              SizedBox(height: 24),
+              
+              // Logout button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  onPressed: () async {
+                    // Show confirmation dialog
+                    bool confirm = await _showLogoutConfirmationDialog(context);
+                    if (confirm) {
+                      await authProvider.logout();
+                      if (mounted) {
+                        Navigator.of(context).pushReplacementNamed(RouteNames.login);
+                      }
+                    }
+                  },
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.logout),
+                      SizedBox(width: 8),
+                      Text('LOGOUT', style: TextStyle(fontSize: 16)),
+                    ],
+                  ),
+                ),
+              ),
+              SizedBox(height: 16),
+              
+              // App version
+              Text(
+                'Version 1.0.0',
+                style: TextStyle(
+                  color: Colors.grey,
+                  fontSize: 12,
+                ),
+              ),
+              
+              // Extra space for bottom navigation
+              SizedBox(height: 80),
+            ],
+          ),
         ),
       ),
     );

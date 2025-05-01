@@ -8,6 +8,8 @@ import '../../widgets/common/loading_indicator.dart';
 import '../../widgets/common/error_display.dart';
 import 'expense_detail_screen.dart';
 import 'add_expense_screen.dart';
+import '../../widgets/layout/screen_wrapper.dart';
+import '../../routes/route_names.dart';
 
 class ExpenseListScreen extends StatefulWidget {
   @override

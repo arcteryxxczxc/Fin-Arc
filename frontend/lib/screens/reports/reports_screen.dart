@@ -1,18 +1,15 @@
+// lib/screens/reports/reports_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
+import '../../widgets/layout/screen_wrapper.dart';
 import '../../providers/expense_provider.dart';
 import '../../providers/income_provider.dart';
 import '../../services/report_service.dart';
 import '../../widgets/common/loading_indicator.dart';
 import '../../widgets/common/error_display.dart';
-import '../../widgets/common/drawer.dart';
 import '../../routes/route_names.dart';
-import 'monthly_report_screen.dart';
-import 'annual_report_screen.dart';
-import 'budget_report_screen.dart';
-import 'cashflow_report_screen.dart';
 
 class ReportsScreen extends StatefulWidget {
   @override
@@ -65,119 +62,127 @@ class _ReportsScreenState extends State<ReportsScreen> {
     final theme = Theme.of(context);
     final currencyFormatter = NumberFormat.currency(symbol: '\$');
     
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Financial Reports'),
-      ),
-      drawer: AppDrawer(currentRoute: RouteNames.reports),
-      body: _isLoading 
-        ? LoadingIndicator(message: 'Loading reports data...')
-        : _error != null
-          ? ErrorDisplay(
-              error: _error!,
-              onRetry: _fetchOverviewData,
-            )
-          : SingleChildScrollView(
-              padding: EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Available reports
-                  Text(
-                    'Reports',
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  SizedBox(height: 16),
-                  
-                  // Report cards
-                  GridView.count(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
-                    shrinkWrap: true,
-                    physics: NeverScrollableScrollPhysics(),
+    return ScreenWrapper(
+      currentRoute: RouteNames.reports,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text('Financial Reports'),
+        ),
+        body: _isLoading 
+          ? LoadingIndicator(message: 'Loading reports data...')
+          : _error != null
+            ? ErrorDisplay(
+                error: _error!,
+                onRetry: _fetchOverviewData,
+              )
+            : RefreshIndicator(
+                onRefresh: _fetchOverviewData,
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildReportCard(
-                        title: 'Monthly Report',
-                        description: 'View your monthly income and expenses',
-                        icon: Icons.calendar_month,
-                        color: Colors.blue,
-                        onTap: () {
-                          Navigator.of(context).pushNamed(RouteNames.monthlyReport);
-                        },
+                      // Available reports
+                      Text(
+                        'Reports',
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                      _buildReportCard(
-                        title: 'Annual Report',
-                        description: 'Year-to-date financial summary',
-                        icon: Icons.insert_chart,
-                        color: Colors.green,
-                        onTap: () {
-                          Navigator.of(context).pushNamed(RouteNames.annualReport);
-                        },
+                      SizedBox(height: 16),
+                      
+                      // Report cards
+                      GridView.count(
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 16,
+                        mainAxisSpacing: 16,
+                        shrinkWrap: true,
+                        physics: NeverScrollableScrollPhysics(),
+                        children: [
+                          _buildReportCard(
+                            title: 'Monthly Report',
+                            description: 'View your monthly income and expenses',
+                            icon: Icons.calendar_month,
+                            color: Colors.blue,
+                            onTap: () {
+                              Navigator.of(context).pushNamed(RouteNames.monthlyReport);
+                            },
+                          ),
+                          _buildReportCard(
+                            title: 'Annual Report',
+                            description: 'Year-to-date financial summary',
+                            icon: Icons.insert_chart,
+                            color: Colors.green,
+                            onTap: () {
+                              Navigator.of(context).pushNamed(RouteNames.annualReport);
+                            },
+                          ),
+                          _buildReportCard(
+                            title: 'Budget Report',
+                            description: 'Track your budget progress',
+                            icon: Icons.account_balance_wallet,
+                            color: Colors.purple,
+                            onTap: () {
+                              Navigator.of(context).pushNamed(RouteNames.budgetReport);
+                            },
+                          ),
+                          _buildReportCard(
+                            title: 'Cashflow Report',
+                            description: 'Analyze your cash movement',
+                            icon: Icons.show_chart,
+                            color: Colors.teal,
+                            onTap: () {
+                              Navigator.of(context).pushNamed(RouteNames.cashflowReport);
+                            },
+                          ),
+                          _buildReportCard(
+                            title: 'Export Data',
+                            description: 'Download your financial data',
+                            icon: Icons.download,
+                            color: Colors.orange,
+                            onTap: () {
+                              _showExportDialog(context);
+                            },
+                          ),
+                          _buildReportCard(
+                            title: 'Financial Insights',
+                            description: 'Get actionable financial advice',
+                            icon: Icons.lightbulb_outline,
+                            color: Colors.amber,
+                            onTap: () {
+                              _showComingSoonDialog(context, 'Financial Insights');
+                            },
+                          ),
+                        ],
                       ),
-                      _buildReportCard(
-                        title: 'Budget Report',
-                        description: 'Track your budget progress',
-                        icon: Icons.account_balance_wallet,
-                        color: Colors.purple,
-                        onTap: () {
-                          Navigator.of(context).pushNamed(RouteNames.budgetReport);
-                        },
-                      ),
-                      _buildReportCard(
-                        title: 'Cashflow Report',
-                        description: 'Analyze your cash movement',
-                        icon: Icons.show_chart,
-                        color: Colors.teal,
-                        onTap: () {
-                          Navigator.of(context).pushNamed(RouteNames.cashflowReport);
-                        },
-                      ),
-                      _buildReportCard(
-                        title: 'Export Data',
-                        description: 'Download your financial data',
-                        icon: Icons.download,
-                        color: Colors.orange,
-                        onTap: () {
-                          _showExportDialog(context);
-                        },
-                      ),
-                      _buildReportCard(
-                        title: 'Financial Insights',
-                        description: 'Get actionable financial advice',
-                        icon: Icons.lightbulb_outline,
-                        color: Colors.amber,
-                        onTap: () {
-                          _showComingSoonDialog(context, 'Financial Insights');
-                        },
-                      ),
+                      
+                      SizedBox(height: 24),
+                      
+                      // Financial overview
+                      if (_overviewData != null) ...[
+                        Text(
+                          'Financial Overview',
+                          style: theme.textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(height: 16),
+                        
+                        // Month trend chart
+                        _buildTrendChart(theme),
+                        SizedBox(height: 24),
+                        
+                        // Stats cards
+                        _buildStatCards(theme, currencyFormatter),
+                        
+                        // Add bottom padding for bottom navigation
+                        SizedBox(height: 80),
+                      ],
                     ],
                   ),
-                  
-                  SizedBox(height: 24),
-                  
-                  // Financial overview
-                  if (_overviewData != null) ...[
-                    Text(
-                      'Financial Overview',
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    SizedBox(height: 16),
-                    
-                    // Month trend chart
-                    _buildTrendChart(theme),
-                    SizedBox(height: 24),
-                    
-                    // Stats cards
-                    _buildStatCards(theme, currencyFormatter),
-                  ],
-                ],
+                ),
               ),
-            ),
+      ),
     );
   }
   
@@ -549,8 +554,8 @@ class _ReportsScreenState extends State<ReportsScreen> {
                   child: Text(
                     title,
                     style: TextStyle(
-                      fontSize: 12,
                       color: Colors.grey[600],
+                      fontSize: 12,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -734,16 +739,29 @@ class _ReportsScreenState extends State<ReportsScreen> {
       
       try {
         // Call export API based on type
-        // This should be implemented in the report service
-        // TODO: Implement proper export functionality
-        await Future.delayed(Duration(seconds: 1)); // Simulate API call
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('$title data exported successfully'),
-            backgroundColor: Colors.green,
-          ),
+        final result = await _reportService.exportReport(
+          reportType: exportType,
+          startDate: startDate,
+          endDate: endDate,
         );
+        
+        if (result['success']) {
+          // Here we would handle the downloaded file
+          // For now, just show a success message
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('$title data exported successfully'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result['message'] ?? 'Export failed'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

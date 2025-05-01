@@ -1,12 +1,12 @@
+// lib/screens/reports/monthly_report_screen.dart
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
-import '../services/report_service.dart';
-import '../widgets/common/loading_indicator.dart';
-import '../widgets/common/error_display.dart';
-import '../widgets/common/drawer.dart';
-import '../routes/route_names.dart';
-import '../utils/error_handler.dart';
+import '../../services/report_service.dart';
+import '../../widgets/common/loading_indicator.dart';
+import '../../widgets/common/error_display.dart';
+import '../../widgets/layout/screen_wrapper.dart';
+import '../../routes/route_names.dart';
 
 class MonthlyReportScreen extends StatefulWidget {
   @override
@@ -92,58 +92,62 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final currencyFormatter = NumberFormat.currency(symbol: '\$');
+    final currencyFormatter = NumberFormat.currency(symbol: '\
+                    );
     
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Monthly Report'),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.calendar_today),
-            onPressed: () => _showMonthPicker(context),
-            tooltip: 'Choose Month',
-          ),
-        ],
-      ),
-      drawer: AppDrawer(currentRoute: RouteNames.monthlyReport),
-      body: _isLoading 
-        ? LoadingIndicator(message: 'Loading monthly report...')
-        : _error != null
-          ? ErrorDisplay(
-              error: _error!,
-              onRetry: _fetchMonthlyReport,
-            )
-          : _reportData == null
-            ? Center(child: Text('No report data available'))
-            : RefreshIndicator(
-                onRefresh: _fetchMonthlyReport,
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Month selector
-                      _buildMonthSelector(theme),
-                      SizedBox(height: 24),
-                      
-                      // Monthly summary
-                      _buildMonthlySummary(theme, currencyFormatter),
-                      SizedBox(height: 24),
-                      
-                      // Daily trends
-                      _buildDailyTrendsChart(theme),
-                      SizedBox(height: 24),
-                      
-                      // Expense categories
-                      _buildExpenseCategories(theme, currencyFormatter),
-                      SizedBox(height: 24),
-                      
-                      // Income sources
-                      _buildIncomeSources(theme, currencyFormatter),
-                    ],
+    return ScreenWrapper(
+      currentRoute: RouteNames.monthlyReport, 
+      showBottomNav: false, // Hide bottom nav on detail screens
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text('Monthly Report'),
+          actions: [
+            IconButton(
+              icon: Icon(Icons.calendar_today),
+              onPressed: () => _showMonthPicker(context),
+              tooltip: 'Choose Month',
+            ),
+          ],
+        ),
+        body: _isLoading 
+          ? LoadingIndicator(message: 'Loading monthly report...')
+          : _error != null
+            ? ErrorDisplay(
+                error: _error!,
+                onRetry: _fetchMonthlyReport,
+              )
+            : _reportData == null
+              ? Center(child: Text('No report data available'))
+              : RefreshIndicator(
+                  onRefresh: _fetchMonthlyReport,
+                  child: SingleChildScrollView(
+                    padding: EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Month selector
+                        _buildMonthSelector(theme),
+                        SizedBox(height: 24),
+                        
+                        // Monthly summary
+                        _buildMonthlySummary(theme, currencyFormatter),
+                        SizedBox(height: 24),
+                        
+                        // Daily trends
+                        _buildDailyTrendsChart(theme),
+                        SizedBox(height: 24),
+                        
+                        // Expense categories
+                        _buildExpenseCategories(theme, currencyFormatter),
+                        SizedBox(height: 24),
+                        
+                        // Income sources
+                        _buildIncomeSources(theme, currencyFormatter),
+                      ],
+                    ),
                   ),
                 ),
-              ),
+      ),
     );
   }
   
@@ -512,7 +516,7 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
                         getTitlesWidget: (value, meta) {
                           if (value == 0) return Text('');
                           return Text(
-                            '\$${value.toInt()}',
+                            '\${value.toInt()}',
                             style: TextStyle(
                               color: theme.textTheme.bodySmall?.color,
                               fontSize: 10,
@@ -940,7 +944,7 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
                           getTitlesWidget: (value, meta) {
                             if (value == 0) return Text('');
                             return Text(
-                              '\$${value.toInt()}',
+                              '\${value.toInt()}',
                               style: TextStyle(
                                 color: theme.textTheme.bodySmall?.color,
                                 fontSize: 10,

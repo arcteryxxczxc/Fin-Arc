@@ -4,6 +4,28 @@ import 'package:flutter/material.dart';
 class FinArcRouteObserver extends RouteObserver<PageRoute<dynamic>> {
   final ValueNotifier<String> currentRoute = ValueNotifier<String>('/');
   
+  Stream<String> get stream {
+    late StreamController<String> controller;
+    
+    void listener() {
+      controller.add(currentRoute.value);
+    }
+    
+    controller = StreamController<String>(
+      onListen: () {
+        currentRoute.addListener(listener);
+        // Immediately provide the current value
+        controller.add(currentRoute.value);
+      },
+      onCancel: () {
+        currentRoute.removeListener(listener);
+        controller.close();
+      },
+    );
+    
+    return controller.stream;
+  }
+
   @override
   void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
     super.didPush(route, previousRoute);

@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 
 class RegisterScreen extends StatefulWidget {
+  const RegisterScreen({super.key});
+
   @override
   _RegisterScreenState createState() => _RegisterScreenState();
 }
@@ -37,7 +39,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (_passwordController.text != _confirmPasswordController.text) {
       // Show error message
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Passwords do not match')),
+        const SnackBar(content: Text('Passwords do not match')),
       );
       return;
     }
@@ -63,18 +65,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
     
     return Scaffold(
       appBar: AppBar(
-        title: Text('Register for Fin-Arc'),
+        title: const Text('Register for Fin-Arc'),
       ),
       body: Center(
         child: SingleChildScrollView(
-          padding: EdgeInsets.all(20),
+          padding: const EdgeInsets.all(20),
           child: Card(
             elevation: 4,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10),
             ),
             child: Padding(
-              padding: EdgeInsets.all(20),
+              padding: const EdgeInsets.all(20),
               child: Form(
                 key: _formKey,
                 child: Column(
@@ -86,33 +88,33 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       size: 80,
                       color: Theme.of(context).primaryColor,
                     ),
-                    SizedBox(height: 20),
-                    Text(
+                    const SizedBox(height: 20),
+                    const Text(
                       'Create New Account',
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    SizedBox(height: 20),
+                    const SizedBox(height: 20),
                     
                     // Error message
                     if (authProvider.error != null)
                       Container(
-                        padding: EdgeInsets.all(10),
-                        margin: EdgeInsets.only(bottom: 20),
+                        padding: const EdgeInsets.all(10),
+                        margin: const EdgeInsets.only(bottom: 20),
                         width: double.infinity,
                         color: Colors.red.shade100,
                         child: Text(
                           authProvider.error!,
-                          style: TextStyle(color: Colors.red),
+                          style: const TextStyle(color: Colors.red),
                         ),
                       ),
                     
                     // Username field
                     TextFormField(
                       controller: _usernameController,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         labelText: 'Username',
                         prefixIcon: Icon(Icons.person),
                         border: OutlineInputBorder(),
@@ -124,13 +126,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         return null;
                       },
                     ),
-                    SizedBox(height: 15),
+                    const SizedBox(height: 15),
                     
                     // Email field
                     TextFormField(
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         labelText: 'Email',
                         prefixIcon: Icon(Icons.email),
                         border: OutlineInputBorder(),
@@ -145,29 +147,29 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         return null;
                       },
                     ),
-                    SizedBox(height: 15),
+                    const SizedBox(height: 15),
                     
                     // First name field
                     TextFormField(
                       controller: _firstNameController,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         labelText: 'First Name',
                         prefixIcon: Icon(Icons.person_outline),
                         border: OutlineInputBorder(),
                       ),
                     ),
-                    SizedBox(height: 15),
+                    const SizedBox(height: 15),
                     
                     // Last name field
                     TextFormField(
                       controller: _lastNameController,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         labelText: 'Last Name',
                         prefixIcon: Icon(Icons.person_outline),
                         border: OutlineInputBorder(),
                       ),
                     ),
-                    SizedBox(height: 15),
+                    const SizedBox(height: 15),
                     
                     // Password field
                     TextFormField(
@@ -175,7 +177,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       obscureText: _obscurePassword,
                       decoration: InputDecoration(
                         labelText: 'Password',
-                        prefixIcon: Icon(Icons.lock),
+                        prefixIcon: const Icon(Icons.lock),
                         suffixIcon: IconButton(
                           icon: Icon(
                             _obscurePassword ? Icons.visibility : Icons.visibility_off,
@@ -186,7 +188,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             });
                           },
                         ),
-                        border: OutlineInputBorder(),
+                        border: const OutlineInputBorder(),
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
@@ -198,7 +200,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         return null;
                       },
                     ),
-                    SizedBox(height: 15),
+                    const SizedBox(height: 15),
                     
                     // Confirm password field
                     TextFormField(
@@ -206,7 +208,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       obscureText: _obscureConfirmPassword,
                       decoration: InputDecoration(
                         labelText: 'Confirm Password',
-                        prefixIcon: Icon(Icons.lock),
+                        prefixIcon: const Icon(Icons.lock),
                         suffixIcon: IconButton(
                           icon: Icon(
                             _obscureConfirmPassword ? Icons.visibility : Icons.visibility_off,
@@ -217,7 +219,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             });
                           },
                         ),
-                        border: OutlineInputBorder(),
+                        border: const OutlineInputBorder(),
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
@@ -229,7 +231,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         return null;
                       },
                     ),
-                    SizedBox(height: 25),
+                    const SizedBox(height: 25),
                     
                     // Register button
                     SizedBox(
@@ -238,22 +240,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       child: ElevatedButton(
                         onPressed: authProvider.isLoading ? null : _submit,
                         child: authProvider.isLoading
-                            ? CircularProgressIndicator(color: Colors.white)
-                            : Text('REGISTER', style: TextStyle(fontSize: 16)),
+                            ? const CircularProgressIndicator(color: Colors.white)
+                            : const Text('REGISTER', style: TextStyle(fontSize: 16)),
                       ),
                     ),
-                    SizedBox(height: 20),
+                    const SizedBox(height: 20),
                     
                     // Login link
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text('Already have an account?'),
+                        const Text('Already have an account?'),
                         TextButton(
                           onPressed: () {
                             Navigator.of(context).pushReplacementNamed('/login');
                           },
-                          child: Text('Login'),
+                          child: const Text('Login'),
                         ),
                       ],
                     ),

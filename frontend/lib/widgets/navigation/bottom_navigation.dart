@@ -7,10 +7,10 @@ class FinArcBottomNavigation extends StatelessWidget {
   final Function(int) onTabTapped;
   
   const FinArcBottomNavigation({
-    Key? key,
+    super.key,
     required this.currentRoute,
     required this.onTabTapped,
-  }) : super(key: key);
+  });
   
   @override
   Widget build(BuildContext context) {
@@ -25,7 +25,7 @@ class FinArcBottomNavigation extends StatelessWidget {
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
             blurRadius: 10,
-            offset: Offset(0, -5),
+            offset: const Offset(0, -5),
           ),
         ],
         color: theme.cardColor,

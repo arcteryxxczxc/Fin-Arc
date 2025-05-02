@@ -6,6 +6,8 @@ import '../../providers/income_provider.dart';
 import '../../models/category.dart';
 
 class AddIncomeScreen extends StatefulWidget {
+  const AddIncomeScreen({super.key});
+
   @override
   _AddIncomeScreenState createState() => _AddIncomeScreenState();
 }
@@ -58,7 +60,7 @@ class _AddIncomeScreenState extends State<AddIncomeScreen> {
       context: context,
       initialDate: _selectedDate,
       firstDate: DateTime(2020),
-      lastDate: DateTime.now().add(Duration(days: 365)),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
     );
     if (picked != null && picked != _selectedDate) {
       setState(() {
@@ -102,7 +104,7 @@ class _AddIncomeScreenState extends State<AddIncomeScreen> {
       if (success && mounted) {
         // Show success message and navigate back
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Income added successfully')),
+          const SnackBar(content: Text('Income added successfully')),
         );
         Navigator.of(context).pop();
       } else if (mounted) {
@@ -124,10 +126,10 @@ class _AddIncomeScreenState extends State<AddIncomeScreen> {
     
     return Scaffold(
       appBar: AppBar(
-        title: Text('Add Income'),
+        title: const Text('Add Income'),
       ),
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Form(
           key: _formKey,
           child: Column(
@@ -136,12 +138,12 @@ class _AddIncomeScreenState extends State<AddIncomeScreen> {
               // Amount field
               TextFormField(
                 controller: _amountController,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Amount',
                   prefixIcon: Icon(Icons.attach_money),
                   border: OutlineInputBorder(),
                 ),
-                keyboardType: TextInputType.numberWithOptions(decimal: true),
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter an amount';
@@ -152,12 +154,12 @@ class _AddIncomeScreenState extends State<AddIncomeScreen> {
                   return null;
                 },
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               
               // Source field
               TextFormField(
                 controller: _sourceController,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Source',
                   prefixIcon: Icon(Icons.account_balance),
                   border: OutlineInputBorder(),
@@ -169,24 +171,24 @@ class _AddIncomeScreenState extends State<AddIncomeScreen> {
                   return null;
                 },
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               
               // Description field
               TextFormField(
                 controller: _descriptionController,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Description',
                   prefixIcon: Icon(Icons.description),
                   border: OutlineInputBorder(),
                 ),
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               
               // Date selector
               InkWell(
                 onTap: () => _selectDate(context),
                 child: InputDecorator(
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'Date',
                     prefixIcon: Icon(Icons.calendar_today),
                     border: OutlineInputBorder(),
@@ -196,11 +198,11 @@ class _AddIncomeScreenState extends State<AddIncomeScreen> {
                   ),
                 ),
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               
               // Category dropdown
               DropdownButtonFormField<Category>(
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Category',
                   prefixIcon: Icon(Icons.category),
                   border: OutlineInputBorder(),
@@ -219,7 +221,7 @@ class _AddIncomeScreenState extends State<AddIncomeScreen> {
                             shape: BoxShape.circle,
                           ),
                         ),
-                        SizedBox(width: 10),
+                        const SizedBox(width: 10),
                         Text(category.name),
                       ],
                     ),
@@ -231,20 +233,20 @@ class _AddIncomeScreenState extends State<AddIncomeScreen> {
                   });
                 },
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               
               // Recurring income toggle
               SwitchListTile(
-                title: Text('Recurring Income'),
-                subtitle: Text('Enable for repeating income'),
+                title: const Text('Recurring Income'),
+                subtitle: const Text('Enable for repeating income'),
                 value: _isRecurring,
                 onChanged: (bool value) {
                   setState(() {
                     _isRecurring = value;
                     if (!value) {
                       _recurringType = null;
-                    } else if (_recurringType == null) {
-                      _recurringType = _recurringTypes.first;
+                    } else {
+                      _recurringType ??= _recurringTypes.first;
                     }
                   });
                 },
@@ -256,9 +258,9 @@ class _AddIncomeScreenState extends State<AddIncomeScreen> {
                   children: [
                     // Recurring type dropdown
                     Padding(
-                      padding: EdgeInsets.only(top: 8),
+                      padding: const EdgeInsets.only(top: 8),
                       child: DropdownButtonFormField<String>(
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           labelText: 'Recurrence Type',
                           prefixIcon: Icon(Icons.repeat),
                           border: OutlineInputBorder(),
@@ -277,13 +279,13 @@ class _AddIncomeScreenState extends State<AddIncomeScreen> {
                         },
                       ),
                     ),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     
                     // Recurring day field (for monthly and yearly)
                     if (_recurringType == 'Monthly' || _recurringType == 'Yearly')
                       TextFormField(
                         initialValue: _recurringDay.toString(),
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           labelText: 'Day of Month',
                           prefixIcon: Icon(Icons.date_range),
                           border: OutlineInputBorder(),
@@ -310,12 +312,12 @@ class _AddIncomeScreenState extends State<AddIncomeScreen> {
                       ),
                   ],
                 ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               
               // Taxable income toggle
               SwitchListTile(
-                title: Text('Taxable Income'),
-                subtitle: Text('Enable if income is subject to tax'),
+                title: const Text('Taxable Income'),
+                subtitle: const Text('Enable if income is subject to tax'),
                 value: _isTaxable,
                 onChanged: (bool value) {
                   setState(() {
@@ -327,15 +329,15 @@ class _AddIncomeScreenState extends State<AddIncomeScreen> {
               // Tax rate field (if taxable is enabled)
               if (_isTaxable)
                 Padding(
-                  padding: EdgeInsets.only(top: 8),
+                  padding: const EdgeInsets.only(top: 8),
                   child: TextFormField(
                     controller: _taxRateController,
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       labelText: 'Tax Rate (%)',
                       prefixIcon: Icon(Icons.percent),
                       border: OutlineInputBorder(),
                     ),
-                    keyboardType: TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Please enter a tax rate';
@@ -348,7 +350,7 @@ class _AddIncomeScreenState extends State<AddIncomeScreen> {
                     },
                   ),
                 ),
-              SizedBox(height: 24),
+              const SizedBox(height: 24),
               
               // Submit button
               SizedBox(
@@ -357,8 +359,8 @@ class _AddIncomeScreenState extends State<AddIncomeScreen> {
                 child: ElevatedButton(
                   onPressed: incomeProvider.isLoading ? null : _submitForm,
                   child: incomeProvider.isLoading
-                      ? CircularProgressIndicator(color: Colors.white)
-                      : Text('Add Income', style: TextStyle(fontSize: 16)),
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text('Add Income', style: TextStyle(fontSize: 16)),
                 ),
               ),
             ],

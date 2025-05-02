@@ -12,12 +12,10 @@ import 'providers/income_provider.dart';
 // Screens
 import 'screens/splash_screen.dart';
 import 'screens/auth/login_screen.dart';
-import 'screens/auth/register_screen.dart';
 import 'screens/dashboard/dashboard_screen.dart';
 
 // Routes
 import 'routes/app_router.dart';
-import 'routes/route_names.dart';
 import 'routes/route_observer.dart';
 
 void main() {
@@ -35,6 +33,8 @@ void main() {
 class MyApp extends StatelessWidget {
   // Create a route observer to track navigation
   final FinArcRouteObserver routeObserver = FinArcRouteObserver();
+
+  MyApp({super.key});
   
   @override
   Widget build(BuildContext context) {
@@ -55,7 +55,7 @@ class MyApp extends StatelessWidget {
         
         // Provide current route as a stream
         StreamProvider<String>(
-          create: (_) => routeObserver.currentRoute.stream,
+          create: (_) => routeObserver.stream,
           initialData: '/',
         ),
       ],
@@ -67,7 +67,7 @@ class MyApp extends StatelessWidget {
           initialRoute: '/',
           navigatorObservers: [routeObserver],
           onGenerateRoute: AppRouter.generateRoute,
-          home: AuthenticationWrapper(),
+          home: const AuthenticationWrapper(),
         ),
       ),
     );
@@ -75,6 +75,8 @@ class MyApp extends StatelessWidget {
 }
 
 class AuthenticationWrapper extends StatelessWidget {
+  const AuthenticationWrapper({super.key});
+
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
@@ -84,17 +86,17 @@ class AuthenticationWrapper extends StatelessWidget {
       builder: (ctx, snapshot) {
         // Show splash screen while checking auth state
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return SplashScreen();
+          return const SplashScreen();
         }
         
         // Load initial data if authenticated
         if (authProvider.isAuthenticated) {
           // Initialize other providers as needed
-          return DashboardScreen();
+          return const DashboardScreen();
         }
         
         // Not authenticated, show login screen
-        return LoginScreen();
+        return const LoginScreen();
       },
     );
   }

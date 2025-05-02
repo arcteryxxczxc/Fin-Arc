@@ -5,6 +5,8 @@ import '../widgets/common/drawer.dart';
 import '../routes/route_names.dart';
 
 class SettingsScreen extends StatefulWidget {
+  const SettingsScreen({super.key});
+
   @override
   _SettingsScreenState createState() => _SettingsScreenState();
 }
@@ -27,11 +29,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
     
     return Scaffold(
       appBar: AppBar(
-        title: Text('Settings'),
+        title: const Text('Settings'),
       ),
       drawer: AppDrawer(currentRoute: RouteNames.settings),
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -42,8 +44,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: Column(
                 children: [
                   SwitchListTile(
-                    title: Text('Dark Mode'),
-                    subtitle: Text('Use dark color scheme'),
+                    title: const Text('Dark Mode'),
+                    subtitle: const Text('Use dark color scheme'),
                     secondary: Icon(
                       themeProvider.isDarkMode ? Icons.dark_mode : Icons.light_mode,
                       color: theme.primaryColor,
@@ -56,15 +58,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   _buildDivider(),
                   ListTile(
                     leading: Icon(Icons.language, color: theme.primaryColor),
-                    title: Text('Language'),
+                    title: const Text('Language'),
                     subtitle: Text(_selectedLanguage),
-                    trailing: Icon(Icons.arrow_forward_ios, size: 16),
+                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                     onTap: _showLanguageSelector,
                   ),
                 ],
               ),
             ),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
             
             // Preferences section
             _buildSectionHeader('Preferences', Icons.settings),
@@ -74,17 +76,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 children: [
                   ListTile(
                     leading: Icon(Icons.attach_money, color: theme.primaryColor),
-                    title: Text('Currency'),
+                    title: const Text('Currency'),
                     subtitle: Text(_selectedCurrency),
-                    trailing: Icon(Icons.arrow_forward_ios, size: 16),
+                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                     onTap: _showCurrencySelector,
                   ),
                   _buildDivider(),
                   ListTile(
                     leading: Icon(Icons.calendar_today, color: theme.primaryColor),
-                    title: Text('First Day of Month'),
-                    subtitle: Text('Set when your budget month starts'),
-                    trailing: Icon(Icons.arrow_forward_ios, size: 16),
+                    title: const Text('First Day of Month'),
+                    subtitle: const Text('Set when your budget month starts'),
+                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                     onTap: () {
                       // Show date selection dialog
                       _showNumberPicker('First Day of Month', 1, 28, 1);
@@ -93,9 +95,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   _buildDivider(),
                   ListTile(
                     leading: Icon(Icons.home, color: theme.primaryColor),
-                    title: Text('Default View'),
-                    subtitle: Text('Dashboard'),
-                    trailing: Icon(Icons.arrow_forward_ios, size: 16),
+                    title: const Text('Default View'),
+                    subtitle: const Text('Dashboard'),
+                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                     onTap: () {
                       // Show default view selection dialog
                     },
@@ -103,7 +105,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ],
               ),
             ),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
             
             // Notifications section
             _buildSectionHeader('Notifications', Icons.notifications),
@@ -112,8 +114,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: Column(
                 children: [
                   SwitchListTile(
-                    title: Text('Enable Notifications'),
-                    subtitle: Text('Receive alerts and reminders'),
+                    title: const Text('Enable Notifications'),
+                    subtitle: const Text('Receive alerts and reminders'),
                     secondary: Icon(
                       _notificationsEnabled ? Icons.notifications_active : Icons.notifications_off,
                       color: theme.primaryColor,
@@ -132,11 +134,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
+                          const Text(
                             'Notification Types',
                             style: TextStyle(fontWeight: FontWeight.bold),
                           ),
-                          SizedBox(height: 8),
+                          const SizedBox(height: 8),
                           ..._notificationTypes.entries.map((entry) {
                             return CheckboxListTile(
                               title: Text(entry.key),
@@ -150,7 +152,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 });
                               },
                             );
-                          }).toList(),
+                          }),
                         ],
                       ),
                     ),
@@ -158,7 +160,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ],
               ),
             ),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
             
             // Data management section
             _buildSectionHeader('Data Management', Icons.storage),
@@ -168,9 +170,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 children: [
                   ListTile(
                     leading: Icon(Icons.file_download, color: theme.primaryColor),
-                    title: Text('Export Data'),
-                    subtitle: Text('Download your financial data'),
-                    trailing: Icon(Icons.arrow_forward_ios, size: 16),
+                    title: const Text('Export Data'),
+                    subtitle: const Text('Download your financial data'),
+                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                     onTap: () {
                       // Show export options dialog
                     },
@@ -178,25 +180,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   _buildDivider(),
                   ListTile(
                     leading: Icon(Icons.file_upload, color: theme.primaryColor),
-                    title: Text('Import Data'),
-                    subtitle: Text('Import from CSV or Excel file'),
-                    trailing: Icon(Icons.arrow_forward_ios, size: 16),
+                    title: const Text('Import Data'),
+                    subtitle: const Text('Import from CSV or Excel file'),
+                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                     onTap: () {
                       // Show import options dialog
                     },
                   ),
                   _buildDivider(),
                   ListTile(
-                    leading: Icon(Icons.delete_outline, color: Colors.red),
-                    title: Text('Clear All Data'),
-                    subtitle: Text('Remove all your financial data'),
-                    trailing: Icon(Icons.arrow_forward_ios, size: 16),
+                    leading: const Icon(Icons.delete_outline, color: Colors.red),
+                    title: const Text('Clear All Data'),
+                    subtitle: const Text('Remove all your financial data'),
+                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                     onTap: _showClearDataConfirmation,
                   ),
                 ],
               ),
             ),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
             
             // About section
             _buildSectionHeader('About', Icons.info_outline),
@@ -206,8 +208,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 children: [
                   ListTile(
                     leading: Icon(Icons.help_outline, color: theme.primaryColor),
-                    title: Text('Help & Support'),
-                    trailing: Icon(Icons.arrow_forward_ios, size: 16),
+                    title: const Text('Help & Support'),
+                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                     onTap: () {
                       // Show help & support dialog
                     },
@@ -215,8 +217,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   _buildDivider(),
                   ListTile(
                     leading: Icon(Icons.description_outlined, color: theme.primaryColor),
-                    title: Text('Privacy Policy'),
-                    trailing: Icon(Icons.arrow_forward_ios, size: 16),
+                    title: const Text('Privacy Policy'),
+                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                     onTap: () {
                       // Show privacy policy
                     },
@@ -224,15 +226,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   _buildDivider(),
                   ListTile(
                     leading: Icon(Icons.info_outline, color: theme.primaryColor),
-                    title: Text('About Fin-Arc'),
-                    subtitle: Text('Version 1.0.0'),
-                    trailing: Icon(Icons.arrow_forward_ios, size: 16),
+                    title: const Text('About Fin-Arc'),
+                    subtitle: const Text('Version 1.0.0'),
+                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                     onTap: _showAboutDialog,
                   ),
                 ],
               ),
             ),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
           ],
         ),
       ),
@@ -245,7 +247,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: Row(
         children: [
           Icon(icon, size: 20, color: Colors.grey[600]),
-          SizedBox(width: 8),
+          const SizedBox(width: 8),
           Text(
             title,
             style: TextStyle(
@@ -260,7 +262,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
   
   Widget _buildDivider() {
-    return Divider(height: 1, indent: 16, endIndent: 16);
+    return const Divider(height: 1, indent: 16, endIndent: 16);
   }
   
   void _showLanguageSelector() {
@@ -269,7 +271,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showDialog(
       context: context,
       builder: (ctx) => SimpleDialog(
-        title: Text('Select Language'),
+        title: const Text('Select Language'),
         children: languages.map((language) {
           return SimpleDialogOption(
             onPressed: () {
@@ -291,7 +293,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showDialog(
       context: context,
       builder: (ctx) => SimpleDialog(
-        title: Text('Select Currency'),
+        title: const Text('Select Currency'),
         children: currencies.map((currency) {
           return SimpleDialogOption(
             onPressed: () {
@@ -320,12 +322,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text('Select a number between $min and $max:'),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     IconButton(
-                      icon: Icon(Icons.remove),
+                      icon: const Icon(Icons.remove),
                       onPressed: selectedValue > min ? () {
                         setState(() {
                           selectedValue--;
@@ -342,12 +344,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       child: Center(
                         child: Text(
                           selectedValue.toString(),
-                          style: TextStyle(fontSize: 20),
+                          style: const TextStyle(fontSize: 20),
                         ),
                       ),
                     ),
                     IconButton(
-                      icon: Icon(Icons.add),
+                      icon: const Icon(Icons.add),
                       onPressed: selectedValue < max ? () {
                         setState(() {
                           selectedValue++;
@@ -363,13 +365,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: Text('Cancel'),
+            child: const Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () {
               Navigator.of(ctx).pop(selectedValue);
             },
-            child: Text('Confirm'),
+            child: const Text('Confirm'),
           ),
         ],
       ),
@@ -380,14 +382,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Clear All Data'),
-        content: Text(
+        title: const Text('Clear All Data'),
+        content: const Text(
           'This will permanently delete all your financial data. This action cannot be undone.\n\nAre you sure you want to continue?',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: Text('Cancel'),
+            child: const Text('Cancel'),
           ),
           TextButton(
             style: TextButton.styleFrom(foregroundColor: Colors.red),
@@ -395,10 +397,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               // Implement clear data functionality
               Navigator.of(ctx).pop();
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('All data has been cleared')),
+                const SnackBar(content: Text('All data has been cleared')),
               );
             },
-            child: Text('Delete All Data'),
+            child: const Text('Delete All Data'),
           ),
         ],
       ),
@@ -417,7 +419,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           color: Theme.of(context).primaryColor,
         ),
         applicationLegalese: '© 2023 Fin-Arc. All rights reserved.',
-        children: [
+        children: const [
           SizedBox(height: 16),
           Text(
             'Fin-Arc is a personal finance application that helps you track expenses, manage income, and achieve your financial goals.',

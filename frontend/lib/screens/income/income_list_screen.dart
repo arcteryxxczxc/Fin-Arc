@@ -12,6 +12,8 @@ import 'income_detail_screen.dart';
 import 'add_income_screen.dart';
 
 class IncomeListScreen extends StatefulWidget {
+  const IncomeListScreen({super.key});
+
   @override
   _IncomeListScreenState createState() => _IncomeListScreenState();
 }
@@ -68,10 +70,8 @@ class _IncomeListScreenState extends State<IncomeListScreen> {
         (c) => c.name == _selectedCategory,
         orElse: () => null,
       );
-      if (category != null) {
-        categoryId = category.id;
-      }
-    }
+      categoryId = category.id;
+        }
     
     // Format dates
     String? startDateStr, endDateStr;
@@ -146,20 +146,20 @@ class _IncomeListScreenState extends State<IncomeListScreen> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          title: Text('Filter Incomes'),
+          title: const Text('Filter Incomes'),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Category filter
-                Text(
+                const Text(
                   'Category',
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 DropdownButtonFormField<String?>(
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     border: OutlineInputBorder(),
                     contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   ),
@@ -170,24 +170,24 @@ class _IncomeListScreenState extends State<IncomeListScreen> {
                     });
                   },
                   items: [
-                    DropdownMenuItem<String?>(
+                    const DropdownMenuItem<String?>(
                       value: null,
                       child: Text('All Categories'),
                     ),
                     ...categories.map((category) => DropdownMenuItem<String?>(
                       value: category.name,
                       child: Text(category.name),
-                    )).toList(),
+                    )),
                   ],
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 
                 // Date range filter
-                Text(
+                const Text(
                   'Date Range',
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 Row(
                   children: [
                     Expanded(
@@ -206,7 +206,7 @@ class _IncomeListScreenState extends State<IncomeListScreen> {
                           }
                         },
                         child: InputDecorator(
-                          decoration: InputDecoration(
+                          decoration: const InputDecoration(
                             border: OutlineInputBorder(),
                             contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                             labelText: 'From',
@@ -219,7 +219,7 @@ class _IncomeListScreenState extends State<IncomeListScreen> {
                         ),
                       ),
                     ),
-                    SizedBox(width: 16),
+                    const SizedBox(width: 16),
                     Expanded(
                       child: InkWell(
                         onTap: () async {
@@ -236,7 +236,7 @@ class _IncomeListScreenState extends State<IncomeListScreen> {
                           }
                         },
                         child: InputDecorator(
-                          decoration: InputDecoration(
+                          decoration: const InputDecoration(
                             border: OutlineInputBorder(),
                             contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                             labelText: 'To',
@@ -251,7 +251,7 @@ class _IncomeListScreenState extends State<IncomeListScreen> {
                     ),
                   ],
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 
                 // Quick date range buttons
                 Wrap(
@@ -307,7 +307,7 @@ class _IncomeListScreenState extends State<IncomeListScreen> {
               onPressed: () {
                 Navigator.of(ctx).pop();
               },
-              child: Text('Cancel'),
+              child: const Text('Cancel'),
             ),
             ElevatedButton(
               onPressed: () {
@@ -319,7 +319,7 @@ class _IncomeListScreenState extends State<IncomeListScreen> {
                 Navigator.of(ctx).pop();
                 _loadIncomes();
               },
-              child: Text('Apply Filters'),
+              child: const Text('Apply Filters'),
             ),
           ],
         ),
@@ -330,11 +330,11 @@ class _IncomeListScreenState extends State<IncomeListScreen> {
   Widget _quickDateRangeButton({required String label, required VoidCallback onTap}) {
     return ElevatedButton(
       onPressed: onTap,
-      child: Text(label),
       style: ElevatedButton.styleFrom(
-        backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
+        backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
         foregroundColor: Theme.of(context).colorScheme.onSurfaceVariant,
       ),
+      child: Text(label),
     );
   }
   
@@ -348,7 +348,7 @@ class _IncomeListScreenState extends State<IncomeListScreen> {
     showDialog(
       context: context,
       builder: (ctx) => SimpleDialog(
-        title: Text('Sort By'),
+        title: const Text('Sort By'),
         children: options.entries.map((entry) {
           final isSelected = _sortBy == entry.key;
           
@@ -385,10 +385,10 @@ class _IncomeListScreenState extends State<IncomeListScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Search Incomes'),
+        title: const Text('Search Incomes'),
         content: TextField(
           autofocus: true,
-          decoration: InputDecoration(
+          decoration: const InputDecoration(
             hintText: 'Enter search term',
             prefixIcon: Icon(Icons.search),
             border: OutlineInputBorder(),
@@ -402,14 +402,14 @@ class _IncomeListScreenState extends State<IncomeListScreen> {
             onPressed: () {
               Navigator.of(ctx).pop();
             },
-            child: Text('Cancel'),
+            child: const Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () {
               Navigator.of(ctx).pop();
               _loadIncomes();
             },
-            child: Text('Search'),
+            child: const Text('Search'),
           ),
         ],
       ),
@@ -425,26 +425,26 @@ class _IncomeListScreenState extends State<IncomeListScreen> {
     
     return Scaffold(
       appBar: AppBar(
-        title: Text('Income'),
+        title: const Text('Income'),
         actions: [
           IconButton(
-            icon: Icon(Icons.search),
+            icon: const Icon(Icons.search),
             onPressed: _showSearchBar,
             tooltip: 'Search incomes',
           ),
           IconButton(
-            icon: Icon(Icons.filter_list),
+            icon: const Icon(Icons.filter_list),
             onPressed: _showFilterDialog,
             tooltip: 'Filter incomes',
           ),
           IconButton(
-            icon: Icon(Icons.sort),
+            icon: const Icon(Icons.sort),
             onPressed: _showSortDialog,
             tooltip: 'Sort incomes',
           ),
         ],
       ),
-      drawer: AppDrawer(currentRoute: RouteNames.incomeList),
+      drawer: const AppDrawer(currentRoute: RouteNames.incomeList),
       body: Column(
         children: [
           // Active filters display
@@ -461,31 +461,31 @@ class _IncomeListScreenState extends State<IncomeListScreen> {
         onPressed: () {
           Navigator.of(context).push(
             MaterialPageRoute(
-              builder: (context) => AddIncomeScreen(),
+              builder: (context) => const AddIncomeScreen(),
             ),
           ).then((_) => _loadIncomes());
         },
-        child: Icon(Icons.add),
         tooltip: 'Add income',
+        child: const Icon(Icons.add),
       ),
     );
   }
   
   Widget _buildActiveFilters() {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
+          const Text(
             'Active Filters:',
             style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 12,
             ),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -531,12 +531,12 @@ class _IncomeListScreenState extends State<IncomeListScreen> {
                   });
                   _loadIncomes();
                 },
-                child: Text('Clear All'),
                 style: TextButton.styleFrom(
-                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  minimumSize: Size(0, 0),
+                  minimumSize: const Size(0, 0),
                 ),
+                child: const Text('Clear All'),
               ),
             ],
           ),
@@ -547,7 +547,7 @@ class _IncomeListScreenState extends State<IncomeListScreen> {
   
   Widget _buildFilterChip({required String label, required VoidCallback onRemove}) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
         borderRadius: BorderRadius.circular(16),
@@ -562,10 +562,10 @@ class _IncomeListScreenState extends State<IncomeListScreen> {
               color: Theme.of(context).colorScheme.primary,
             ),
           ),
-          SizedBox(width: 4),
+          const SizedBox(width: 4),
           InkWell(
             onTap: onRemove,
-            customBorder: CircleBorder(),
+            customBorder: const CircleBorder(),
             child: Icon(
               Icons.close,
               size: 16,
@@ -584,7 +584,7 @@ class _IncomeListScreenState extends State<IncomeListScreen> {
     NumberFormat currencyFormatter,
   ) {
     if (incomeProvider.isLoading && incomes.isEmpty) {
-      return LoadingIndicator(message: 'Loading incomes...');
+      return const LoadingIndicator(message: 'Loading incomes...');
     }
     
     if (incomeProvider.error != null && incomes.isEmpty) {
@@ -599,17 +599,17 @@ class _IncomeListScreenState extends State<IncomeListScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
+            const Icon(
               Icons.account_balance,
               size: 64,
               color: Colors.grey,
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Text(
               'No income entries found',
               style: theme.textTheme.titleMedium,
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Text(
               'Add your first income or change filters',
               style: theme.textTheme.bodyMedium,
@@ -624,13 +624,13 @@ class _IncomeListScreenState extends State<IncomeListScreen> {
       onRefresh: _loadIncomes,
       child: ListView.separated(
         controller: _scrollController,
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         itemCount: incomes.length + (incomeProvider.hasMorePages ? 1 : 0),
-        separatorBuilder: (context, index) => Divider(),
+        separatorBuilder: (context, index) => const Divider(),
         itemBuilder: (context, index) {
           // Show loading indicator at the bottom
           if (index == incomes.length) {
-            return Center(
+            return const Center(
               child: Padding(
                 padding: EdgeInsets.all(16),
                 child: CircularProgressIndicator(),
@@ -647,7 +647,7 @@ class _IncomeListScreenState extends State<IncomeListScreen> {
           }
           
           return ListTile(
-            contentPadding: EdgeInsets.symmetric(vertical: 8, horizontal: 0),
+            contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 0),
             leading: CircleAvatar(
               backgroundColor: income.categoryId != null ? categoryColor.withOpacity(0.2) : Colors.green[100],
               child: Icon(
@@ -678,7 +678,7 @@ class _IncomeListScreenState extends State<IncomeListScreen> {
             ),
             trailing: Text(
               income.formattedAmount,
-              style: TextStyle(
+              style: const TextStyle(
                 fontWeight: FontWeight.bold,
                 color: Colors.green,
               ),

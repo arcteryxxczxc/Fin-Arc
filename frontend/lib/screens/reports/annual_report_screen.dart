@@ -9,6 +9,8 @@ import '../routes/route_names.dart';
 import '../utils/error_handler.dart';
 
 class AnnualReportScreen extends StatefulWidget {
+  const AnnualReportScreen({super.key});
+
   @override
   _AnnualReportScreenState createState() => _AnnualReportScreenState();
 }
@@ -90,13 +92,13 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
   // Allow user to pick a year from a dialog
   void _showYearPicker(BuildContext context) {
     final now = DateTime.now();
-    final firstYear = 2020; // First available year
+    const firstYear = 2020; // First available year
     
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Select Year'),
-        content: Container(
+        title: const Text('Select Year'),
+        content: SizedBox(
           width: double.maxFinite,
           height: 300,
           child: ListView.builder(
@@ -126,7 +128,7 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: Text('CANCEL'),
+            child: const Text('CANCEL'),
           ),
         ],
       ),
@@ -140,10 +142,10 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
     
     return Scaffold(
       appBar: AppBar(
-        title: Text('Annual Report'),
+        title: const Text('Annual Report'),
         actions: [
           IconButton(
-            icon: Icon(Icons.calendar_today),
+            icon: const Icon(Icons.calendar_today),
             onPressed: () => _showYearPicker(context),
             tooltip: 'Choose Year',
           ),
@@ -158,33 +160,33 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
               onRetry: _fetchAnnualReport,
             )
           : _reportData == null
-            ? Center(child: Text('No report data available'))
+            ? const Center(child: Text('No report data available'))
             : RefreshIndicator(
                 onRefresh: _fetchAnnualReport,
                 child: SingleChildScrollView(
-                  padding: EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Year selector
                       _buildYearSelector(theme),
-                      SizedBox(height: 24),
+                      const SizedBox(height: 24),
                       
                       // Annual summary
                       _buildAnnualSummary(theme, currencyFormatter),
-                      SizedBox(height: 24),
+                      const SizedBox(height: 24),
                       
                       // Monthly trends
                       _buildMonthlyTrendsChart(theme),
-                      SizedBox(height: 24),
+                      const SizedBox(height: 24),
                       
                       // Quarterly data
                       _buildQuarterlyData(theme, currencyFormatter),
-                      SizedBox(height: 24),
+                      const SizedBox(height: 24),
                       
                       // Expense categories
                       _buildExpenseCategories(theme, currencyFormatter),
-                      SizedBox(height: 24),
+                      const SizedBox(height: 24),
                       
                       // Income sources
                       _buildIncomeSources(theme, currencyFormatter),
@@ -204,12 +206,12 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             IconButton(
-              icon: Icon(Icons.chevron_left),
+              icon: const Icon(Icons.chevron_left),
               onPressed: _previousYear,
               tooltip: 'Previous year',
             ),
@@ -223,7 +225,7 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
               ),
             ),
             IconButton(
-              icon: Icon(Icons.chevron_right),
+              icon: const Icon(Icons.chevron_right),
               onPressed: canGoNext ? _nextYear : null,
               tooltip: canGoNext ? 'Next year' : 'Cannot go to future years',
             ),
@@ -246,7 +248,7 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -256,7 +258,7 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             
             // Income, Expenses, Balance
             Row(
@@ -270,7 +272,7 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
                     icon: Icons.arrow_upward,
                   ),
                 ),
-                SizedBox(width: 16),
+                const SizedBox(width: 16),
                 Expanded(
                   child: _buildSummaryItem(
                     title: 'Expenses',
@@ -280,7 +282,7 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
                     icon: Icons.arrow_downward,
                   ),
                 ),
-                SizedBox(width: 16),
+                const SizedBox(width: 16),
                 Expanded(
                   child: _buildSummaryItem(
                     title: 'Balance',
@@ -293,11 +295,11 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
               ],
             ),
             
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
             
             // Savings rate
             Container(
-              padding: EdgeInsets.all(16),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: theme.colorScheme.primary.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
@@ -305,7 +307,7 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
               child: Row(
                 children: [
                   Container(
-                    padding: EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
                       color: theme.colorScheme.primary.withOpacity(0.2),
                       shape: BoxShape.circle,
@@ -315,21 +317,21 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
                       color: theme.colorScheme.primary,
                     ),
                   ),
-                  SizedBox(width: 16),
+                  const SizedBox(width: 16),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
+                        const Text(
                           'Savings Rate',
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        SizedBox(height: 4),
+                        const SizedBox(height: 4),
                         Text(
                           'You saved ${savingsRate.toStringAsFixed(1)}% of your income this year',
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 12,
                           ),
                         ),
@@ -355,7 +357,7 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
     return Column(
       children: [
         Container(
-          padding: EdgeInsets.all(12),
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: color.withOpacity(0.1),
             shape: BoxShape.circle,
@@ -366,7 +368,7 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
             size: 24,
           ),
         ),
-        SizedBox(height: 8),
+        const SizedBox(height: 8),
         Text(
           title,
           style: TextStyle(
@@ -374,7 +376,7 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
             color: Colors.grey[700],
           ),
         ),
-        SizedBox(height: 4),
+        const SizedBox(height: 4),
         Text(
           currencyFormatter.format(amount),
           style: TextStyle(
@@ -395,7 +397,7 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
         elevation: 2,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         child: Padding(
-          padding: EdgeInsets.all(16),
+          padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -405,10 +407,10 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              SizedBox(height: 24),
-              Center(
+              const SizedBox(height: 24),
+              const Center(
                 child: Padding(
-                  padding: const EdgeInsets.all(24.0),
+                  padding: EdgeInsets.all(24.0),
                   child: Text('No monthly data available for this year'),
                 ),
               ),
@@ -441,13 +443,13 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
               toY: income,
               color: Colors.green,
               width: 12,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(4)),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
             ),
             BarChartRodData(
               toY: expenses,
               color: Colors.red,
               width: 12,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(4)),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
             ),
           ],
           barsSpace: 4,
@@ -466,7 +468,7 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -476,10 +478,10 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
             
             // Chart
-            Container(
+            SizedBox(
               height: 240,
               child: BarChart(
                 BarChartData(
@@ -509,7 +511,7 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
                           final index = value.toInt();
                           if (index >= 0 && index < months.length) {
                             return Padding(
-                              padding: EdgeInsets.only(top: 8),
+                              padding: const EdgeInsets.only(top: 8),
                               child: Text(
                                 months[index],
                                 style: TextStyle(
@@ -520,7 +522,7 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
                               ),
                             );
                           }
-                          return Text('');
+                          return const Text('');
                         },
                       ),
                     ),
@@ -529,7 +531,7 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
                         showTitles: true,
                         reservedSize: 40,
                         getTitlesWidget: (value, meta) {
-                          if (value == 0) return Text('');
+                          if (value == 0) return const Text('');
                           return Text(
                             '\$${(value / 1000).toInt()}K',
                             style: TextStyle(
@@ -541,10 +543,10 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
                         interval: maxY / 5,
                       ),
                     ),
-                    topTitles: AxisTitles(
+                    topTitles: const AxisTitles(
                       sideTitles: SideTitles(showTitles: false),
                     ),
-                    rightTitles: AxisTitles(
+                    rightTitles: const AxisTitles(
                       sideTitles: SideTitles(showTitles: false),
                     ),
                   ),
@@ -554,7 +556,7 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
               ),
             ),
             
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             
             // Legend
             Row(
@@ -564,7 +566,7 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
                   label: 'Income',
                   color: Colors.green,
                 ),
-                SizedBox(width: 24),
+                const SizedBox(width: 24),
                 _buildLegendItem(
                   label: 'Expenses',
                   color: Colors.red,
@@ -588,7 +590,7 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
             shape: BoxShape.circle,
           ),
         ),
-        SizedBox(width: 4),
+        const SizedBox(width: 4),
         Text(
           label,
           style: TextStyle(
@@ -608,7 +610,7 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
         elevation: 2,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         child: Padding(
-          padding: EdgeInsets.all(16),
+          padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -618,10 +620,10 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              SizedBox(height: 16),
-              Center(
+              const SizedBox(height: 16),
+              const Center(
                 child: Padding(
-                  padding: const EdgeInsets.all(24.0),
+                  padding: EdgeInsets.all(24.0),
                   child: Text('No quarterly data available for this year'),
                 ),
               ),
@@ -635,7 +637,7 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -645,11 +647,11 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             
             // Quarterly data table
             Table(
-              columnWidths: {
+              columnWidths: const {
                 0: FlexColumnWidth(2),
                 1: FlexColumnWidth(3),
                 2: FlexColumnWidth(3),
@@ -667,7 +669,7 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
                       ),
                     ),
                   ),
-                  children: [
+                  children: const [
                     Padding(
                       padding: EdgeInsets.symmetric(vertical: 8),
                       child: Text(
@@ -717,29 +719,29 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
                     ),
                     children: [
                       Padding(
-                        padding: EdgeInsets.symmetric(vertical: 12),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
                         child: Text(quarterName),
                       ),
                       Padding(
-                        padding: EdgeInsets.symmetric(vertical: 12),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
                         child: Text(
                           currencyFormatter.format(income),
-                          style: TextStyle(
+                          style: const TextStyle(
                             color: Colors.green,
                           ),
                         ),
                       ),
                       Padding(
-                        padding: EdgeInsets.symmetric(vertical: 12),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
                         child: Text(
                           currencyFormatter.format(expenses),
-                          style: TextStyle(
+                          style: const TextStyle(
                             color: Colors.red,
                           ),
                         ),
                       ),
                       Padding(
-                        padding: EdgeInsets.symmetric(vertical: 12),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
                         child: Text(
                           currencyFormatter.format(balance),
                           style: TextStyle(
@@ -750,7 +752,7 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
                       ),
                     ],
                   );
-                }).toList(),
+                }),
               ],
             ),
           ],
@@ -767,7 +769,7 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
         elevation: 2,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         child: Padding(
-          padding: EdgeInsets.all(16),
+          padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -777,10 +779,10 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              SizedBox(height: 16),
-              Center(
+              const SizedBox(height: 16),
+              const Center(
                 child: Padding(
-                  padding: const EdgeInsets.all(24.0),
+                  padding: EdgeInsets.all(24.0),
                   child: Text('No expense data available for this year'),
                 ),
               ),
@@ -811,7 +813,7 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
           value: total,
           title: '${percentage.toInt()}%',
           radius: 80,
-          titleStyle: TextStyle(
+          titleStyle: const TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
             fontSize: 14,
@@ -824,7 +826,7 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -834,18 +836,18 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             
             if (sections.isEmpty) ...[
-              Center(
+              const Center(
                 child: Padding(
-                  padding: const EdgeInsets.all(16.0),
+                  padding: EdgeInsets.all(16.0),
                   child: Text('No spending data available'),
                 ),
               ),
             ] else ...[
               // Pie chart
-              Container(
+              SizedBox(
                 height: 200,
                 child: PieChart(
                   PieChartData(
@@ -856,12 +858,12 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
                 ),
               ),
               
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               
               // Category list
               ListView.builder(
                 shrinkWrap: true,
-                physics: NeverScrollableScrollPhysics(),
+                physics: const NeverScrollableScrollPhysics(),
                 itemCount: categories.length,
                 itemBuilder: (context, index) {
                   final category = categories[index];
@@ -871,13 +873,13 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
                   final percentage = (category['percentage'] as num).toDouble();
                   
                   // Skip categories with no spending
-                  if (total <= 0) return SizedBox.shrink();
+                  if (total <= 0) return const SizedBox.shrink();
                   
                   // Parse color from hex string
                   final colorValue = Color(int.parse(color.replaceFirst('#', '0xFF')));
                   
                   return ListTile(
-                    contentPadding: EdgeInsets.symmetric(vertical: 4),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 4),
                     leading: Container(
                       width: 16,
                       height: 16,
@@ -889,7 +891,7 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
                     title: Text(name),
                     trailing: Text(
                       '${currencyFormatter.format(total)} (${percentage.toInt()}%)',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                      style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                   );
                 },
@@ -909,7 +911,7 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
         elevation: 2,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         child: Padding(
-          padding: EdgeInsets.all(16),
+          padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -919,10 +921,10 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              SizedBox(height: 16),
-              Center(
+              const SizedBox(height: 16),
+              const Center(
                 child: Padding(
-                  padding: const EdgeInsets.all(24.0),
+                  padding: EdgeInsets.all(24.0),
                   child: Text('No income data available for this year'),
                 ),
               ),
@@ -967,7 +969,7 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
               toY: total,
               color: colorValue,
               width: 20,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(6)),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
             ),
           ],
         ),
@@ -982,7 +984,7 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -992,18 +994,18 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             
             if (barGroups.isEmpty) ...[
-              Center(
+              const Center(
                 child: Padding(
-                  padding: const EdgeInsets.all(16.0),
+                  padding: EdgeInsets.all(16.0),
                   child: Text('No income data available'),
                 ),
               ),
             ] else ...[
               // Bar chart
-              Container(
+              SizedBox(
                 height: 200,
                 child: BarChart(
                   BarChartData(
@@ -1031,7 +1033,7 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
                             final index = value.toInt();
                             if (index >= 0 && index < sourceNames.length) {
                               return Padding(
-                                padding: EdgeInsets.only(top: 8),
+                                padding: const EdgeInsets.only(top: 8),
                                 child: Text(
                                   sourceNames[index],
                                   style: TextStyle(
@@ -1043,7 +1045,7 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
                                 ),
                               );
                             }
-                            return Text('');
+                            return const Text('');
                           },
                         ),
                       ),
@@ -1052,7 +1054,7 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
                           showTitles: true,
                           reservedSize: 40,
                           getTitlesWidget: (value, meta) {
-                            if (value == 0) return Text('');
+                            if (value == 0) return const Text('');
                             return Text(
                               '\${(value / 1000).toInt()}K',
                               style: TextStyle(
@@ -1064,10 +1066,10 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
                           interval: maxAmount / 5,
                         ),
                       ),
-                      topTitles: AxisTitles(
+                      topTitles: const AxisTitles(
                         sideTitles: SideTitles(showTitles: false),
                       ),
-                      rightTitles: AxisTitles(
+                      rightTitles: const AxisTitles(
                         sideTitles: SideTitles(showTitles: false),
                       ),
                     ),
@@ -1077,12 +1079,12 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
                 ),
               ),
               
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               
               // Income sources list
               ListView.builder(
                 shrinkWrap: true,
-                physics: NeverScrollableScrollPhysics(),
+                physics: const NeverScrollableScrollPhysics(),
                 itemCount: sources.length,
                 itemBuilder: (context, index) {
                   final source = sources[index];
@@ -1092,13 +1094,13 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
                   final percentage = (source['percentage'] as num).toDouble();
                   
                   // Skip sources with no income
-                  if (total <= 0) return SizedBox.shrink();
+                  if (total <= 0) return const SizedBox.shrink();
                   
                   // Parse color from hex string
                   final colorValue = Color(int.parse(color.replaceFirst('#', '0xFF')));
                   
                   return ListTile(
-                    contentPadding: EdgeInsets.symmetric(vertical: 4),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 4),
                     leading: Container(
                       width: 16,
                       height: 16,
@@ -1110,7 +1112,7 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
                     title: Text(name),
                     trailing: Text(
                       '${currencyFormatter.format(total)} (${percentage.toInt()}%)',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                      style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                   );
                 },

@@ -51,8 +51,8 @@ class IncomeProvider with ChangeNotifier {
     return _incomes
         .where((income) {
           final incomeDate = DateTime.parse(income.date);
-          return incomeDate.isAfter(firstDayOfMonth.subtract(Duration(days: 1))) && 
-                 incomeDate.isBefore(lastDayOfMonth.add(Duration(days: 1)));
+          return incomeDate.isAfter(firstDayOfMonth.subtract(const Duration(days: 1))) && 
+                 incomeDate.isBefore(lastDayOfMonth.add(const Duration(days: 1)));
         })
         .fold(0, (sum, income) => sum + income.amount);
   }
@@ -67,8 +67,8 @@ class IncomeProvider with ChangeNotifier {
     return _incomes
         .where((income) {
           final incomeDate = DateTime.parse(income.date);
-          return incomeDate.isAfter(firstDayOfYear.subtract(Duration(days: 1))) && 
-                 incomeDate.isBefore(lastDayOfYear.add(Duration(days: 1)));
+          return incomeDate.isAfter(firstDayOfYear.subtract(const Duration(days: 1))) && 
+                 incomeDate.isBefore(lastDayOfYear.add(const Duration(days: 1)));
         })
         .fold(0, (sum, income) => sum + income.amount);
   }
@@ -472,8 +472,8 @@ class IncomeProvider with ChangeNotifier {
     final currentMonthIncome = _incomes
         .where((income) {
           final incomeDate = DateTime.parse(income.date);
-          return incomeDate.isAfter(currentMonthStart.subtract(Duration(days: 1))) && 
-                 incomeDate.isBefore(currentMonthEnd.add(Duration(days: 1)));
+          return incomeDate.isAfter(currentMonthStart.subtract(const Duration(days: 1))) && 
+                 incomeDate.isBefore(currentMonthEnd.add(const Duration(days: 1)));
         })
         .fold(0.0, (sum, income) => sum + income.amount);
     
@@ -481,8 +481,8 @@ class IncomeProvider with ChangeNotifier {
     final prevMonthIncome = _incomes
         .where((income) {
           final incomeDate = DateTime.parse(income.date);
-          return incomeDate.isAfter(prevMonthStart.subtract(Duration(days: 1))) && 
-                 incomeDate.isBefore(prevMonthEnd.add(Duration(days: 1)));
+          return incomeDate.isAfter(prevMonthStart.subtract(const Duration(days: 1))) && 
+                 incomeDate.isBefore(prevMonthEnd.add(const Duration(days: 1)));
         })
         .fold(0.0, (sum, income) => sum + income.amount);
     

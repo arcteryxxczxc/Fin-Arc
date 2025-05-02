@@ -5,13 +5,14 @@ import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/report_service.dart';
-import '../../utils/constants.dart';
 import '../../widgets/common/loading_indicator.dart';
 import '../../widgets/common/error_display.dart';
 import '../../widgets/layout/screen_wrapper.dart';
 import '../../routes/route_names.dart';
 
 class DashboardScreen extends StatefulWidget {
+  const DashboardScreen({super.key});
+
   @override
   _DashboardScreenState createState() => _DashboardScreenState();
 }
@@ -77,34 +78,34 @@ class _DashboardScreenState extends State<DashboardScreen> {
       currentRoute: RouteNames.dashboard,
       child: Scaffold(
         appBar: AppBar(
-          title: Text(
+          title: const Text(
             'Fin-Arc Dashboard',
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
           actions: [
             IconButton(
-              icon: Icon(Icons.refresh),
+              icon: const Icon(Icons.refresh),
               onPressed: _fetchDashboardData,
               tooltip: 'Refresh data',
             ),
             IconButton(
               icon: Stack(
                 children: [
-                  Icon(Icons.notifications_outlined),
+                  const Icon(Icons.notifications_outlined),
                   Positioned(
                     right: 0,
                     top: 0,
                     child: Container(
-                      padding: EdgeInsets.all(1),
+                      padding: const EdgeInsets.all(1),
                       decoration: BoxDecoration(
                         color: Colors.red,
                         borderRadius: BorderRadius.circular(6),
                       ),
-                      constraints: BoxConstraints(
+                      constraints: const BoxConstraints(
                         minWidth: 12,
                         minHeight: 12,
                       ),
-                      child: Text(
+                      child: const Text(
                         '3',
                         style: TextStyle(
                           color: Colors.white,
@@ -119,7 +120,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               onPressed: () {
                 // Show notifications
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Notifications coming soon')),
+                  const SnackBar(content: Text('Notifications coming soon')),
                 );
               },
               tooltip: 'Notifications',
@@ -127,7 +128,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ],
         ),
         body: _isLoading 
-          ? LoadingIndicator(message: 'Loading dashboard data...')
+          ? const LoadingIndicator(message: 'Loading dashboard data...')
           : _error != null
             ? ErrorDisplay(
                 error: _error!,
@@ -139,8 +140,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
         floatingActionButton: FloatingActionButton(
           onPressed: () => _showAddTransactionDialog(context),
-          child: Icon(Icons.add),
           tooltip: 'Add transaction',
+          child: const Icon(Icons.add),
         ),
       ),
     );
@@ -167,39 +168,39 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final budgetOverview = _dashboardData?['budget_overview'] ?? [];
     
     return SingleChildScrollView(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Welcome message and date
           _buildWelcomeCard(user, themeData),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           
           // Financial summary
           _buildFinancialSummary(stats, themeData),
-          SizedBox(height: 24),
+          const SizedBox(height: 24),
           
           // Main charts section
           _buildFinancialCharts(trend, themeData),
-          SizedBox(height: 24),
+          const SizedBox(height: 24),
           
           // Budget progress
           if (budgetOverview.isNotEmpty) ...[
             _buildBudgetProgress(budgetOverview, themeData),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
           ],
           
           // Spending breakdown
           if (categories.isNotEmpty) ...[
             _buildSpendingBreakdown(categories, themeData),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
           ],
           
           // Recent transactions
           _buildRecentTransactions(recentTransactions, themeData),
           
           // Add bottom padding for floating action button
-          SizedBox(height: 80),
+          const SizedBox(height: 80),
         ],
       ),
     );
@@ -223,7 +224,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Row(
           children: [
             Expanded(
@@ -236,7 +237,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  SizedBox(height: 4),
+                  const SizedBox(height: 4),
                   Text(
                     DateFormat('EEEE, MMMM d, yyyy').format(now),
                     style: themeData.textTheme.bodyMedium,
@@ -249,7 +250,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               backgroundColor: themeData.primaryColor,
               child: Text(
                 user?.initials ?? 'U',
-                style: TextStyle(
+                style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
                 ),
@@ -276,8 +277,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
             DropdownButton<int>(
               value: _selectedPeriod,
-              underline: SizedBox(),
-              icon: Icon(Icons.keyboard_arrow_down),
+              underline: const SizedBox(),
+              icon: const Icon(Icons.keyboard_arrow_down),
               onChanged: (value) {
                 if (value != null) {
                   setState(() {
@@ -294,7 +295,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ],
         ),
-        SizedBox(height: 12),
+        const SizedBox(height: 12),
         
         // Summary cards based on selected period
         _buildSummaryCards(stats, _selectedPeriod, themeData),
@@ -336,7 +337,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             themeData,
           ),
         ),
-        SizedBox(width: 12),
+        const SizedBox(width: 12),
         Expanded(
           child: _buildSummaryCard(
             'Expenses',
@@ -346,7 +347,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             themeData,
           ),
         ),
-        SizedBox(width: 12),
+        const SizedBox(width: 12),
         Expanded(
           child: _buildSummaryCard(
             'Balance',
@@ -371,14 +372,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
                 Container(
-                  padding: EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: color.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
@@ -389,14 +390,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     size: 18,
                   ),
                 ),
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
                 Text(
                   title,
                   style: themeData.textTheme.bodyMedium,
                 ),
               ],
             ),
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
             Text(
               currencyFormatter.format(amount),
               style: themeData.textTheme.titleLarge?.copyWith(
@@ -457,7 +458,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -467,12 +468,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Text(
               'Last 6 months',
               style: themeData.textTheme.bodySmall,
             ),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
             
             // Chart
             SizedBox(
@@ -528,8 +529,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         },
                       ),
                     ),
-                    rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                   ),
                   borderData: FlBorderData(show: false),
                   minX: 0,
@@ -544,7 +545,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       color: Colors.green,
                       barWidth: 3,
                       isStrokeCapRound: true,
-                      dotData: FlDotData(show: false),
+                      dotData: const FlDotData(show: false),
                       belowBarData: BarAreaData(
                         show: true,
                         color: Colors.green.withOpacity(0.1),
@@ -557,7 +558,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       color: Colors.red,
                       barWidth: 3,
                       isStrokeCapRound: true,
-                      dotData: FlDotData(show: false),
+                      dotData: const FlDotData(show: false),
                       belowBarData: BarAreaData(
                         show: true,
                         color: Colors.red.withOpacity(0.1),
@@ -568,7 +569,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
             
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             
             // Legend
             Row(
@@ -579,27 +580,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     Container(
                       width: 12,
                       height: 12,
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                         color: Colors.green,
                         shape: BoxShape.circle,
                       ),
                     ),
-                    SizedBox(width: 4),
+                    const SizedBox(width: 4),
                     Text('Income', style: themeData.textTheme.bodySmall),
                   ],
                 ),
-                SizedBox(width: 24),
+                const SizedBox(width: 24),
                 Row(
                   children: [
                     Container(
                       width: 12,
                       height: 12,
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                         color: Colors.red,
                         shape: BoxShape.circle,
                       ),
                     ),
-                    SizedBox(width: 4),
+                    const SizedBox(width: 4),
                     Text('Expenses', style: themeData.textTheme.bodySmall),
                   ],
                 ),
@@ -616,7 +617,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -633,18 +634,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   onPressed: () {
                     Navigator.of(context).pushNamed(RouteNames.budgetReport);
                   },
-                  child: Text('View all'),
+                  child: const Text('View all'),
                 ),
               ],
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             
             // Budget progress bars
             ListView.separated(
               shrinkWrap: true,
-              physics: NeverScrollableScrollPhysics(),
+              physics: const NeverScrollableScrollPhysics(),
               itemCount: budgetOverview.length > 3 ? 3 : budgetOverview.length,
-              separatorBuilder: (context, index) => SizedBox(height: 16),
+              separatorBuilder: (context, index) => const SizedBox(height: 16),
               itemBuilder: (context, index) {
                 final budget = budgetOverview[index];
                 final name = budget['name'] ?? 'Category';
@@ -676,7 +677,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                       ],
                     ),
-                    SizedBox(height: 8),
+                    const SizedBox(height: 8),
                     ClipRRect(
                       borderRadius: BorderRadius.circular(4),
                       child: LinearProgressIndicator(
@@ -686,7 +687,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         valueColor: AlwaysStoppedAnimation<Color>(progressColor),
                       ),
                     ),
-                    SizedBox(height: 4),
+                    const SizedBox(height: 4),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -695,7 +696,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           style: themeData.textTheme.bodySmall,
                         ),
                         if (status == 'over')
-                          Text(
+                          const Text(
                             'Over budget!',
                             style: TextStyle(
                               color: Colors.red,
@@ -745,7 +746,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           value: spent,
           title: '${percentage.toInt()}%',
           radius: 70,
-          titleStyle: TextStyle(
+          titleStyle: const TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
             fontSize: 14,
@@ -758,7 +759,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -775,16 +776,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   onPressed: () {
                     Navigator.of(context).pushNamed(RouteNames.categoryList);
                   },
-                  child: Text('View all'),
+                  child: const Text('View all'),
                 ),
               ],
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             
             if (sections.isEmpty) ...[
-              Center(
+              const Center(
                 child: Padding(
-                  padding: const EdgeInsets.all(16.0),
+                  padding: EdgeInsets.all(16.0),
                   child: Text('No spending data available'),
                 ),
               ),
@@ -801,7 +802,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
               
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               
               // Categories legend
               Wrap(
@@ -813,7 +814,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   final colorHex = category['color'] ?? '#757575';
                   
                   // Skip categories with no spending
-                  if (spent <= 0) return SizedBox.shrink();
+                  if (spent <= 0) return const SizedBox.shrink();
                   
                   // Parse color from hex string
                   final color = Color(int.parse(colorHex.replaceFirst('#', '0xFF')));
@@ -829,7 +830,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           shape: BoxShape.circle,
                         ),
                       ),
-                      SizedBox(width: 4),
+                      const SizedBox(width: 4),
                       Flexible(
                         child: Text(
                           '$name: ${currencyFormatter.format(spent)}',
@@ -871,7 +872,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -889,16 +890,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     // Navigate to transactions screen - choose expense or income list
                     Navigator.of(context).pushNamed(RouteNames.expenseList);
                   },
-                  child: Text('View all'),
+                  child: const Text('View all'),
                 ),
               ],
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             
             if (recentList.isEmpty) ...[
-              Center(
+              const Center(
                 child: Padding(
-                  padding: const EdgeInsets.all(16.0),
+                  padding: EdgeInsets.all(16.0),
                   child: Text('No recent transactions'),
                 ),
               ),
@@ -906,9 +907,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
               // Transactions list
               ListView.separated(
                 shrinkWrap: true,
-                physics: NeverScrollableScrollPhysics(),
+                physics: const NeverScrollableScrollPhysics(),
                 itemCount: recentList.length,
-                separatorBuilder: (context, index) => Divider(height: 1),
+                separatorBuilder: (context, index) => const Divider(height: 1),
                 itemBuilder: (context, index) {
                   final transaction = recentList[index];
                   final isExpense = transaction['type'] == 'expense';
@@ -920,7 +921,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   final date = transaction['date'] ?? '';
                   
                   return ListTile(
-                    contentPadding: EdgeInsets.symmetric(vertical: 4, horizontal: 0),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 4, horizontal: 0),
                     leading: CircleAvatar(
                       backgroundColor: isExpense ? Colors.red.withOpacity(0.2) : Colors.green.withOpacity(0.2),
                       child: Icon(
@@ -939,7 +940,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                     subtitle: Text(
                       isExpense
-                        ? '${category} • ${DateFormat('MMM d').format(DateTime.parse(date))}'
+                        ? '$category • ${DateFormat('MMM d').format(DateTime.parse(date))}'
                         : DateFormat('MMM d').format(DateTime.parse(date)),
                       style: themeData.textTheme.bodySmall,
                     ),
@@ -977,22 +978,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void _showAddTransactionDialog(BuildContext context) {
     showModalBottomSheet(
       context: context,
-      shape: RoundedRectangleBorder(
+      shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (ctx) => Container(
-        padding: EdgeInsets.all(24),
+        padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
+            const Text(
               'Add Transaction',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
             Row(
               children: [
                 Expanded(
@@ -1007,7 +1008,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     },
                   ),
                 ),
-                SizedBox(width: 16),
+                const SizedBox(width: 16),
                 Expanded(
                   child: _buildAddButton(
                     context: ctx,
@@ -1022,7 +1023,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ],
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
           ],
         ),
       ),
@@ -1045,12 +1046,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: EdgeInsets.symmetric(vertical: 16),
+          padding: const EdgeInsets.symmetric(vertical: 16),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                padding: EdgeInsets.all(12),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: color.withOpacity(0.1),
                   shape: BoxShape.circle,
@@ -1061,7 +1062,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   size: 24,
                 ),
               ),
-              SizedBox(height: 12),
+              const SizedBox(height: 12),
               Text(
                 label,
                 style: TextStyle(

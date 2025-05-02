@@ -8,7 +8,7 @@ import '../../models/category.dart';
 class AddExpenseScreen extends StatefulWidget {
   final int? expenseId; // If editing existing expense
   
-  const AddExpenseScreen({Key? key, this.expenseId}) : super(key: key);
+  const AddExpenseScreen({super.key, this.expenseId});
   
   @override
   _AddExpenseScreenState createState() => _AddExpenseScreenState();
@@ -149,7 +149,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
       context: context,
       initialDate: _selectedDate,
       firstDate: DateTime(2020),
-      lastDate: DateTime.now().add(Duration(days: 365)),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
     );
     if (picked != null && picked != _selectedDate) {
       setState(() {
@@ -245,7 +245,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
         appBar: AppBar(
           title: Text(_isEditing ? 'Edit Expense' : 'Add Expense'),
         ),
-        body: Center(
+        body: const Center(
           child: CircularProgressIndicator(),
         ),
       );
@@ -256,7 +256,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
         title: Text(_isEditing ? 'Edit Expense' : 'Add Expense'),
       ),
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Form(
           key: _formKey,
           child: Column(
@@ -265,12 +265,12 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
               // Amount field
               TextFormField(
                 controller: _amountController,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Amount',
                   prefixIcon: Icon(Icons.attach_money),
                   border: OutlineInputBorder(),
                 ),
-                keyboardType: TextInputType.numberWithOptions(decimal: true),
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter an amount';
@@ -281,18 +281,18 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                   return null;
                 },
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               
               // Description field
               TextFormField(
                 controller: _descriptionController,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Description',
                   prefixIcon: Icon(Icons.description),
                   border: OutlineInputBorder(),
                 ),
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               
               // Date and time selectors
               Row(
@@ -301,7 +301,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                     child: InkWell(
                       onTap: () => _selectDate(context),
                       child: InputDecorator(
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           labelText: 'Date',
                           prefixIcon: Icon(Icons.calendar_today),
                           border: OutlineInputBorder(),
@@ -312,12 +312,12 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                       ),
                     ),
                   ),
-                  SizedBox(width: 16),
+                  const SizedBox(width: 16),
                   Expanded(
                     child: InkWell(
                       onTap: () => _selectTime(context),
                       child: InputDecorator(
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           labelText: 'Time',
                           prefixIcon: Icon(Icons.access_time),
                           border: OutlineInputBorder(),
@@ -330,11 +330,11 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                   ),
                 ],
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               
               // Category dropdown
               DropdownButtonFormField<Category>(
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Category',
                   prefixIcon: Icon(Icons.category),
                   border: OutlineInputBorder(),
@@ -356,7 +356,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                             shape: BoxShape.circle,
                           ),
                         ),
-                        SizedBox(width: 10),
+                        const SizedBox(width: 10),
                         Text(category.name),
                       ],
                     ),
@@ -368,11 +368,11 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                   });
                 },
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               
               // Payment method dropdown
               DropdownButtonFormField<String>(
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Payment Method',
                   prefixIcon: Icon(Icons.payment),
                   border: OutlineInputBorder(),
@@ -390,31 +390,31 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                   });
                 },
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               
               // Location field
               TextFormField(
                 controller: _locationController,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Location',
                   prefixIcon: Icon(Icons.location_on),
                   border: OutlineInputBorder(),
                 ),
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               
               // Recurring expense toggle
               SwitchListTile(
-                title: Text('Recurring Expense'),
-                subtitle: Text('Enable for repeating expenses'),
+                title: const Text('Recurring Expense'),
+                subtitle: const Text('Enable for repeating expenses'),
                 value: _isRecurring,
                 onChanged: (bool value) {
                   setState(() {
                     _isRecurring = value;
                     if (!value) {
                       _recurringType = null;
-                    } else if (_recurringType == null) {
-                      _recurringType = _recurringTypes.first;
+                    } else {
+                      _recurringType ??= _recurringTypes.first;
                     }
                   });
                 },
@@ -423,9 +423,9 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
               // Recurring type dropdown (if recurring is enabled)
               if (_isRecurring)
                 Padding(
-                  padding: EdgeInsets.only(top: 8),
+                  padding: const EdgeInsets.only(top: 8),
                   child: DropdownButtonFormField<String>(
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       labelText: 'Recurrence Type',
                       prefixIcon: Icon(Icons.repeat),
                       border: OutlineInputBorder(),
@@ -444,19 +444,19 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                     },
                   ),
                 ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               
               // Notes field
               TextFormField(
                 controller: _notesController,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Notes',
                   prefixIcon: Icon(Icons.note),
                   border: OutlineInputBorder(),
                 ),
                 maxLines: 3,
               ),
-              SizedBox(height: 24),
+              const SizedBox(height: 24),
               
               // Submit button
               SizedBox(
@@ -465,8 +465,8 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                 child: ElevatedButton(
                   onPressed: expenseProvider.isLoading ? null : _submitForm,
                   child: expenseProvider.isLoading
-                      ? CircularProgressIndicator(color: Colors.white)
-                      : Text(_isEditing ? 'Update Expense' : 'Add Expense', style: TextStyle(fontSize: 16)),
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : Text(_isEditing ? 'Update Expense' : 'Add Expense', style: const TextStyle(fontSize: 16)),
                 ),
               ),
             ],

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 class SplashScreen extends StatelessWidget {
+  const SplashScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -10,14 +12,14 @@ class SplashScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             // App logo
-            Icon(
+            const Icon(
               Icons.account_balance_wallet,
               size: 100,
               color: Colors.white,
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             // App name
-            Text(
+            const Text(
               'Fin-Arc',
               style: TextStyle(
                 fontSize: 36,
@@ -25,7 +27,7 @@ class SplashScreen extends StatelessWidget {
                 color: Colors.white,
               ),
             ),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
             // Tagline
             Text(
               'Personal Finance Application',
@@ -34,9 +36,9 @@ class SplashScreen extends StatelessWidget {
                 color: Colors.white.withOpacity(0.8),
               ),
             ),
-            SizedBox(height: 40),
+            const SizedBox(height: 40),
             // Loading indicator
-            CircularProgressIndicator(
+            const CircularProgressIndicator(
               valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
             ),
           ],

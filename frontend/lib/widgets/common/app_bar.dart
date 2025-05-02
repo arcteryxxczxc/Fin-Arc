@@ -12,14 +12,14 @@ class FinArcAppBar extends StatelessWidget implements PreferredSizeWidget {
   final bool automaticallyImplyLeading;
   
   const FinArcAppBar({
-    Key? key,
+    super.key,
     required this.title,
     this.actions,
     this.showNotification = true,
     this.showSearch = false,
     this.onSearchPressed,
     this.automaticallyImplyLeading = true,
-  }) : super(key: key);
+  });
   
   @override
   Widget build(BuildContext context) {
@@ -29,7 +29,7 @@ class FinArcAppBar extends StatelessWidget implements PreferredSizeWidget {
     return AppBar(
       title: Text(
         title,
-        style: TextStyle(
+        style: const TextStyle(
           fontWeight: FontWeight.bold,
         ),
       ),
@@ -39,11 +39,11 @@ class FinArcAppBar extends StatelessWidget implements PreferredSizeWidget {
         // Search icon
         if (showSearch)
           IconButton(
-            icon: Icon(Icons.search),
+            icon: const Icon(Icons.search),
             onPressed: onSearchPressed ?? () {
               // Default search action
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Search not implemented')),
+                const SnackBar(content: Text('Search not implemented')),
               );
             },
             tooltip: 'Search',
@@ -54,21 +54,21 @@ class FinArcAppBar extends StatelessWidget implements PreferredSizeWidget {
           IconButton(
             icon: Stack(
               children: [
-                Icon(Icons.notifications_outlined),
+                const Icon(Icons.notifications_outlined),
                 Positioned(
                   right: 0,
                   top: 0,
                   child: Container(
-                    padding: EdgeInsets.all(1),
+                    padding: const EdgeInsets.all(1),
                     decoration: BoxDecoration(
                       color: Colors.red,
                       borderRadius: BorderRadius.circular(6),
                     ),
-                    constraints: BoxConstraints(
+                    constraints: const BoxConstraints(
                       minWidth: 12,
                       minHeight: 12,
                     ),
-                    child: Text(
+                    child: const Text(
                       '3',
                       style: TextStyle(
                         color: Colors.white,
@@ -83,7 +83,7 @@ class FinArcAppBar extends StatelessWidget implements PreferredSizeWidget {
             onPressed: () {
               // Show notifications
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Notifications coming soon')),
+                const SnackBar(content: Text('Notifications coming soon')),
               );
             },
             tooltip: 'Notifications',
@@ -97,7 +97,7 @@ class FinArcAppBar extends StatelessWidget implements PreferredSizeWidget {
               backgroundColor: theme.colorScheme.primary,
               child: Text(
                 authProvider.user?.initials ?? 'U',
-                style: TextStyle(
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
@@ -113,11 +113,11 @@ class FinArcAppBar extends StatelessWidget implements PreferredSizeWidget {
         // Extra actions
         if (actions != null) ...actions!,
         
-        SizedBox(width: 8),
+        const SizedBox(width: 8),
       ],
     );
   }
   
   @override
-  Size get preferredSize => Size.fromHeight(kToolbarHeight);
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 }

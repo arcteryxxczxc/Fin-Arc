@@ -1,5 +1,4 @@
 import '../api/endpoints/income_api.dart';
-import '../models/income.dart';
 
 class IncomeService {
   final IncomeApi _incomeApi = IncomeApi();

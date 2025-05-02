@@ -9,6 +9,8 @@ import 'category_detail_screen.dart';
 import 'category_form_screen.dart';
 
 class CategoryListScreen extends StatefulWidget {
+  const CategoryListScreen({super.key});
+
   @override
   _CategoryListScreenState createState() => _CategoryListScreenState();
 }
@@ -40,10 +42,10 @@ class _CategoryListScreenState extends State<CategoryListScreen> with SingleTick
     
     return Scaffold(
       appBar: AppBar(
-        title: Text('Categories'),
+        title: const Text('Categories'),
         bottom: TabBar(
           controller: _tabController,
-          tabs: [
+          tabs: const [
             Tab(text: 'Expense Categories'),
             Tab(text: 'Income Categories'),
           ],
@@ -62,7 +64,7 @@ class _CategoryListScreenState extends State<CategoryListScreen> with SingleTick
           ),
           // Sort menu
           PopupMenuButton<String>(
-            icon: Icon(Icons.sort),
+            icon: const Icon(Icons.sort),
             onSelected: (value) {
               // Implement sorting logic
               ScaffoldMessenger.of(context).showSnackBar(
@@ -70,15 +72,15 @@ class _CategoryListScreenState extends State<CategoryListScreen> with SingleTick
               );
             },
             itemBuilder: (context) => [
-              PopupMenuItem(
+              const PopupMenuItem(
                 value: 'name',
                 child: Text('Sort by name'),
               ),
-              PopupMenuItem(
+              const PopupMenuItem(
                 value: 'budget',
                 child: Text('Sort by budget'),
               ),
-              PopupMenuItem(
+              const PopupMenuItem(
                 value: 'spent',
                 child: Text('Sort by spending'),
               ),
@@ -88,7 +90,7 @@ class _CategoryListScreenState extends State<CategoryListScreen> with SingleTick
         ],
       ),
       body: categoryProvider.isLoading
-        ? LoadingIndicator(message: 'Loading categories...')
+        ? const LoadingIndicator(message: 'Loading categories...')
         : categoryProvider.error != null
           ? ErrorDisplay(
               error: categoryProvider.error!,
@@ -116,8 +118,8 @@ class _CategoryListScreenState extends State<CategoryListScreen> with SingleTick
         onPressed: () {
           _showAddCategoryDialog(context);
         },
-        child: Icon(Icons.add),
         tooltip: 'Add category',
+        child: const Icon(Icons.add),
       ),
     );
   }
@@ -128,17 +130,17 @@ class _CategoryListScreenState extends State<CategoryListScreen> with SingleTick
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
+            const Icon(
               Icons.category_outlined,
               size: 64,
               color: Colors.grey,
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Text(
               'No ${isExpense ? 'expense' : 'income'} categories found',
               style: theme.textTheme.titleMedium,
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Text(
               'Tap the + button to add a new category',
               style: theme.textTheme.bodyMedium,
@@ -151,9 +153,9 @@ class _CategoryListScreenState extends State<CategoryListScreen> with SingleTick
     final currencyFormatter = NumberFormat.currency(symbol: '\$');
     
     return ListView.separated(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       itemCount: categories.length,
-      separatorBuilder: (context, index) => SizedBox(height: 8),
+      separatorBuilder: (context, index) => const SizedBox(height: 8),
       itemBuilder: (context, index) {
         final category = categories[index];
         
@@ -173,7 +175,7 @@ class _CategoryListScreenState extends State<CategoryListScreen> with SingleTick
             },
             borderRadius: BorderRadius.circular(12),
             child: Padding(
-              padding: EdgeInsets.all(16),
+              padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -196,7 +198,7 @@ class _CategoryListScreenState extends State<CategoryListScreen> with SingleTick
                           ),
                         ),
                       ),
-                      SizedBox(width: 16),
+                      const SizedBox(width: 16),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -215,7 +217,7 @@ class _CategoryListScreenState extends State<CategoryListScreen> with SingleTick
                                 ),
                                 if (!category.isActive)
                                   Container(
-                                    padding: EdgeInsets.symmetric(
+                                    padding: const EdgeInsets.symmetric(
                                       horizontal: 8,
                                       vertical: 4,
                                     ),
@@ -223,7 +225,7 @@ class _CategoryListScreenState extends State<CategoryListScreen> with SingleTick
                                       color: Colors.grey[300],
                                       borderRadius: BorderRadius.circular(10),
                                     ),
-                                    child: Text(
+                                    child: const Text(
                                       'Inactive',
                                       style: TextStyle(
                                         fontSize: 10,
@@ -246,17 +248,17 @@ class _CategoryListScreenState extends State<CategoryListScreen> with SingleTick
                     ],
                   ),
                   if (isExpense && category.budgetLimit != null && category.budgetLimit! > 0) ...[
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     _buildBudgetProgress(category, theme, currencyFormatter),
                   ],
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   // Actions row
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       TextButton.icon(
-                        icon: Icon(Icons.edit, size: 18),
-                        label: Text('Edit'),
+                        icon: const Icon(Icons.edit, size: 18),
+                        label: const Text('Edit'),
                         onPressed: () {
                           Navigator.of(context).push(
                             MaterialPageRoute(
@@ -265,18 +267,18 @@ class _CategoryListScreenState extends State<CategoryListScreen> with SingleTick
                           );
                         },
                         style: TextButton.styleFrom(
-                          padding: EdgeInsets.symmetric(horizontal: 12),
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
                         ),
                       ),
                       TextButton.icon(
-                        icon: Icon(Icons.delete_outline, size: 18),
-                        label: Text('Delete'),
+                        icon: const Icon(Icons.delete_outline, size: 18),
+                        label: const Text('Delete'),
                         onPressed: () {
                           _showDeleteConfirmationDialog(context, category);
                         },
                         style: TextButton.styleFrom(
                           foregroundColor: theme.colorScheme.error,
-                          padding: EdgeInsets.symmetric(horizontal: 12),
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
                         ),
                       ),
                     ],
@@ -313,7 +315,7 @@ class _CategoryListScreenState extends State<CategoryListScreen> with SingleTick
           children: [
             Text(
               'Budget: ${currencyFormatter.format(budgetLimit)}',
-              style: TextStyle(fontSize: 12),
+              style: const TextStyle(fontSize: 12),
             ),
             Text(
               '${percentage.toInt()}%',
@@ -325,20 +327,20 @@ class _CategoryListScreenState extends State<CategoryListScreen> with SingleTick
             ),
           ],
         ),
-        SizedBox(height: 4),
+        const SizedBox(height: 4),
         LinearProgressIndicator(
           value: percentage / 100 > 1 ? 1 : percentage / 100,
           minHeight: 6,
           backgroundColor: theme.dividerColor.withOpacity(0.2),
           valueColor: AlwaysStoppedAnimation<Color>(progressColor),
         ),
-        SizedBox(height: 4),
+        const SizedBox(height: 4),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
               'Spent: ${currencyFormatter.format(spent)}',
-              style: TextStyle(fontSize: 12),
+              style: const TextStyle(fontSize: 12),
             ),
             Text(
               'Remaining: ${currencyFormatter.format(budgetLimit - spent)}',
@@ -371,19 +373,18 @@ class _CategoryListScreenState extends State<CategoryListScreen> with SingleTick
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Delete Category'),
+        title: const Text('Delete Category'),
         content: Text(
           'Are you sure you want to delete "${category.name}"? This action cannot be undone.',
         ),
         actions: [
           TextButton(
-            child: Text('Cancel'),
+            child: const Text('Cancel'),
             onPressed: () {
               Navigator.of(ctx).pop();
             },
           ),
           TextButton(
-            child: Text('Delete'),
             style: TextButton.styleFrom(
               foregroundColor: Colors.red,
             ),
@@ -396,7 +397,7 @@ class _CategoryListScreenState extends State<CategoryListScreen> with SingleTick
                 .then((success) {
                   if (success) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Category deleted successfully')),
+                      const SnackBar(content: Text('Category deleted successfully')),
                     );
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -411,6 +412,7 @@ class _CategoryListScreenState extends State<CategoryListScreen> with SingleTick
                   }
                 });
             },
+            child: const Text('Delete'),
           ),
         ],
       ),

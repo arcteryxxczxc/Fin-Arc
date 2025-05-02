@@ -35,7 +35,7 @@ class Category {
       description: json['description'],
       colorCode: json['color'] ?? json['color_code'] ?? '#757575',
       icon: json['icon'],
-      budgetLimit: json['budget'] != null ? json['budget'].toDouble() : null,
+      budgetLimit: json['budget']?.toDouble(),
       budgetStartDay: json['budget_start_day'] ?? 1,
       isIncome: json['is_income'] ?? false,
       isActive: json['is_active'] ?? true,

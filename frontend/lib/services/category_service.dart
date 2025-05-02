@@ -1,5 +1,4 @@
 import '../api/endpoints/category_api.dart';
-import '../models/category.dart';
 
 class CategoryService {
   final CategoryApi _categoryApi = CategoryApi();

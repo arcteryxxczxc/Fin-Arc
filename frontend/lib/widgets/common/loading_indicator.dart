@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 class LoadingIndicator extends StatelessWidget {
   final String? message;
   
-  const LoadingIndicator({Key? key, this.message}) : super(key: key);
+  const LoadingIndicator({super.key, this.message});
   
   @override
   Widget build(BuildContext context) {
@@ -12,12 +12,12 @@ class LoadingIndicator extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CircularProgressIndicator(),
+          const CircularProgressIndicator(),
           if (message != null) ...[
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Text(
               message!,
-              style: TextStyle(color: Colors.grey),
+              style: const TextStyle(color: Colors.grey),
             ),
           ],
         ],

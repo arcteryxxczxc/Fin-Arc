@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'expense_detail_screen.dart';
+import 'add_expense_screen.dart';
 import '../../providers/expense_provider.dart';
 import '../../providers/category_provider.dart';
 import '../../models/expense.dart';
 import '../../widgets/common/loading_indicator.dart';
 import '../../widgets/common/error_display.dart';
-import 'expense_detail_screen.dart';
-import 'add_expense_screen.dart';
-import '../../widgets/layout/screen_wrapper.dart';
-import '../../routes/route_names.dart';
 
 class ExpenseListScreen extends StatefulWidget {
+  const ExpenseListScreen({super.key});
+
   @override
   _ExpenseListScreenState createState() => _ExpenseListScreenState();
 }
@@ -68,10 +68,8 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
         (c) => c.name == _selectedCategory,
         orElse: () => null,
       );
-      if (category != null) {
-        categoryId = category.id;
-      }
-    }
+      categoryId = category.id;
+        }
     
     // Format dates
     String? startDateStr, endDateStr;
@@ -148,20 +146,20 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          title: Text('Filter Expenses'),
+          title: const Text('Filter Expenses'),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Category filter
-                Text(
+                const Text(
                   'Category',
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 DropdownButtonFormField<String?>(
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     border: OutlineInputBorder(),
                     contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   ),
@@ -172,24 +170,24 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
                     });
                   },
                   items: [
-                    DropdownMenuItem<String?>(
+                    const DropdownMenuItem<String?>(
                       value: null,
                       child: Text('All Categories'),
                     ),
                     ...categories.map((category) => DropdownMenuItem<String?>(
                       value: category.name,
                       child: Text(category.name),
-                    )).toList(),
+                    )),
                   ],
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 
                 // Date range filter
-                Text(
+                const Text(
                   'Date Range',
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 Row(
                   children: [
                     Expanded(
@@ -208,7 +206,7 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
                           }
                         },
                         child: InputDecorator(
-                          decoration: InputDecoration(
+                          decoration: const InputDecoration(
                             border: OutlineInputBorder(),
                             contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                             labelText: 'From',
@@ -221,7 +219,7 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
                         ),
                       ),
                     ),
-                    SizedBox(width: 16),
+                    const SizedBox(width: 16),
                     Expanded(
                       child: InkWell(
                         onTap: () async {
@@ -238,7 +236,7 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
                           }
                         },
                         child: InputDecorator(
-                          decoration: InputDecoration(
+                          decoration: const InputDecoration(
                             border: OutlineInputBorder(),
                             contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                             labelText: 'To',
@@ -253,7 +251,7 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
                     ),
                   ],
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 
                 // Quick date range buttons
                 Wrap(
@@ -309,7 +307,7 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
               onPressed: () {
                 Navigator.of(ctx).pop();
               },
-              child: Text('Cancel'),
+              child: const Text('Cancel'),
             ),
             ElevatedButton(
               onPressed: () {
@@ -321,7 +319,7 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
                 Navigator.of(ctx).pop();
                 _loadExpenses();
               },
-              child: Text('Apply Filters'),
+              child: const Text('Apply Filters'),
             ),
           ],
         ),
@@ -332,11 +330,11 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
   Widget _quickDateRangeButton({required String label, required VoidCallback onTap}) {
     return ElevatedButton(
       onPressed: onTap,
-      child: Text(label),
       style: ElevatedButton.styleFrom(
-        backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
+        backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
         foregroundColor: Theme.of(context).colorScheme.onSurfaceVariant,
       ),
+      child: Text(label),
     );
   }
   
@@ -350,7 +348,7 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
     showDialog(
       context: context,
       builder: (ctx) => SimpleDialog(
-        title: Text('Sort By'),
+        title: const Text('Sort By'),
         children: options.entries.map((entry) {
           final isSelected = _sortBy == entry.key;
           
@@ -387,10 +385,10 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Search Expenses'),
+        title: const Text('Search Expenses'),
         content: TextField(
           autofocus: true,
-          decoration: InputDecoration(
+          decoration: const InputDecoration(
             hintText: 'Enter search term',
             prefixIcon: Icon(Icons.search),
             border: OutlineInputBorder(),
@@ -404,14 +402,14 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
             onPressed: () {
               Navigator.of(ctx).pop();
             },
-            child: Text('Cancel'),
+            child: const Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () {
               Navigator.of(ctx).pop();
               _loadExpenses();
             },
-            child: Text('Search'),
+            child: const Text('Search'),
           ),
         ],
       ),
@@ -427,20 +425,20 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
     
     return Scaffold(
       appBar: AppBar(
-        title: Text('Expenses'),
+        title: const Text('Expenses'),
         actions: [
           IconButton(
-            icon: Icon(Icons.search),
+            icon: const Icon(Icons.search),
             onPressed: _showSearchBar,
             tooltip: 'Search expenses',
           ),
           IconButton(
-            icon: Icon(Icons.filter_list),
+            icon: const Icon(Icons.filter_list),
             onPressed: _showFilterDialog,
             tooltip: 'Filter expenses',
           ),
           IconButton(
-            icon: Icon(Icons.sort),
+            icon: const Icon(Icons.sort),
             onPressed: _showSortDialog,
             tooltip: 'Sort expenses',
           ),
@@ -462,31 +460,31 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
         onPressed: () {
           Navigator.of(context).push(
             MaterialPageRoute(
-              builder: (context) => AddExpenseScreen(),
+              builder: (context) => const AddExpenseScreen(),
             ),
           ).then((_) => _loadExpenses());
         },
-        child: Icon(Icons.add),
         tooltip: 'Add expense',
+        child: const Icon(Icons.add),
       ),
     );
   }
   
   Widget _buildActiveFilters() {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
+          const Text(
             'Active Filters:',
             style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 12,
             ),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -532,12 +530,12 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
                   });
                   _loadExpenses();
                 },
-                child: Text('Clear All'),
                 style: TextButton.styleFrom(
-                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  minimumSize: Size(0, 0),
+                  minimumSize: const Size(0, 0),
                 ),
+                child: const Text('Clear All'),
               ),
             ],
           ),
@@ -548,7 +546,7 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
   
   Widget _buildFilterChip({required String label, required VoidCallback onRemove}) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
         borderRadius: BorderRadius.circular(16),
@@ -563,10 +561,10 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
               color: Theme.of(context).colorScheme.primary,
             ),
           ),
-          SizedBox(width: 4),
+          const SizedBox(width: 4),
           InkWell(
             onTap: onRemove,
-            customBorder: CircleBorder(),
+            customBorder: const CircleBorder(),
             child: Icon(
               Icons.close,
               size: 16,
@@ -585,7 +583,7 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
     NumberFormat currencyFormatter,
   ) {
     if (expenseProvider.isLoading && expenses.isEmpty) {
-      return LoadingIndicator(message: 'Loading expenses...');
+      return const LoadingIndicator(message: 'Loading expenses...');
     }
     
     if (expenseProvider.error != null && expenses.isEmpty) {
@@ -600,17 +598,17 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
+            const Icon(
               Icons.receipt_long,
               size: 64,
               color: Colors.grey,
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Text(
               'No expenses found',
               style: theme.textTheme.titleMedium,
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Text(
               'Add your first expense or change filters',
               style: theme.textTheme.bodyMedium,
@@ -625,13 +623,13 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
       onRefresh: _loadExpenses,
       child: ListView.separated(
         controller: _scrollController,
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         itemCount: expenses.length + (expenseProvider.hasMorePages ? 1 : 0),
-        separatorBuilder: (context, index) => Divider(),
+        separatorBuilder: (context, index) => const Divider(),
         itemBuilder: (context, index) {
           // Show loading indicator at the bottom
           if (index == expenses.length) {
-            return Center(
+            return const Center(
               child: Padding(
                 padding: EdgeInsets.all(16),
                 child: CircularProgressIndicator(),
@@ -648,7 +646,7 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
           }
           
           return ListTile(
-            contentPadding: EdgeInsets.symmetric(vertical: 8, horizontal: 0),
+            contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 0),
             leading: CircleAvatar(
               backgroundColor: expense.categoryId != null ? categoryColor.withOpacity(0.2) : Colors.grey[300],
               child: Icon(

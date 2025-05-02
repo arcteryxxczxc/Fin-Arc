@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 
 class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
+
   @override
   _LoginScreenState createState() => _LoginScreenState();
 }
@@ -43,18 +45,18 @@ class _LoginScreenState extends State<LoginScreen> {
     
     return Scaffold(
       appBar: AppBar(
-        title: Text('Login to Fin-Arc'),
+        title: const Text('Login to Fin-Arc'),
       ),
       body: Center(
         child: SingleChildScrollView(
-          padding: EdgeInsets.all(20),
+          padding: const EdgeInsets.all(20),
           child: Card(
             elevation: 4,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10),
             ),
             child: Padding(
-              padding: EdgeInsets.all(20),
+              padding: const EdgeInsets.all(20),
               child: Form(
                 key: _formKey,
                 child: Column(
@@ -66,33 +68,33 @@ class _LoginScreenState extends State<LoginScreen> {
                       size: 80,
                       color: Theme.of(context).primaryColor,
                     ),
-                    SizedBox(height: 20),
-                    Text(
+                    const SizedBox(height: 20),
+                    const Text(
                       'Login to Your Account',
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    SizedBox(height: 20),
+                    const SizedBox(height: 20),
                     
                     // Error message
                     if (authProvider.error != null)
                       Container(
-                        padding: EdgeInsets.all(10),
-                        margin: EdgeInsets.only(bottom: 20),
+                        padding: const EdgeInsets.all(10),
+                        margin: const EdgeInsets.only(bottom: 20),
                         width: double.infinity,
                         color: Colors.red.shade100,
                         child: Text(
                           authProvider.error!,
-                          style: TextStyle(color: Colors.red),
+                          style: const TextStyle(color: Colors.red),
                         ),
                       ),
                     
                     // Username field
                     TextFormField(
                       controller: _usernameController,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         labelText: 'Username',
                         prefixIcon: Icon(Icons.person),
                         border: OutlineInputBorder(),
@@ -104,7 +106,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         return null;
                       },
                     ),
-                    SizedBox(height: 20),
+                    const SizedBox(height: 20),
                     
                     // Password field
                     TextFormField(
@@ -112,7 +114,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       obscureText: _obscurePassword,
                       decoration: InputDecoration(
                         labelText: 'Password',
-                        prefixIcon: Icon(Icons.lock),
+                        prefixIcon: const Icon(Icons.lock),
                         suffixIcon: IconButton(
                           icon: Icon(
                             _obscurePassword ? Icons.visibility : Icons.visibility_off,
@@ -123,7 +125,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             });
                           },
                         ),
-                        border: OutlineInputBorder(),
+                        border: const OutlineInputBorder(),
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
@@ -132,7 +134,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         return null;
                       },
                     ),
-                    SizedBox(height: 20),
+                    const SizedBox(height: 20),
                     
                     // Login button
                     SizedBox(
@@ -141,22 +143,22 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: ElevatedButton(
                         onPressed: authProvider.isLoading ? null : _submit,
                         child: authProvider.isLoading
-                            ? CircularProgressIndicator(color: Colors.white)
-                            : Text('LOGIN', style: TextStyle(fontSize: 16)),
+                            ? const CircularProgressIndicator(color: Colors.white)
+                            : const Text('LOGIN', style: TextStyle(fontSize: 16)),
                       ),
                     ),
-                    SizedBox(height: 20),
+                    const SizedBox(height: 20),
                     
                     // Register link
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text('Don\'t have an account?'),
+                        const Text('Don\'t have an account?'),
                         TextButton(
                           onPressed: () {
                             Navigator.of(context).pushReplacementNamed('/register');
                           },
-                          child: Text('Register'),
+                          child: const Text('Register'),
                         ),
                       ],
                     ),

@@ -11,7 +11,7 @@ import '../../widgets/common/error_display.dart';
 class ExpenseDetailScreen extends StatefulWidget {
   final int expenseId;
   
-  const ExpenseDetailScreen({Key? key, required this.expenseId}) : super(key: key);
+  const ExpenseDetailScreen({super.key, required this.expenseId});
   
   @override
   _ExpenseDetailScreenState createState() => _ExpenseDetailScreenState();
@@ -56,9 +56,7 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
           }
           
           // If category not found in local cache, fetch it
-          if (category == null) {
-            category = await categoryProvider.getCategoryDetails(expense.categoryId!);
-          }
+          category ??= await categoryProvider.getCategoryDetails(expense.categoryId!);
         }
         
         if (mounted) {
@@ -90,7 +88,7 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
     // Navigate to edit expense screen
     // This will be implemented in a future PR
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Edit expense feature coming soon')),
+      const SnackBar(content: Text('Edit expense feature coming soon')),
     );
   }
   
@@ -98,19 +96,18 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Delete Expense'),
-        content: Text(
+        title: const Text('Delete Expense'),
+        content: const Text(
           'Are you sure you want to delete this expense? This action cannot be undone.',
         ),
         actions: [
           TextButton(
-            child: Text('Cancel'),
+            child: const Text('Cancel'),
             onPressed: () {
               Navigator.of(ctx).pop();
             },
           ),
           TextButton(
-            child: Text('Delete'),
             style: TextButton.styleFrom(
               foregroundColor: Colors.red,
             ),
@@ -123,7 +120,7 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
               
               if (success && mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Expense deleted successfully')),
+                  const SnackBar(content: Text('Expense deleted successfully')),
                 );
                 Navigator.of(context).pop(); // Return to previous screen
               } else if (mounted) {
@@ -135,6 +132,7 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
                 );
               }
             },
+            child: const Text('Delete'),
           ),
         ],
       ),
@@ -147,14 +145,14 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
     
     if (_isLoading) {
       return Scaffold(
-        appBar: AppBar(title: Text('Expense Details')),
-        body: LoadingIndicator(message: 'Loading expense details...'),
+        appBar: AppBar(title: const Text('Expense Details')),
+        body: const LoadingIndicator(message: 'Loading expense details...'),
       );
     }
     
     if (_error != null || _expense == null) {
       return Scaffold(
-        appBar: AppBar(title: Text('Expense Details')),
+        appBar: AppBar(title: const Text('Expense Details')),
         body: ErrorDisplay(
           error: _error ?? 'Failed to load expense',
           onRetry: _loadExpenseDetails,
@@ -188,22 +186,22 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
     
     return Scaffold(
       appBar: AppBar(
-        title: Text('Expense Details'),
+        title: const Text('Expense Details'),
         actions: [
           IconButton(
-            icon: Icon(Icons.edit),
+            icon: const Icon(Icons.edit),
             onPressed: _editExpense,
             tooltip: 'Edit expense',
           ),
           IconButton(
-            icon: Icon(Icons.delete),
+            icon: const Icon(Icons.delete),
             onPressed: _deleteExpense,
             tooltip: 'Delete expense',
           ),
         ],
       ),
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -212,7 +210,7 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
               elevation: 2,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               child: Padding(
-                padding: EdgeInsets.all(16),
+                padding: const EdgeInsets.all(16),
                 child: Column(
                   children: [
                     // Amount
@@ -223,7 +221,7 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
                         color: theme.colorScheme.error,
                       ),
                     ),
-                    SizedBox(height: 8),
+                    const SizedBox(height: 8),
                     
                     // Category
                     if (_category != null) ...[
@@ -238,10 +236,10 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
                               shape: BoxShape.circle,
                             ),
                           ),
-                          SizedBox(width: 8),
+                          const SizedBox(width: 8),
                           Text(
                             _category!.name,
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
@@ -269,14 +267,14 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
                 ),
               ),
             ),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
             
             // Main details
             Card(
               elevation: 2,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               child: Padding(
-                padding: EdgeInsets.all(16),
+                padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -285,14 +283,14 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
                       title: 'Description',
                       value: _expense!.description ?? 'No description',
                     ),
-                    Divider(),
+                    const Divider(),
                     _buildDetailItem(
                       icon: Icons.calendar_today,
                       title: 'Date',
                       value: formattedDate,
                     ),
                     if (_expense!.time != null && _expense!.time!.isNotEmpty) ...[
-                      Divider(),
+                      const Divider(),
                       _buildDetailItem(
                         icon: Icons.access_time,
                         title: 'Time',
@@ -300,7 +298,7 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
                       ),
                     ],
                     if (_expense!.paymentMethod != null) ...[
-                      Divider(),
+                      const Divider(),
                       _buildDetailItem(
                         icon: Icons.payment,
                         title: 'Payment Method',
@@ -308,7 +306,7 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
                       ),
                     ],
                     if (_expense!.location != null && _expense!.location!.isNotEmpty) ...[
-                      Divider(),
+                      const Divider(),
                       _buildDetailItem(
                         icon: Icons.location_on,
                         title: 'Location',
@@ -319,14 +317,14 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
                 ),
               ),
             ),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
             
             // Additional information
             Card(
               elevation: 2,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               child: Padding(
-                padding: EdgeInsets.all(16),
+                padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -340,7 +338,7 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
                             : 'Recurring',
                         valueColor: theme.primaryColor,
                       ),
-                      Divider(),
+                      const Divider(),
                     ],
                     
                     // Notes
@@ -351,7 +349,7 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
                         value: _expense!.notes!,
                         isMultiLine: true,
                       ),
-                      Divider(),
+                      const Divider(),
                     ],
                     
                     // Receipt
@@ -362,7 +360,7 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
                         value: 'Receipt available',
                         valueColor: theme.primaryColor,
                       ),
-                      Divider(),
+                      const Divider(),
                     ],
                     
                     // Created/Updated dates
@@ -376,7 +374,7 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
                       ),
                     ),
                     if (_expense!.updatedAt != _expense!.createdAt) ...[
-                      Divider(),
+                      const Divider(),
                       _buildDetailItem(
                         icon: Icons.update,
                         title: 'Last Updated',
@@ -407,12 +405,12 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
     bool isMultiLine = false,
   }) {
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         crossAxisAlignment: isMultiLine ? CrossAxisAlignment.start : CrossAxisAlignment.center,
         children: [
           Container(
-            padding: EdgeInsets.all(8),
+            padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               color: (iconColor ?? Theme.of(context).primaryColor).withOpacity(0.1),
               shape: BoxShape.circle,
@@ -423,7 +421,7 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
               size: 18,
             ),
           ),
-          SizedBox(width: 16),
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -435,7 +433,7 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
                     fontSize: 12,
                   ),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Text(
                   value,
                   style: valueStyle ?? TextStyle(

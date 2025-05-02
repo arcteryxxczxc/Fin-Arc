@@ -8,7 +8,7 @@ class StorageService {
   late SharedPreferences _prefs;
   
   // Secure storage for sensitive data
-  final FlutterSecureStorage _secureStorage = FlutterSecureStorage();
+  static const FlutterSecureStorage _secureStorage = FlutterSecureStorage();
   
   // Initialize shared preferences
   Future<void> init() async {

@@ -1,4 +1,4 @@
-// report.dart
+// lib/models/report.dart
 class Report {
   final String id;
   final String title;

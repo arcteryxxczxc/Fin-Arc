@@ -9,6 +9,8 @@ import '../routes/route_names.dart';
 import '../utils/error_handler.dart';
 
 class BudgetReportScreen extends StatefulWidget {
+  const BudgetReportScreen({super.key});
+
   @override
   _BudgetReportScreenState createState() => _BudgetReportScreenState();
 }
@@ -92,7 +94,7 @@ class _BudgetReportScreenState extends State<BudgetReportScreen> {
   // Allow user to pick a month/year
   void _showMonthPicker(BuildContext context) {
     final now = DateTime.now();
-    final firstYear = 2020; // First available year
+    const firstYear = 2020; // First available year
     
     final years = List<int>.generate(now.year - firstYear + 1, (i) => firstYear + i);
     final months = [
@@ -107,8 +109,8 @@ class _BudgetReportScreenState extends State<BudgetReportScreen> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          title: Text('Select Month'),
-          content: Container(
+          title: const Text('Select Month'),
+          content: SizedBox(
             width: double.maxFinite,
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -131,12 +133,12 @@ class _BudgetReportScreenState extends State<BudgetReportScreen> {
                     }
                   },
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 
                 // Month grid
                 GridView.builder(
                   shrinkWrap: true,
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 3,
                     childAspectRatio: 2.5,
                     crossAxisSpacing: 10,
@@ -190,7 +192,7 @@ class _BudgetReportScreenState extends State<BudgetReportScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text('CANCEL'),
+              child: const Text('CANCEL'),
             ),
             ElevatedButton(
               onPressed: () {
@@ -200,7 +202,7 @@ class _BudgetReportScreenState extends State<BudgetReportScreen> {
                 });
                 _fetchBudgetReport();
               },
-              child: Text('SELECT'),
+              child: const Text('SELECT'),
             ),
           ],
         ),
@@ -215,10 +217,10 @@ class _BudgetReportScreenState extends State<BudgetReportScreen> {
     
     return Scaffold(
       appBar: AppBar(
-        title: Text('Budget Report'),
+        title: const Text('Budget Report'),
         actions: [
           IconButton(
-            icon: Icon(Icons.calendar_today),
+            icon: const Icon(Icons.calendar_today),
             onPressed: () => _showMonthPicker(context),
             tooltip: 'Choose Month',
           ),
@@ -233,25 +235,25 @@ class _BudgetReportScreenState extends State<BudgetReportScreen> {
               onRetry: _fetchBudgetReport,
             )
           : _budgetData == null
-            ? Center(child: Text('No budget data available'))
+            ? const Center(child: Text('No budget data available'))
             : RefreshIndicator(
                 onRefresh: _fetchBudgetReport,
                 child: SingleChildScrollView(
-                  padding: EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Month selector
                       _buildMonthSelector(theme),
-                      SizedBox(height: 24),
+                      const SizedBox(height: 24),
                       
                       // Budget summary
                       _buildBudgetSummary(theme, currencyFormatter),
-                      SizedBox(height: 24),
+                      const SizedBox(height: 24),
                       
                       // Categories with budget
                       _buildBudgetCategoriesList(theme, currencyFormatter),
-                      SizedBox(height: 24),
+                      const SizedBox(height: 24),
                       
                       // Categories without budget
                       _buildNonBudgetCategoriesList(theme, currencyFormatter),
@@ -277,12 +279,12 @@ class _BudgetReportScreenState extends State<BudgetReportScreen> {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             IconButton(
-              icon: Icon(Icons.chevron_left),
+              icon: const Icon(Icons.chevron_left),
               onPressed: _previousMonth,
               tooltip: 'Previous month',
             ),
@@ -296,7 +298,7 @@ class _BudgetReportScreenState extends State<BudgetReportScreen> {
               ),
             ),
             IconButton(
-              icon: Icon(Icons.chevron_right),
+              icon: const Icon(Icons.chevron_right),
               onPressed: canGoNext ? _nextMonth : null,
               tooltip: canGoNext ? 'Next month' : 'Cannot go to future months',
             ),
@@ -327,7 +329,7 @@ class _BudgetReportScreenState extends State<BudgetReportScreen> {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -337,7 +339,7 @@ class _BudgetReportScreenState extends State<BudgetReportScreen> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             
             // Progress bar and percentage
             Column(
@@ -345,7 +347,7 @@ class _BudgetReportScreenState extends State<BudgetReportScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Total Budget Usage'),
+                    const Text('Total Budget Usage'),
                     Text(
                       '${percentage.toInt()}%',
                       style: TextStyle(
@@ -355,7 +357,7 @@ class _BudgetReportScreenState extends State<BudgetReportScreen> {
                     ),
                   ],
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(4),
                   child: LinearProgressIndicator(
@@ -367,7 +369,7 @@ class _BudgetReportScreenState extends State<BudgetReportScreen> {
                 ),
               ],
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             
             // Budget stats
             Row(
@@ -381,7 +383,7 @@ class _BudgetReportScreenState extends State<BudgetReportScreen> {
                     icon: Icons.account_balance_wallet,
                   ),
                 ),
-                SizedBox(width: 16),
+                const SizedBox(width: 16),
                 Expanded(
                   child: _buildBudgetStatItem(
                     title: 'Spent',
@@ -391,7 +393,7 @@ class _BudgetReportScreenState extends State<BudgetReportScreen> {
                     icon: Icons.arrow_downward,
                   ),
                 ),
-                SizedBox(width: 16),
+                const SizedBox(width: 16),
                 Expanded(
                   child: _buildBudgetStatItem(
                     title: 'Remaining',
@@ -419,7 +421,7 @@ class _BudgetReportScreenState extends State<BudgetReportScreen> {
     return Column(
       children: [
         Container(
-          padding: EdgeInsets.all(12),
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: color.withOpacity(0.1),
             shape: BoxShape.circle,
@@ -430,7 +432,7 @@ class _BudgetReportScreenState extends State<BudgetReportScreen> {
             size: 24,
           ),
         ),
-        SizedBox(height: 8),
+        const SizedBox(height: 8),
         Text(
           title,
           style: TextStyle(
@@ -438,7 +440,7 @@ class _BudgetReportScreenState extends State<BudgetReportScreen> {
             color: Colors.grey[700],
           ),
         ),
-        SizedBox(height: 4),
+        const SizedBox(height: 4),
         Text(
           currencyFormatter.format(amount),
           style: TextStyle(
@@ -459,7 +461,7 @@ class _BudgetReportScreenState extends State<BudgetReportScreen> {
         elevation: 2,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         child: Padding(
-          padding: EdgeInsets.all(16),
+          padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -469,10 +471,10 @@ class _BudgetReportScreenState extends State<BudgetReportScreen> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              SizedBox(height: 16),
-              Center(
+              const SizedBox(height: 16),
+              const Center(
                 child: Padding(
-                  padding: const EdgeInsets.all(24.0),
+                  padding: EdgeInsets.all(24.0),
                   child: Text('No budget categories found for this month'),
                 ),
               ),
@@ -486,7 +488,7 @@ class _BudgetReportScreenState extends State<BudgetReportScreen> {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -496,13 +498,13 @@ class _BudgetReportScreenState extends State<BudgetReportScreen> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             
             ListView.separated(
               shrinkWrap: true,
-              physics: NeverScrollableScrollPhysics(),
+              physics: const NeverScrollableScrollPhysics(),
               itemCount: budgetCategories.length,
-              separatorBuilder: (context, index) => SizedBox(height: 16),
+              separatorBuilder: (context, index) => const SizedBox(height: 16),
               itemBuilder: (context, index) {
                 final category = budgetCategories[index];
                 final name = category['name'] as String;
@@ -539,18 +541,18 @@ class _BudgetReportScreenState extends State<BudgetReportScreen> {
                             shape: BoxShape.circle,
                           ),
                         ),
-                        SizedBox(width: 8),
+                        const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             name,
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
                       ],
                     ),
-                    SizedBox(height: 8),
+                    const SizedBox(height: 8),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -564,7 +566,7 @@ class _BudgetReportScreenState extends State<BudgetReportScreen> {
                         ),
                       ],
                     ),
-                    SizedBox(height: 6),
+                    const SizedBox(height: 6),
                     ClipRRect(
                       borderRadius: BorderRadius.circular(4),
                       child: LinearProgressIndicator(
@@ -574,7 +576,7 @@ class _BudgetReportScreenState extends State<BudgetReportScreen> {
                         valueColor: AlwaysStoppedAnimation<Color>(progressColor),
                       ),
                     ),
-                    SizedBox(height: 6),
+                    const SizedBox(height: 6),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -610,14 +612,14 @@ class _BudgetReportScreenState extends State<BudgetReportScreen> {
     final uncategorizedExpenses = (_budgetData!['uncategorized_expenses'] as num?)?.toDouble() ?? 0.0;
     
     if (nonBudgetCategories.isEmpty && uncategorizedExpenses <= 0) {
-      return SizedBox.shrink();
+      return const SizedBox.shrink();
     }
     
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -627,12 +629,12 @@ class _BudgetReportScreenState extends State<BudgetReportScreen> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             
             // Categories without budget
             ListView.builder(
               shrinkWrap: true,
-              physics: NeverScrollableScrollPhysics(),
+              physics: const NeverScrollableScrollPhysics(),
               itemCount: nonBudgetCategories.length,
               itemBuilder: (context, index) {
                 final category = nonBudgetCategories[index];
@@ -641,7 +643,7 @@ class _BudgetReportScreenState extends State<BudgetReportScreen> {
                 final spent = (category['spent'] as num).toDouble();
                 
                 // Skip categories with no spending
-                if (spent <= 0) return SizedBox.shrink();
+                if (spent <= 0) return const SizedBox.shrink();
                 
                 // Parse color from hex string
                 final color = Color(int.parse(colorCode.replaceFirst('#', '0xFF')));
@@ -659,7 +661,7 @@ class _BudgetReportScreenState extends State<BudgetReportScreen> {
                   title: Text(name),
                   trailing: Text(
                     currencyFormatter.format(spent),
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                 );
               },
@@ -667,21 +669,21 @@ class _BudgetReportScreenState extends State<BudgetReportScreen> {
             
             // Uncategorized expenses
             if (uncategorizedExpenses > 0) ...[
-              Divider(),
+              const Divider(),
               ListTile(
                 contentPadding: EdgeInsets.zero,
                 leading: Container(
                   width: 16,
                   height: 16,
-                  decoration: BoxDecoration(
+                  decoration: const BoxDecoration(
                     color: Colors.grey,
                     shape: BoxShape.circle,
                   ),
                 ),
-                title: Text('Uncategorized'),
+                title: const Text('Uncategorized'),
                 trailing: Text(
                   currencyFormatter.format(uncategorizedExpenses),
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
               ),
             ],

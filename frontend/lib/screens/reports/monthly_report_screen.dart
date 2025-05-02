@@ -9,6 +9,8 @@ import '../../widgets/layout/screen_wrapper.dart';
 import '../../routes/route_names.dart';
 
 class MonthlyReportScreen extends StatefulWidget {
+  const MonthlyReportScreen({super.key});
+
   @override
   _MonthlyReportScreenState createState() => _MonthlyReportScreenState();
 }
@@ -100,46 +102,46 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
       showBottomNav: false, // Hide bottom nav on detail screens
       child: Scaffold(
         appBar: AppBar(
-          title: Text('Monthly Report'),
+          title: const Text('Monthly Report'),
           actions: [
             IconButton(
-              icon: Icon(Icons.calendar_today),
+              icon: const Icon(Icons.calendar_today),
               onPressed: () => _showMonthPicker(context),
               tooltip: 'Choose Month',
             ),
           ],
         ),
         body: _isLoading 
-          ? LoadingIndicator(message: 'Loading monthly report...')
+          ? const LoadingIndicator(message: 'Loading monthly report...')
           : _error != null
             ? ErrorDisplay(
                 error: _error!,
                 onRetry: _fetchMonthlyReport,
               )
             : _reportData == null
-              ? Center(child: Text('No report data available'))
+              ? const Center(child: Text('No report data available'))
               : RefreshIndicator(
                   onRefresh: _fetchMonthlyReport,
                   child: SingleChildScrollView(
-                    padding: EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(16),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // Month selector
                         _buildMonthSelector(theme),
-                        SizedBox(height: 24),
+                        const SizedBox(height: 24),
                         
                         // Monthly summary
                         _buildMonthlySummary(theme, currencyFormatter),
-                        SizedBox(height: 24),
+                        const SizedBox(height: 24),
                         
                         // Daily trends
                         _buildDailyTrendsChart(theme),
-                        SizedBox(height: 24),
+                        const SizedBox(height: 24),
                         
                         // Expense categories
                         _buildExpenseCategories(theme, currencyFormatter),
-                        SizedBox(height: 24),
+                        const SizedBox(height: 24),
                         
                         // Income sources
                         _buildIncomeSources(theme, currencyFormatter),
@@ -154,7 +156,7 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
   // Allow user to pick a month from a dialog
   Future<void> _showMonthPicker(BuildContext context) async {
     final now = DateTime.now();
-    final firstYear = 2020; // First available year
+    const firstYear = 2020; // First available year
     
     final years = List<int>.generate(now.year - firstYear + 1, (i) => firstYear + i);
     final months = [
@@ -169,8 +171,8 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          title: Text('Select Month'),
-          content: Container(
+          title: const Text('Select Month'),
+          content: SizedBox(
             width: double.maxFinite,
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -193,12 +195,12 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
                     }
                   },
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 
                 // Month grid
                 GridView.builder(
                   shrinkWrap: true,
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 3,
                     childAspectRatio: 2.5,
                     crossAxisSpacing: 10,
@@ -252,7 +254,7 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text('CANCEL'),
+              child: const Text('CANCEL'),
             ),
             ElevatedButton(
               onPressed: () {
@@ -262,7 +264,7 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
                 });
                 _fetchMonthlyReport();
               },
-              child: Text('SELECT'),
+              child: const Text('SELECT'),
             ),
           ],
         ),
@@ -285,12 +287,12 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             IconButton(
-              icon: Icon(Icons.chevron_left),
+              icon: const Icon(Icons.chevron_left),
               onPressed: _previousMonth,
               tooltip: 'Previous month',
             ),
@@ -301,7 +303,7 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
               ),
             ),
             IconButton(
-              icon: Icon(Icons.chevron_right),
+              icon: const Icon(Icons.chevron_right),
               onPressed: canGoNext ? _nextMonth : null,
               tooltip: canGoNext ? 'Next month' : 'Cannot go to future months',
             ),
@@ -321,7 +323,7 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -331,7 +333,7 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             
             Row(
               children: [
@@ -344,7 +346,7 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
                     icon: Icons.arrow_upward,
                   ),
                 ),
-                SizedBox(width: 16),
+                const SizedBox(width: 16),
                 Expanded(
                   child: _buildSummaryItem(
                     title: 'Expenses',
@@ -354,7 +356,7 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
                     icon: Icons.arrow_downward,
                   ),
                 ),
-                SizedBox(width: 16),
+                const SizedBox(width: 16),
                 Expanded(
                   child: _buildSummaryItem(
                     title: 'Balance',
@@ -382,7 +384,7 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
     return Column(
       children: [
         Container(
-          padding: EdgeInsets.all(12),
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: color.withOpacity(0.1),
             shape: BoxShape.circle,
@@ -393,7 +395,7 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
             size: 24,
           ),
         ),
-        SizedBox(height: 8),
+        const SizedBox(height: 8),
         Text(
           title,
           style: TextStyle(
@@ -401,7 +403,7 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
             color: Colors.grey[700],
           ),
         ),
-        SizedBox(height: 4),
+        const SizedBox(height: 4),
         Text(
           currencyFormatter.format(amount),
           style: TextStyle(
@@ -422,7 +424,7 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
         elevation: 2,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         child: Padding(
-          padding: EdgeInsets.all(16),
+          padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -432,10 +434,10 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              SizedBox(height: 24),
-              Center(
+              const SizedBox(height: 24),
+              const Center(
                 child: Padding(
-                  padding: const EdgeInsets.all(24.0),
+                  padding: EdgeInsets.all(24.0),
                   child: Text('No daily data available for this month'),
                 ),
               ),
@@ -479,7 +481,7 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -489,10 +491,10 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
             
             // Chart
-            Container(
+            SizedBox(
               height: 220,
               child: LineChart(
                 LineChartData(
@@ -514,7 +516,7 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
                         showTitles: true,
                         reservedSize: 40,
                         getTitlesWidget: (value, meta) {
-                          if (value == 0) return Text('');
+                          if (value == 0) return const Text('');
                           return Text(
                             '\${value.toInt()}',
                             style: TextStyle(
@@ -541,12 +543,12 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
                               ),
                             );
                           }
-                          return Text('');
+                          return const Text('');
                         },
                       ),
                     ),
-                    rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                   ),
                   borderData: FlBorderData(show: false),
                   minX: 0,
@@ -561,7 +563,7 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
                       color: Colors.green,
                       barWidth: 3,
                       isStrokeCapRound: true,
-                      dotData: FlDotData(show: false),
+                      dotData: const FlDotData(show: false),
                       belowBarData: BarAreaData(
                         show: true,
                         color: Colors.green.withOpacity(0.1),
@@ -574,7 +576,7 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
                       color: Colors.red,
                       barWidth: 3,
                       isStrokeCapRound: true,
-                      dotData: FlDotData(show: false),
+                      dotData: const FlDotData(show: false),
                       belowBarData: BarAreaData(
                         show: true,
                         color: Colors.red.withOpacity(0.1),
@@ -587,7 +589,7 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
                       color: Colors.blue,
                       barWidth: 3,
                       isStrokeCapRound: true,
-                      dotData: FlDotData(show: false),
+                      dotData: const FlDotData(show: false),
                       belowBarData: BarAreaData(
                         show: true,
                         color: Colors.blue.withOpacity(0.1),
@@ -598,7 +600,7 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
               ),
             ),
             
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             
             // Legend
             Row(
@@ -608,12 +610,12 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
                   label: 'Income',
                   color: Colors.green,
                 ),
-                SizedBox(width: 16),
+                const SizedBox(width: 16),
                 _buildLegendItem(
                   label: 'Expenses',
                   color: Colors.red,
                 ),
-                SizedBox(width: 16),
+                const SizedBox(width: 16),
                 _buildLegendItem(
                   label: 'Balance',
                   color: Colors.blue,
@@ -637,7 +639,7 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
             shape: BoxShape.circle,
           ),
         ),
-        SizedBox(width: 4),
+        const SizedBox(width: 4),
         Text(
           label,
           style: TextStyle(
@@ -657,7 +659,7 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
         elevation: 2,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         child: Padding(
-          padding: EdgeInsets.all(16),
+          padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -667,10 +669,10 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              SizedBox(height: 16),
-              Center(
+              const SizedBox(height: 16),
+              const Center(
                 child: Padding(
-                  padding: const EdgeInsets.all(24.0),
+                  padding: EdgeInsets.all(24.0),
                   child: Text('No expense data available for this month'),
                 ),
               ),
@@ -701,7 +703,7 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
           value: total,
           title: '${percentage.toInt()}%',
           radius: 80,
-          titleStyle: TextStyle(
+          titleStyle: const TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
             fontSize: 14,
@@ -714,7 +716,7 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -724,18 +726,18 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             
             if (sections.isEmpty) ...[
-              Center(
+              const Center(
                 child: Padding(
-                  padding: const EdgeInsets.all(16.0),
+                  padding: EdgeInsets.all(16.0),
                   child: Text('No spending data available'),
                 ),
               ),
             ] else ...[
               // Pie chart
-              Container(
+              SizedBox(
                 height: 200,
                 child: PieChart(
                   PieChartData(
@@ -746,12 +748,12 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
                 ),
               ),
               
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               
               // Category list
               ListView.builder(
                 shrinkWrap: true,
-                physics: NeverScrollableScrollPhysics(),
+                physics: const NeverScrollableScrollPhysics(),
                 itemCount: categories.length,
                 itemBuilder: (context, index) {
                   final category = categories[index];
@@ -761,13 +763,13 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
                   final percentage = (category['percentage'] as num).toDouble();
                   
                   // Skip categories with no spending
-                  if (total <= 0) return SizedBox.shrink();
+                  if (total <= 0) return const SizedBox.shrink();
                   
                   // Parse color from hex string
                   final colorValue = Color(int.parse(color.replaceFirst('#', '0xFF')));
                   
                   return ListTile(
-                    contentPadding: EdgeInsets.symmetric(vertical: 4),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 4),
                     leading: Container(
                       width: 16,
                       height: 16,
@@ -779,7 +781,7 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
                     title: Text(name),
                     trailing: Text(
                       '${currencyFormatter.format(total)} (${percentage.toInt()}%)',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                      style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                   );
                 },
@@ -799,7 +801,7 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
         elevation: 2,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         child: Padding(
-          padding: EdgeInsets.all(16),
+          padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -809,10 +811,10 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              SizedBox(height: 16),
-              Center(
+              const SizedBox(height: 16),
+              const Center(
                 child: Padding(
-                  padding: const EdgeInsets.all(24.0),
+                  padding: EdgeInsets.all(24.0),
                   child: Text('No income data available for this month'),
                 ),
               ),
@@ -857,7 +859,7 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
               toY: total,
               color: colorValue,
               width: 20,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(6)),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
             ),
           ],
         ),
@@ -872,7 +874,7 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -882,18 +884,18 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             
             if (barGroups.isEmpty) ...[
-              Center(
+              const Center(
                 child: Padding(
-                  padding: const EdgeInsets.all(16.0),
+                  padding: EdgeInsets.all(16.0),
                   child: Text('No income data available'),
                 ),
               ),
             ] else ...[
               // Bar chart
-              Container(
+              SizedBox(
                 height: 200,
                 child: BarChart(
                   BarChartData(
@@ -921,7 +923,7 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
                             final index = value.toInt();
                             if (index >= 0 && index < sourceNames.length) {
                               return Padding(
-                                padding: EdgeInsets.only(top: 8),
+                                padding: const EdgeInsets.only(top: 8),
                                 child: Text(
                                   sourceNames[index],
                                   style: TextStyle(
@@ -933,7 +935,7 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
                                 ),
                               );
                             }
-                            return Text('');
+                            return const Text('');
                           },
                         ),
                       ),
@@ -942,7 +944,7 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
                           showTitles: true,
                           reservedSize: 40,
                           getTitlesWidget: (value, meta) {
-                            if (value == 0) return Text('');
+                            if (value == 0) return const Text('');
                             return Text(
                               '\${value.toInt()}',
                               style: TextStyle(
@@ -954,10 +956,10 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
                           interval: maxAmount / 5,
                         ),
                       ),
-                      topTitles: AxisTitles(
+                      topTitles: const AxisTitles(
                         sideTitles: SideTitles(showTitles: false),
                       ),
-                      rightTitles: AxisTitles(
+                      rightTitles: const AxisTitles(
                         sideTitles: SideTitles(showTitles: false),
                       ),
                     ),
@@ -967,12 +969,12 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
                 ),
               ),
               
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               
               // Income sources list
               ListView.builder(
                 shrinkWrap: true,
-                physics: NeverScrollableScrollPhysics(),
+                physics: const NeverScrollableScrollPhysics(),
                 itemCount: sources.length,
                 itemBuilder: (context, index) {
                   final source = sources[index];
@@ -982,13 +984,13 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
                   final percentage = (source['percentage'] as num).toDouble();
                   
                   // Skip sources with no income
-                  if (total <= 0) return SizedBox.shrink();
+                  if (total <= 0) return const SizedBox.shrink();
                   
                   // Parse color from hex string
                   final colorValue = Color(int.parse(color.replaceFirst('#', '0xFF')));
                   
                   return ListTile(
-                    contentPadding: EdgeInsets.symmetric(vertical: 4),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 4),
                     leading: Container(
                       width: 16,
                       height: 16,
@@ -1000,7 +1002,7 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
                     title: Text(name),
                     trailing: Text(
                       '${currencyFormatter.format(total)} (${percentage.toInt()}%)',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                      style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                   );
                 },

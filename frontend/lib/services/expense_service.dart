@@ -1,5 +1,4 @@
 import '../api/endpoints/expense_api.dart';
-import '../models/expense.dart';
 
 class ExpenseService {
   final ExpenseApi _expenseApi = ExpenseApi();

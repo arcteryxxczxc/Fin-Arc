@@ -6,10 +6,10 @@ class ErrorDisplay extends StatelessWidget {
   final VoidCallback? onRetry;
   
   const ErrorDisplay({
-    Key? key, 
+    super.key, 
     required this.error,
     this.onRetry,
-  }) : super(key: key);
+  });
   
   @override
   Widget build(BuildContext context) {
@@ -19,31 +19,31 @@ class ErrorDisplay extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
+            const Icon(
               Icons.error_outline,
               color: Colors.red,
               size: 48,
             ),
-            SizedBox(height: 16),
-            Text(
+            const SizedBox(height: 16),
+            const Text(
               'Error',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Text(
               error,
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.grey[700]),
             ),
             if (onRetry != null) ...[
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               ElevatedButton.icon(
                 onPressed: onRetry,
-                icon: Icon(Icons.refresh),
-                label: Text('Retry'),
+                icon: const Icon(Icons.refresh),
+                label: const Text('Retry'),
               ),
             ],
           ],

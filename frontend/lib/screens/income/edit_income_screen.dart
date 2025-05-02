@@ -11,7 +11,7 @@ import '../../widgets/common/error_display.dart';
 class EditIncomeScreen extends StatefulWidget {
   final int incomeId;
   
-  const EditIncomeScreen({Key? key, required this.incomeId}) : super(key: key);
+  const EditIncomeScreen({super.key, required this.incomeId});
 
   @override
   _EditIncomeScreenState createState() => _EditIncomeScreenState();
@@ -141,7 +141,7 @@ class _EditIncomeScreenState extends State<EditIncomeScreen> {
       context: context,
       initialDate: _selectedDate,
       firstDate: DateTime(2020),
-      lastDate: DateTime.now().add(Duration(days: 365)),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
     );
     if (picked != null && picked != _selectedDate) {
       setState(() {
@@ -191,7 +191,7 @@ class _EditIncomeScreenState extends State<EditIncomeScreen> {
         if (success && mounted) {
           // Show success message and navigate back
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Income updated successfully')),
+            const SnackBar(content: Text('Income updated successfully')),
           );
           Navigator.of(context).pop();
         } else if (mounted) {
@@ -233,16 +233,16 @@ class _EditIncomeScreenState extends State<EditIncomeScreen> {
     if (_isLoading) {
       return Scaffold(
         appBar: AppBar(
-          title: Text('Edit Income'),
+          title: const Text('Edit Income'),
         ),
-        body: LoadingIndicator(message: 'Loading income data...'),
+        body: const LoadingIndicator(message: 'Loading income data...'),
       );
     }
     
     if (_error != null && _income == null) {
       return Scaffold(
         appBar: AppBar(
-          title: Text('Edit Income'),
+          title: const Text('Edit Income'),
         ),
         body: ErrorDisplay(
           error: _error!,
@@ -253,10 +253,10 @@ class _EditIncomeScreenState extends State<EditIncomeScreen> {
     
     return Scaffold(
       appBar: AppBar(
-        title: Text('Edit Income'),
+        title: const Text('Edit Income'),
       ),
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Form(
           key: _formKey,
           child: Column(
@@ -265,12 +265,12 @@ class _EditIncomeScreenState extends State<EditIncomeScreen> {
               // Amount field
               TextFormField(
                 controller: _amountController,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Amount',
                   prefixIcon: Icon(Icons.attach_money),
                   border: OutlineInputBorder(),
                 ),
-                keyboardType: TextInputType.numberWithOptions(decimal: true),
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter an amount';
@@ -281,12 +281,12 @@ class _EditIncomeScreenState extends State<EditIncomeScreen> {
                   return null;
                 },
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               
               // Source field
               TextFormField(
                 controller: _sourceController,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Source',
                   prefixIcon: Icon(Icons.account_balance),
                   border: OutlineInputBorder(),
@@ -298,25 +298,25 @@ class _EditIncomeScreenState extends State<EditIncomeScreen> {
                   return null;
                 },
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               
               // Description field
               TextFormField(
                 controller: _descriptionController,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Description (Optional)',
                   prefixIcon: Icon(Icons.description),
                   border: OutlineInputBorder(),
                 ),
                 maxLines: 2,
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               
               // Date selector
               InkWell(
                 onTap: () => _selectDate(context),
                 child: InputDecorator(
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'Date',
                     prefixIcon: Icon(Icons.calendar_today),
                     border: OutlineInputBorder(),
@@ -326,18 +326,18 @@ class _EditIncomeScreenState extends State<EditIncomeScreen> {
                   ),
                 ),
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               
               // Category dropdown
               DropdownButtonFormField<Category?>(
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Category (Optional)',
                   prefixIcon: Icon(Icons.category),
                   border: OutlineInputBorder(),
                 ),
                 value: _selectedCategory,
                 items: [
-                  DropdownMenuItem<Category?>(
+                  const DropdownMenuItem<Category?>(
                     value: null,
                     child: Text('No Category'),
                   ),
@@ -354,12 +354,12 @@ class _EditIncomeScreenState extends State<EditIncomeScreen> {
                               shape: BoxShape.circle,
                             ),
                           ),
-                          SizedBox(width: 10),
+                          const SizedBox(width: 10),
                           Text(category.name),
                         ],
                       ),
                     );
-                  }).toList(),
+                  }),
                 ],
                 onChanged: (Category? newValue) {
                   setState(() {
@@ -367,20 +367,20 @@ class _EditIncomeScreenState extends State<EditIncomeScreen> {
                   });
                 },
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               
               // Recurring income toggle
               SwitchListTile(
-                title: Text('Recurring Income'),
-                subtitle: Text('Enable for repeating income'),
+                title: const Text('Recurring Income'),
+                subtitle: const Text('Enable for repeating income'),
                 value: _isRecurring,
                 onChanged: (bool value) {
                   setState(() {
                     _isRecurring = value;
                     if (!value) {
                       _recurringType = null;
-                    } else if (_recurringType == null) {
-                      _recurringType = _recurringTypes.first;
+                    } else {
+                      _recurringType ??= _recurringTypes.first;
                     }
                   });
                 },
@@ -392,9 +392,9 @@ class _EditIncomeScreenState extends State<EditIncomeScreen> {
                   children: [
                     // Recurring type dropdown
                     Padding(
-                      padding: EdgeInsets.only(top: 8),
+                      padding: const EdgeInsets.only(top: 8),
                       child: DropdownButtonFormField<String>(
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           labelText: 'Recurrence Type',
                           prefixIcon: Icon(Icons.repeat),
                           border: OutlineInputBorder(),
@@ -413,13 +413,13 @@ class _EditIncomeScreenState extends State<EditIncomeScreen> {
                         },
                       ),
                     ),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     
                     // Recurring day field (for monthly and yearly)
                     if (_recurringType == 'Monthly' || _recurringType == 'Yearly')
                       TextFormField(
                         initialValue: _recurringDay.toString(),
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           labelText: 'Day of Month',
                           prefixIcon: Icon(Icons.date_range),
                           border: OutlineInputBorder(),
@@ -446,12 +446,12 @@ class _EditIncomeScreenState extends State<EditIncomeScreen> {
                       ),
                   ],
                 ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               
               // Taxable income toggle
               SwitchListTile(
-                title: Text('Taxable Income'),
-                subtitle: Text('Enable if income is subject to tax'),
+                title: const Text('Taxable Income'),
+                subtitle: const Text('Enable if income is subject to tax'),
                 value: _isTaxable,
                 onChanged: (bool value) {
                   setState(() {
@@ -463,15 +463,15 @@ class _EditIncomeScreenState extends State<EditIncomeScreen> {
               // Tax rate field (if taxable is enabled)
               if (_isTaxable)
                 Padding(
-                  padding: EdgeInsets.only(top: 8),
+                  padding: const EdgeInsets.only(top: 8),
                   child: TextFormField(
                     controller: _taxRateController,
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       labelText: 'Tax Rate (%)',
                       prefixIcon: Icon(Icons.percent),
                       border: OutlineInputBorder(),
                     ),
-                    keyboardType: TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Please enter a tax rate';
@@ -484,7 +484,7 @@ class _EditIncomeScreenState extends State<EditIncomeScreen> {
                     },
                   ),
                 ),
-              SizedBox(height: 24),
+              const SizedBox(height: 24),
               
               // Submit button
               SizedBox(
@@ -493,8 +493,8 @@ class _EditIncomeScreenState extends State<EditIncomeScreen> {
                 child: ElevatedButton(
                   onPressed: _isSaving ? null : _submitForm,
                   child: _isSaving
-                      ? CircularProgressIndicator(color: Colors.white)
-                      : Text('Update Income', style: TextStyle(fontSize: 16)),
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text('Update Income', style: TextStyle(fontSize: 16)),
                 ),
               ),
             ],
@@ -508,6 +508,6 @@ class _EditIncomeScreenState extends State<EditIncomeScreen> {
 // Extension to capitalize first letter of a string
 extension StringExtension on String {
   String capitalize() {
-    return "${this[0].toUpperCase()}${this.substring(1)}";
+    return "${this[0].toUpperCase()}${substring(1)}";
   }
 }

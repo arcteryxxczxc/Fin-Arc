@@ -1,17 +1,16 @@
 // lib/screens/reports/reports_screen.dart
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../widgets/layout/screen_wrapper.dart';
-import '../../providers/expense_provider.dart';
-import '../../providers/income_provider.dart';
 import '../../services/report_service.dart';
 import '../../widgets/common/loading_indicator.dart';
 import '../../widgets/common/error_display.dart';
 import '../../routes/route_names.dart';
 
 class ReportsScreen extends StatefulWidget {
+  const ReportsScreen({super.key});
+
   @override
   _ReportsScreenState createState() => _ReportsScreenState();
 }
@@ -66,10 +65,10 @@ class _ReportsScreenState extends State<ReportsScreen> {
       currentRoute: RouteNames.reports,
       child: Scaffold(
         appBar: AppBar(
-          title: Text('Financial Reports'),
+          title: const Text('Financial Reports'),
         ),
         body: _isLoading 
-          ? LoadingIndicator(message: 'Loading reports data...')
+          ? const LoadingIndicator(message: 'Loading reports data...')
           : _error != null
             ? ErrorDisplay(
                 error: _error!,
@@ -78,7 +77,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
             : RefreshIndicator(
                 onRefresh: _fetchOverviewData,
                 child: SingleChildScrollView(
-                  padding: EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -89,7 +88,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      SizedBox(height: 16),
+                      const SizedBox(height: 16),
                       
                       // Report cards
                       GridView.count(
@@ -97,7 +96,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                         crossAxisSpacing: 16,
                         mainAxisSpacing: 16,
                         shrinkWrap: true,
-                        physics: NeverScrollableScrollPhysics(),
+                        physics: const NeverScrollableScrollPhysics(),
                         children: [
                           _buildReportCard(
                             title: 'Monthly Report',
@@ -156,7 +155,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                         ],
                       ),
                       
-                      SizedBox(height: 24),
+                      const SizedBox(height: 24),
                       
                       // Financial overview
                       if (_overviewData != null) ...[
@@ -166,17 +165,17 @@ class _ReportsScreenState extends State<ReportsScreen> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        SizedBox(height: 16),
+                        const SizedBox(height: 16),
                         
                         // Month trend chart
                         _buildTrendChart(theme),
-                        SizedBox(height: 24),
+                        const SizedBox(height: 24),
                         
                         // Stats cards
                         _buildStatCards(theme, currencyFormatter),
                         
                         // Add bottom padding for bottom navigation
-                        SizedBox(height: 80),
+                        const SizedBox(height: 80),
                       ],
                     ],
                   ),
@@ -200,12 +199,12 @@ class _ReportsScreenState extends State<ReportsScreen> {
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: EdgeInsets.all(16),
+          padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                padding: EdgeInsets.all(10),
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   color: color.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
@@ -216,15 +215,15 @@ class _ReportsScreenState extends State<ReportsScreen> {
                   size: 28,
                 ),
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               Text(
                 title,
-                style: TextStyle(
+                style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
                 ),
               ),
-              SizedBox(height: 4),
+              const SizedBox(height: 4),
               Expanded(
                 child: Text(
                   description,
@@ -245,7 +244,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
     final trend = _overviewData!['trend'] as List<dynamic>;
     
     if (trend.isEmpty) {
-      return SizedBox.shrink();
+      return const SizedBox.shrink();
     }
     
     // Extract data for the chart
@@ -281,7 +280,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -291,10 +290,10 @@ class _ReportsScreenState extends State<ReportsScreen> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
             
             // Chart
-            Container(
+            SizedBox(
               height: 200,
               child: LineChart(
                 LineChartData(
@@ -316,7 +315,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                         showTitles: true,
                         reservedSize: 40,
                         getTitlesWidget: (value, meta) {
-                          if (value == 0) return Text('');
+                          if (value == 0) return const Text('');
                           return Text(
                             '\$${(value / 1000).toInt()}K',
                             style: TextStyle(
@@ -343,12 +342,12 @@ class _ReportsScreenState extends State<ReportsScreen> {
                               ),
                             );
                           }
-                          return Text('');
+                          return const Text('');
                         },
                       ),
                     ),
-                    rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                   ),
                   borderData: FlBorderData(show: false),
                   minX: 0,
@@ -363,7 +362,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                       color: Colors.green,
                       barWidth: 3,
                       isStrokeCapRound: true,
-                      dotData: FlDotData(show: false),
+                      dotData: const FlDotData(show: false),
                       belowBarData: BarAreaData(
                         show: true,
                         color: Colors.green.withOpacity(0.1),
@@ -376,7 +375,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                       color: Colors.red,
                       barWidth: 3,
                       isStrokeCapRound: true,
-                      dotData: FlDotData(show: false),
+                      dotData: const FlDotData(show: false),
                       belowBarData: BarAreaData(
                         show: true,
                         color: Colors.red.withOpacity(0.1),
@@ -389,7 +388,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                       color: Colors.blue,
                       barWidth: 3,
                       isStrokeCapRound: true,
-                      dotData: FlDotData(show: false),
+                      dotData: const FlDotData(show: false),
                       belowBarData: BarAreaData(
                         show: true,
                         color: Colors.blue.withOpacity(0.1),
@@ -400,7 +399,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
               ),
             ),
             
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             
             // Legend
             Row(
@@ -410,12 +409,12 @@ class _ReportsScreenState extends State<ReportsScreen> {
                   label: 'Income',
                   color: Colors.green,
                 ),
-                SizedBox(width: 16),
+                const SizedBox(width: 16),
                 _buildLegendItem(
                   label: 'Expenses',
                   color: Colors.red,
                 ),
-                SizedBox(width: 16),
+                const SizedBox(width: 16),
                 _buildLegendItem(
                   label: 'Balance',
                   color: Colors.blue,
@@ -439,7 +438,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
             shape: BoxShape.circle,
           ),
         ),
-        SizedBox(width: 4),
+        const SizedBox(width: 4),
         Text(
           label,
           style: TextStyle(
@@ -476,7 +475,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                 theme: theme,
               ),
             ),
-            SizedBox(width: 16),
+            const SizedBox(width: 16),
             Expanded(
               child: _buildStatCard(
                 title: 'Savings Rate',
@@ -489,7 +488,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
             ),
           ],
         ),
-        SizedBox(height: 16),
+        const SizedBox(height: 16),
         Row(
           children: [
             Expanded(
@@ -502,7 +501,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                 theme: theme,
               ),
             ),
-            SizedBox(width: 16),
+            const SizedBox(width: 16),
             Expanded(
               child: _buildStatCard(
                 title: 'Month Expenses',
@@ -531,14 +530,14 @@ class _ReportsScreenState extends State<ReportsScreen> {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
                 Container(
-                  padding: EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: iconColor.withOpacity(0.1),
                     shape: BoxShape.circle,
@@ -549,7 +548,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                     size: 18,
                   ),
                 ),
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     title,
@@ -562,7 +561,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                 ),
               ],
             ),
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
             Text(
               value,
               style: theme.textTheme.titleMedium?.copyWith(
@@ -570,7 +569,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
               ),
               overflow: TextOverflow.ellipsis,
             ),
-            SizedBox(height: 4),
+            const SizedBox(height: 4),
             Text(
               subtitle,
               style: TextStyle(
@@ -621,11 +620,11 @@ class _ReportsScreenState extends State<ReportsScreen> {
     
     showModalBottomSheet(
       context: context,
-      shape: RoundedRectangleBorder(
+      shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (ctx) => Container(
-        padding: EdgeInsets.all(24),
+        padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -636,19 +635,19 @@ class _ReportsScreenState extends State<ReportsScreen> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Text(
               'Select the data you want to export',
               style: TextStyle(
                 color: Colors.grey[600],
               ),
             ),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
             
             // Export options list
             ...exportOptions.map((option) => ListTile(
               leading: Container(
-                padding: EdgeInsets.all(8),
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: option['color'].withOpacity(0.1),
                   shape: BoxShape.circle,
@@ -667,7 +666,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
               },
             )),
             
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             
             // Cancel button
             SizedBox(
@@ -676,7 +675,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                 onPressed: () {
                   Navigator.of(ctx).pop();
                 },
-                child: Text('Cancel'),
+                child: const Text('Cancel'),
               ),
             ),
           ],
@@ -721,7 +720,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
         SnackBar(
           content: Row(
             children: [
-              SizedBox(
+              const SizedBox(
                 width: 20,
                 height: 20,
                 child: CircularProgressIndicator(
@@ -729,11 +728,11 @@ class _ReportsScreenState extends State<ReportsScreen> {
                   color: Colors.white,
                 ),
               ),
-              SizedBox(width: 16),
+              const SizedBox(width: 16),
               Text('Exporting $title data...'),
             ],
           ),
-          duration: Duration(seconds: 1),
+          duration: const Duration(seconds: 1),
         ),
       );
       
@@ -777,12 +776,12 @@ class _ReportsScreenState extends State<ReportsScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Coming Soon'),
+        title: const Text('Coming Soon'),
         content: Text('The $feature feature is coming soon! Stay tuned for updates.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: Text('OK'),
+            child: const Text('OK'),
           ),
         ],
       ),

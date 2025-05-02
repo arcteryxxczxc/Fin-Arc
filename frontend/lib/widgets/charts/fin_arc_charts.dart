@@ -10,13 +10,13 @@ class FinArcLineChart extends StatelessWidget {
   final String title;
   
   const FinArcLineChart({
-    Key? key,
+    super.key,
     required this.incomeData,
     required this.expenseData,
     required this.labels,
     this.maxY,
     this.title = 'Income vs Expenses',
-  }) : super(key: key);
+  });
   
   @override
   Widget build(BuildContext context) {
@@ -46,7 +46,7 @@ class FinArcLineChart extends StatelessWidget {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -56,10 +56,10 @@ class FinArcLineChart extends StatelessWidget {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
             
             // Chart
-            Container(
+            SizedBox(
               height: 200,
               child: LineChart(
                 LineChartData(
@@ -81,7 +81,7 @@ class FinArcLineChart extends StatelessWidget {
                         showTitles: true,
                         reservedSize: 40,
                         getTitlesWidget: (value, meta) {
-                          if (value == 0) return Text('');
+                          if (value == 0) return const Text('');
                           return Text(
                             '\$${value.toInt()}',
                             style: TextStyle(
@@ -108,12 +108,12 @@ class FinArcLineChart extends StatelessWidget {
                               ),
                             );
                           }
-                          return Text('');
+                          return const Text('');
                         },
                       ),
                     ),
-                    rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                   ),
                   borderData: FlBorderData(show: false),
                   minX: 0,
@@ -128,7 +128,7 @@ class FinArcLineChart extends StatelessWidget {
                       color: Colors.green,
                       barWidth: 3,
                       isStrokeCapRound: true,
-                      dotData: FlDotData(show: false),
+                      dotData: const FlDotData(show: false),
                       belowBarData: BarAreaData(
                         show: true,
                         color: Colors.green.withOpacity(0.1),
@@ -141,7 +141,7 @@ class FinArcLineChart extends StatelessWidget {
                       color: Colors.red,
                       barWidth: 3,
                       isStrokeCapRound: true,
-                      dotData: FlDotData(show: false),
+                      dotData: const FlDotData(show: false),
                       belowBarData: BarAreaData(
                         show: true,
                         color: Colors.red.withOpacity(0.1),
@@ -152,7 +152,7 @@ class FinArcLineChart extends StatelessWidget {
               ),
             ),
             
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             
             // Legend
             Row(
@@ -162,7 +162,7 @@ class FinArcLineChart extends StatelessWidget {
                   label: 'Income',
                   color: Colors.green,
                 ),
-                SizedBox(width: 24),
+                const SizedBox(width: 24),
                 _buildLegendItem(
                   label: 'Expenses',
                   color: Colors.red,
@@ -186,7 +186,7 @@ class FinArcLineChart extends StatelessWidget {
             shape: BoxShape.circle,
           ),
         ),
-        SizedBox(width: 4),
+        const SizedBox(width: 4),
         Text(
           label,
           style: TextStyle(
@@ -205,11 +205,11 @@ class FinArcPieChart extends StatelessWidget {
   final double radius;
   
   const FinArcPieChart({
-    Key? key,
+    super.key,
     required this.items,
     this.title = 'Distribution',
     this.radius = 80,
-  }) : super(key: key);
+  });
   
   @override
   Widget build(BuildContext context) {
@@ -228,7 +228,7 @@ class FinArcPieChart extends StatelessWidget {
           value: item.value,
           title: '${item.percentage.toInt()}%',
           radius: radius,
-          titleStyle: TextStyle(
+          titleStyle: const TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
             fontSize: 14,
@@ -241,7 +241,7 @@ class FinArcPieChart extends StatelessWidget {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -251,13 +251,13 @@ class FinArcPieChart extends StatelessWidget {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             
             // Pie chart
-            Container(
+            SizedBox(
               height: radius * 2 + 40,
               child: sections.isEmpty
-                ? Center(child: Text('No data available'))
+                ? const Center(child: Text('No data available'))
                 : PieChart(
                     PieChartData(
                       sections: sections,
@@ -267,21 +267,21 @@ class FinArcPieChart extends StatelessWidget {
                   ),
             ),
             
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             
             // Legend list
             ListView.builder(
               shrinkWrap: true,
-              physics: NeverScrollableScrollPhysics(),
+              physics: const NeverScrollableScrollPhysics(),
               itemCount: items.length,
               itemBuilder: (context, index) {
                 final item = items[index];
                 
                 // Skip items with no value
-                if (item.value <= 0) return SizedBox.shrink();
+                if (item.value <= 0) return const SizedBox.shrink();
                 
                 return ListTile(
-                  contentPadding: EdgeInsets.symmetric(vertical: 4),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 4),
                   leading: Container(
                     width: 16,
                     height: 16,
@@ -293,7 +293,7 @@ class FinArcPieChart extends StatelessWidget {
                   title: Text(item.label),
                   trailing: Text(
                     '${currencyFormatter.format(item.value)} (${item.percentage.toInt()}%)',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                 );
               },
@@ -311,11 +311,11 @@ class FinArcBarChart extends StatelessWidget {
   final bool horizontal;
   
   const FinArcBarChart({
-    Key? key,
+    super.key,
     required this.items,
     this.title = 'Bar Chart',
     this.horizontal = false,
-  }) : super(key: key);
+  });
   
   @override
   Widget build(BuildContext context) {
@@ -330,7 +330,7 @@ class FinArcBarChart extends StatelessWidget {
         elevation: 2,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         child: Padding(
-          padding: EdgeInsets.all(16),
+          padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -340,8 +340,8 @@ class FinArcBarChart extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              SizedBox(height: 16),
-              Container(
+              const SizedBox(height: 16),
+              const SizedBox(
                 height: 200,
                 child: Center(child: Text('No data available')),
               ),
@@ -372,7 +372,7 @@ class FinArcBarChart extends StatelessWidget {
               toY: item.value,
               color: item.color,
               width: 20,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(6)),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
             ),
           ],
         ),
@@ -383,7 +383,7 @@ class FinArcBarChart extends StatelessWidget {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -393,10 +393,10 @@ class FinArcBarChart extends StatelessWidget {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             
             // Bar chart
-            Container(
+            SizedBox(
               height: 200,
               child: BarChart(
                 BarChartData(
@@ -424,7 +424,7 @@ class FinArcBarChart extends StatelessWidget {
                           final index = value.toInt();
                           if (index >= 0 && index < validItems.length) {
                             return Padding(
-                              padding: EdgeInsets.only(top: 8),
+                              padding: const EdgeInsets.only(top: 8),
                               child: Text(
                                 validItems[index].label,
                                 style: TextStyle(
@@ -436,7 +436,7 @@ class FinArcBarChart extends StatelessWidget {
                               ),
                             );
                           }
-                          return Text('');
+                          return const Text('');
                         },
                       ),
                     ),
@@ -445,7 +445,7 @@ class FinArcBarChart extends StatelessWidget {
                         showTitles: true,
                         reservedSize: 40,
                         getTitlesWidget: (value, meta) {
-                          if (value == 0) return Text('');
+                          if (value == 0) return const Text('');
                           return Text(
                             '\$${(value / 1000).toInt()}K',
                             style: TextStyle(
@@ -457,10 +457,10 @@ class FinArcBarChart extends StatelessWidget {
                         interval: maxValue / 5,
                       ),
                     ),
-                    topTitles: AxisTitles(
+                    topTitles: const AxisTitles(
                       sideTitles: SideTitles(showTitles: false),
                     ),
-                    rightTitles: AxisTitles(
+                    rightTitles: const AxisTitles(
                       sideTitles: SideTitles(showTitles: false),
                     ),
                   ),
@@ -470,18 +470,18 @@ class FinArcBarChart extends StatelessWidget {
               ),
             ),
             
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             
             // Legend list
             ListView.builder(
               shrinkWrap: true,
-              physics: NeverScrollableScrollPhysics(),
+              physics: const NeverScrollableScrollPhysics(),
               itemCount: validItems.length,
               itemBuilder: (context, index) {
                 final item = validItems[index];
                 
                 return ListTile(
-                  contentPadding: EdgeInsets.symmetric(vertical: 4),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 4),
                   leading: Container(
                     width: 16,
                     height: 16,
@@ -493,7 +493,7 @@ class FinArcBarChart extends StatelessWidget {
                   title: Text(item.label),
                   trailing: Text(
                     currencyFormatter.format(item.value),
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                 );
               },
@@ -510,10 +510,10 @@ class FinArcBudgetProgressChart extends StatelessWidget {
   final String title;
   
   const FinArcBudgetProgressChart({
-    Key? key,
+    super.key,
     required this.items,
     this.title = 'Budget Progress',
-  }) : super(key: key);
+  });
   
   @override
   Widget build(BuildContext context) {
@@ -524,7 +524,7 @@ class FinArcBudgetProgressChart extends StatelessWidget {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -534,14 +534,14 @@ class FinArcBudgetProgressChart extends StatelessWidget {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             
             // Progress bars
             ListView.separated(
               shrinkWrap: true,
-              physics: NeverScrollableScrollPhysics(),
+              physics: const NeverScrollableScrollPhysics(),
               itemCount: items.length,
-              separatorBuilder: (context, index) => SizedBox(height: 16),
+              separatorBuilder: (context, index) => const SizedBox(height: 16),
               itemBuilder: (context, index) {
                 final item = items[index];
                 
@@ -568,18 +568,18 @@ class FinArcBudgetProgressChart extends StatelessWidget {
                             shape: BoxShape.circle,
                           ),
                         ),
-                        SizedBox(width: 8),
+                        const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             item.label,
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
                       ],
                     ),
-                    SizedBox(height: 8),
+                    const SizedBox(height: 8),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -593,7 +593,7 @@ class FinArcBudgetProgressChart extends StatelessWidget {
                         ),
                       ],
                     ),
-                    SizedBox(height: 6),
+                    const SizedBox(height: 6),
                     ClipRRect(
                       borderRadius: BorderRadius.circular(4),
                       child: LinearProgressIndicator(
@@ -603,7 +603,7 @@ class FinArcBudgetProgressChart extends StatelessWidget {
                         valueColor: AlwaysStoppedAnimation<Color>(progressColor),
                       ),
                     ),
-                    SizedBox(height: 6),
+                    const SizedBox(height: 6),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [

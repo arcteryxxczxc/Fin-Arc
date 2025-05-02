@@ -8,12 +8,11 @@ import '../../models/category.dart';
 import '../../widgets/common/loading_indicator.dart';
 import '../../widgets/common/error_display.dart';
 import 'edit_income_screen.dart';
-import '../../routes/route_names.dart';
 
 class IncomeDetailScreen extends StatefulWidget {
   final int incomeId;
   
-  const IncomeDetailScreen({Key? key, required this.incomeId}) : super(key: key);
+  const IncomeDetailScreen({super.key, required this.incomeId});
   
   @override
   _IncomeDetailScreenState createState() => _IncomeDetailScreenState();
@@ -60,9 +59,7 @@ class _IncomeDetailScreenState extends State<IncomeDetailScreen> {
           }
           
           // If not found in local cache, fetch from API
-          if (category == null) {
-            category = await categoryProvider.getCategoryDetails(income.categoryId!);
-          }
+          category ??= await categoryProvider.getCategoryDetails(income.categoryId!);
         }
         
         if (mounted) {
@@ -102,13 +99,13 @@ class _IncomeDetailScreenState extends State<IncomeDetailScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Delete Income'),
-        content: Text(
+        title: const Text('Delete Income'),
+        content: const Text(
           'Are you sure you want to delete this income entry? This action cannot be undone.',
         ),
         actions: [
           TextButton(
-            child: Text('Cancel'),
+            child: const Text('Cancel'),
             onPressed: () {
               Navigator.of(ctx).pop();
             },
@@ -117,7 +114,7 @@ class _IncomeDetailScreenState extends State<IncomeDetailScreen> {
             style: TextButton.styleFrom(
               foregroundColor: Colors.red,
             ),
-            child: Text('Delete'),
+            child: const Text('Delete'),
             onPressed: () async {
               Navigator.of(ctx).pop();
               
@@ -127,7 +124,7 @@ class _IncomeDetailScreenState extends State<IncomeDetailScreen> {
               
               if (success && mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Income deleted successfully')),
+                  const SnackBar(content: Text('Income deleted successfully')),
                 );
                 Navigator.of(context).pop(); // Return to previous screen
               } else if (mounted) {
@@ -152,14 +149,14 @@ class _IncomeDetailScreenState extends State<IncomeDetailScreen> {
     
     if (_isLoading) {
       return Scaffold(
-        appBar: AppBar(title: Text('Income Details')),
-        body: LoadingIndicator(message: 'Loading income details...'),
+        appBar: AppBar(title: const Text('Income Details')),
+        body: const LoadingIndicator(message: 'Loading income details...'),
       );
     }
     
     if (_error != null || _income == null) {
       return Scaffold(
-        appBar: AppBar(title: Text('Income Details')),
+        appBar: AppBar(title: const Text('Income Details')),
         body: ErrorDisplay(
           error: _error ?? 'Failed to load income details',
           onRetry: _loadIncomeDetails,
@@ -181,22 +178,22 @@ class _IncomeDetailScreenState extends State<IncomeDetailScreen> {
     
     return Scaffold(
       appBar: AppBar(
-        title: Text('Income Details'),
+        title: const Text('Income Details'),
         actions: [
           IconButton(
-            icon: Icon(Icons.edit),
+            icon: const Icon(Icons.edit),
             onPressed: _editIncome,
             tooltip: 'Edit income',
           ),
           IconButton(
-            icon: Icon(Icons.delete),
+            icon: const Icon(Icons.delete),
             onPressed: _deleteIncome,
             tooltip: 'Delete income',
           ),
         ],
       ),
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -205,7 +202,7 @@ class _IncomeDetailScreenState extends State<IncomeDetailScreen> {
               elevation: 2,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               child: Padding(
-                padding: EdgeInsets.all(16),
+                padding: const EdgeInsets.all(16),
                 child: Column(
                   children: [
                     // Amount
@@ -216,17 +213,17 @@ class _IncomeDetailScreenState extends State<IncomeDetailScreen> {
                         color: Colors.green,
                       ),
                     ),
-                    SizedBox(height: 8),
+                    const SizedBox(height: 8),
                     
                     // Source
                     Text(
                       _income!.source,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    SizedBox(height: 8),
+                    const SizedBox(height: 8),
                     
                     // Category
                     if (_income!.categoryName != null) ...[
@@ -241,7 +238,7 @@ class _IncomeDetailScreenState extends State<IncomeDetailScreen> {
                               shape: BoxShape.circle,
                             ),
                           ),
-                          SizedBox(width: 8),
+                          const SizedBox(width: 8),
                           Text(
                             _income!.categoryName!,
                             style: TextStyle(
@@ -256,14 +253,14 @@ class _IncomeDetailScreenState extends State<IncomeDetailScreen> {
                 ),
               ),
             ),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
             
             // Main details
             Card(
               elevation: 2,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               child: Padding(
-                padding: EdgeInsets.all(16),
+                padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -272,7 +269,7 @@ class _IncomeDetailScreenState extends State<IncomeDetailScreen> {
                       title: 'Date',
                       value: formattedDate,
                     ),
-                    Divider(),
+                    const Divider(),
                     
                     _buildDetailItem(
                       icon: Icons.account_balance,
@@ -281,7 +278,7 @@ class _IncomeDetailScreenState extends State<IncomeDetailScreen> {
                     ),
                     
                     if (_income!.description != null && _income!.description!.isNotEmpty) ...[
-                      Divider(),
+                      const Divider(),
                       _buildDetailItem(
                         icon: Icons.description,
                         title: 'Description',
@@ -291,7 +288,7 @@ class _IncomeDetailScreenState extends State<IncomeDetailScreen> {
                     ],
                     
                     if (_income!.isTaxable) ...[
-                      Divider(),
+                      const Divider(),
                       _buildDetailItem(
                         icon: Icons.receipt,
                         title: 'Tax Information',
@@ -299,7 +296,7 @@ class _IncomeDetailScreenState extends State<IncomeDetailScreen> {
                           ? 'Taxable at ${_income!.taxRate!.toStringAsFixed(1)}%'
                           : 'Taxable income',
                       ),
-                      Divider(),
+                      const Divider(),
                       _buildDetailItem(
                         icon: Icons.account_balance_wallet,
                         title: 'After-Tax Amount',
@@ -311,14 +308,14 @@ class _IncomeDetailScreenState extends State<IncomeDetailScreen> {
                 ),
               ),
             ),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
             
             // Additional information
             Card(
               elevation: 2,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               child: Padding(
-                padding: EdgeInsets.all(16),
+                padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -334,14 +331,14 @@ class _IncomeDetailScreenState extends State<IncomeDetailScreen> {
                       ),
                       
                       if (_income!.recurringDay != null) ...[
-                        Divider(),
+                        const Divider(),
                         _buildDetailItem(
                           icon: Icons.event,
                           title: 'Recurring Day',
                           value: _formatRecurringDay(_income!.recurringType, _income!.recurringDay),
                         ),
                       ],
-                      Divider(),
+                      const Divider(),
                     ],
                     
                     // Created/Updated dates
@@ -358,7 +355,7 @@ class _IncomeDetailScreenState extends State<IncomeDetailScreen> {
                     ],
                     
                     if (_income!.updatedAt != null && _income!.updatedAt != _income!.createdAt) ...[
-                      Divider(),
+                      const Divider(),
                       _buildDetailItem(
                         icon: Icons.update,
                         title: 'Last Updated',
@@ -389,12 +386,12 @@ class _IncomeDetailScreenState extends State<IncomeDetailScreen> {
     bool isMultiLine = false,
   }) {
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         crossAxisAlignment: isMultiLine ? CrossAxisAlignment.start : CrossAxisAlignment.center,
         children: [
           Container(
-            padding: EdgeInsets.all(8),
+            padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               color: (iconColor ?? Theme.of(context).primaryColor).withOpacity(0.1),
               shape: BoxShape.circle,
@@ -405,7 +402,7 @@ class _IncomeDetailScreenState extends State<IncomeDetailScreen> {
               size: 20,
             ),
           ),
-          SizedBox(width: 16),
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -417,7 +414,7 @@ class _IncomeDetailScreenState extends State<IncomeDetailScreen> {
                     fontSize: 12,
                   ),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Text(
                   value,
                   style: valueStyle ?? TextStyle(

@@ -65,8 +65,8 @@ class DataUtils {
     return items.where((item) {
       try {
         final date = DateTime.parse(getDateString(item));
-        return date.isAfter(startDate.subtract(Duration(days: 1))) && 
-               date.isBefore(endDate.add(Duration(days: 1)));
+        return date.isAfter(startDate.subtract(const Duration(days: 1))) && 
+               date.isBefore(endDate.add(const Duration(days: 1)));
       } catch (e) {
         return false;
       }
@@ -196,7 +196,7 @@ class DataUtils {
     
     for (int i = 0; i < monthsToPredict; i++) {
       final x = xValues.length + i.toDouble();
-      final prediction = max(0, (slope * x) + intercept); // Ensure no negative predictions
+      final prediction = max(0, (slope * x) + intercept) as double;
       predictions.add(prediction);
     }
     

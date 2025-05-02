@@ -53,7 +53,7 @@ class Income {
       recurringType: json['recurring_type'],
       recurringDay: json['recurring_day'],
       isTaxable: json['is_taxable'] ?? false,
-      taxRate: json['tax_rate'] != null ? json['tax_rate'].toDouble() : null,
+      taxRate: json['tax_rate']?.toDouble(),
       afterTaxAmount: json['after_tax_amount']?.toDouble() ?? json['amount'].toDouble(),
       createdAt: json['created_at'],
       updatedAt: json['updated_at'],

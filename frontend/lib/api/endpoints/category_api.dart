@@ -1,6 +1,4 @@
 // lib/api/endpoints/category_api.dart
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import '../../utils/constants.dart';
 import '../client.dart';
 

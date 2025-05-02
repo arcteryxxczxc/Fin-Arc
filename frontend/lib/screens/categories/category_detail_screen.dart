@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import 'package:fl_chart/fl_chart.dart';
 import '../../providers/category_provider.dart';
 import '../../providers/expense_provider.dart';
 import '../../models/category.dart';
@@ -13,7 +12,7 @@ import '../expenses/expense_detail_screen.dart';
 class CategoryDetailScreen extends StatefulWidget {
   final int categoryId;
   
-  const CategoryDetailScreen({Key? key, required this.categoryId}) : super(key: key);
+  const CategoryDetailScreen({super.key, required this.categoryId});
   
   @override
   _CategoryDetailScreenState createState() => _CategoryDetailScreenState();
@@ -26,7 +25,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
   String? _error;
   
   // Date range for filtering
-  DateTime _startDate = DateTime.now().subtract(Duration(days: 30));
+  DateTime _startDate = DateTime.now().subtract(const Duration(days: 30));
   DateTime _endDate = DateTime.now();
   
   @override
@@ -112,14 +111,14 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
     
     if (_isLoading) {
       return Scaffold(
-        appBar: AppBar(title: Text('Category Details')),
-        body: LoadingIndicator(message: 'Loading category details...'),
+        appBar: AppBar(title: const Text('Category Details')),
+        body: const LoadingIndicator(message: 'Loading category details...'),
       );
     }
     
     if (_error != null || _category == null) {
       return Scaffold(
-        appBar: AppBar(title: Text('Category Details')),
+        appBar: AppBar(title: const Text('Category Details')),
         body: ErrorDisplay(
           error: _error ?? 'Failed to load category',
           onRetry: _loadCategoryDetails,
@@ -135,7 +134,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
         title: Text(_category!.name),
         actions: [
           IconButton(
-            icon: Icon(Icons.edit),
+            icon: const Icon(Icons.edit),
             onPressed: () {
               // Navigate to edit category screen
               // This will be implemented in another PR
@@ -145,23 +144,23 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
         ],
       ),
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Category overview card
             _buildCategoryOverview(theme, currencyFormatter, categoryColor),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
             
             // Budget progress if applicable
             if (_category!.budgetLimit != null && _category!.budgetLimit! > 0)
               _buildBudgetProgress(theme, currencyFormatter, categoryColor),
             
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
             
             // Date range selection
             _buildDateRangeSelector(theme),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             
             // Expense list
             _buildExpenseList(theme, currencyFormatter),
@@ -176,7 +175,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -194,7 +193,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                     color: Colors.white,
                   ),
                 ),
-                SizedBox(width: 16),
+                const SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -215,9 +214,9 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                 ),
               ],
             ),
-            SizedBox(height: 16),
-            Divider(),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
+            const Divider(),
+            const SizedBox(height: 16),
             
             // Stats grid
             Row(
@@ -240,7 +239,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                 ),
               ],
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Row(
               children: [
                 Expanded(
@@ -276,9 +275,9 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
     return Column(
       children: [
         Container(
-          padding: EdgeInsets.all(12),
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
+            color: color.withAlpha((0.1 * 255).round()),
             shape: BoxShape.circle,
           ),
           child: Icon(
@@ -287,7 +286,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
             size: 24,
           ),
         ),
-        SizedBox(height: 8),
+        const SizedBox(height: 8),
         Text(
           title,
           style: TextStyle(
@@ -296,10 +295,10 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
           ),
           textAlign: TextAlign.center,
         ),
-        SizedBox(height: 4),
+        const SizedBox(height: 4),
         Text(
           value,
-          style: TextStyle(
+          style: const TextStyle(
             fontWeight: FontWeight.bold,
           ),
           textAlign: TextAlign.center,
@@ -327,7 +326,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
   Widget _buildBudgetProgress(ThemeData theme, NumberFormat currencyFormatter, Color categoryColor) {
     // Skip if no budget
     if (_category!.budgetLimit == null || _category!.budgetLimit! <= 0) {
-      return SizedBox.shrink();
+      return const SizedBox.shrink();
     }
     
     final spent = _category!.currentSpending ?? 0;
@@ -349,7 +348,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -359,13 +358,13 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             
             // Progress bar and percentage
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Budget Usage'),
+                const Text('Budget Usage'),
                 Text(
                   '${percentage.toInt()}%',
                   style: TextStyle(
@@ -375,14 +374,14 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                 ),
               ],
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             LinearProgressIndicator(
               value: percentage / 100 > 1 ? 1 : percentage / 100,
               minHeight: 10,
-              backgroundColor: theme.dividerColor.withOpacity(0.2),
+              backgroundColor: theme.dividerColor.withAlpha((0.1 * 255).round()),
               valueColor: AlwaysStoppedAnimation<Color>(progressColor),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             
             // Spent and remaining
             Row(
@@ -414,7 +413,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Row(
           children: [
             Expanded(
@@ -427,7 +426,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  SizedBox(height: 4),
+                  const SizedBox(height: 4),
                   Text(
                     '${DateFormat('MMM d, yyyy').format(_startDate)} - ${DateFormat('MMM d, yyyy').format(_endDate)}',
                     style: theme.textTheme.bodyMedium,
@@ -437,12 +436,12 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
             ),
             ElevatedButton(
               onPressed: _showDateRangePicker,
-              child: Text('Change'),
               style: ElevatedButton.styleFrom(
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),
               ),
+              child: const Text('Change'),
             ),
           ],
         ),
@@ -455,17 +454,17 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
       return Center(
         child: Column(
           children: [
-            Icon(
+            const Icon(
               Icons.receipt_long,
               size: 64,
               color: Colors.grey,
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Text(
               'No expenses found',
               style: theme.textTheme.titleMedium,
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Text(
               'Try changing the date range or add a new expense',
               style: theme.textTheme.bodyMedium,
@@ -480,7 +479,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -499,14 +498,14 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                 ),
               ],
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             
             // Expense list
             ListView.separated(
               shrinkWrap: true,
-              physics: NeverScrollableScrollPhysics(),
+              physics: const NeverScrollableScrollPhysics(),
               itemCount: _expenses.length,
-              separatorBuilder: (context, index) => Divider(),
+              separatorBuilder: (context, index) => const Divider(),
               itemBuilder: (context, index) {
                 final expense = _expenses[index];
                 

@@ -9,11 +9,11 @@ class ScreenWrapper extends StatelessWidget {
   final bool showBottomNav;
   
   const ScreenWrapper({
-    Key? key,
+    super.key,
     required this.child,
     required this.currentRoute,
     this.showBottomNav = true,
-  }) : super(key: key);
+  });
   
   @override
   Widget build(BuildContext context) {

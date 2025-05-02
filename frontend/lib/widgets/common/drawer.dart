@@ -7,7 +7,7 @@ import '../../routes/route_names.dart';
 class AppDrawer extends StatelessWidget {
   final String currentRoute;
   
-  const AppDrawer({Key? key, required this.currentRoute}) : super(key: key);
+  const AppDrawer({super.key, required this.currentRoute});
   
   @override
   Widget build(BuildContext context) {
@@ -79,7 +79,7 @@ class AppDrawer extends StatelessWidget {
                   route: RouteNames.reports,
                   isSelected: currentRoute.startsWith('/reports'),
                 ),
-                Divider(),
+                const Divider(),
                 // Settings & Profile
                 _buildDrawerItem(
                   context: context,
@@ -102,7 +102,7 @@ class AppDrawer extends StatelessWidget {
                     themeProvider.isDarkMode ? Icons.dark_mode : Icons.light_mode,
                     color: theme.colorScheme.primary,
                   ),
-                  title: Text('Dark Mode'),
+                  title: const Text('Dark Mode'),
                   trailing: Switch(
                     value: themeProvider.isDarkMode,
                     onChanged: (value) {
@@ -112,14 +112,14 @@ class AppDrawer extends StatelessWidget {
                   ),
                 ),
                 
-                Divider(),
+                const Divider(),
                 // Logout
                 ListTile(
-                  leading: Icon(
+                  leading: const Icon(
                     Icons.logout,
                     color: Colors.red,
                   ),
-                  title: Text(
+                  title: const Text(
                     'Logout',
                     style: TextStyle(color: Colors.red),
                   ),
@@ -130,7 +130,7 @@ class AppDrawer extends StatelessWidget {
           ),
           
           // App version
-          Padding(
+          const Padding(
             padding: EdgeInsets.all(16),
             child: Text(
               'Fin-Arc v1.0.0',
@@ -182,17 +182,16 @@ class AppDrawer extends StatelessWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Confirm Logout'),
-        content: Text('Are you sure you want to log out?'),
+        title: const Text('Confirm Logout'),
+        content: const Text('Are you sure you want to log out?'),
         actions: [
           TextButton(
-            child: Text('Cancel'),
+            child: const Text('Cancel'),
             onPressed: () {
               Navigator.of(ctx).pop();
             },
           ),
           ElevatedButton(
-            child: Text('Logout'),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
               foregroundColor: Colors.white,
@@ -214,6 +213,7 @@ class AppDrawer extends StatelessWidget {
               // Navigate to login screen
               Navigator.of(context).pushReplacementNamed(RouteNames.login);
             },
+            child: const Text('Logout'),
           ),
         ],
       ),

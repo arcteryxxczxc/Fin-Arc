@@ -1,14 +1,13 @@
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../models/user.dart';
-import '../utils/constants.dart';
 import '../api/endpoints/auth_api.dart';
 
 class AuthService {
   final AuthApi _authApi = AuthApi();
   
   // Secure storage for tokens
-  final FlutterSecureStorage _storage = FlutterSecureStorage();
+  static const FlutterSecureStorage _storage = FlutterSecureStorage();
   
   // Token storage keys
   static const String _tokenKey = 'access_token';

@@ -1,5 +1,5 @@
 // lib/routes/app_router.dart
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' show Scaffold, MaterialPageRoute, AppBar, Text, Icon, SizedBox, Column, Center, ElevatedButton;
 
 // Screens
 import '../screens/splash_screen.dart';
@@ -28,150 +28,152 @@ class AppRouter {
   static Route<dynamic> generateRoute(RouteSettings settings) {
     // Extract arguments if available
     final args = settings.arguments as Map<String, dynamic>? ?? {};
-    
+
     switch (settings.name) {
       case '/':
       case RouteNames.splash:
         return MaterialPageRoute(
           settings: settings,
-          builder: (_) => SplashScreen()
+          builder: (_) => const SplashScreen(),
         );
-        
+
       case RouteNames.login:
         return MaterialPageRoute(
           settings: settings,
-          builder: (_) => LoginScreen()
+          builder: (_) => const LoginScreen(),
         );
-        
+
       case RouteNames.register:
         return MaterialPageRoute(
           settings: settings,
-          builder: (_) => RegisterScreen()
+          builder: (_) => const RegisterScreen(),
         );
-        
+
       case RouteNames.changePassword:
         return MaterialPageRoute(
           settings: settings,
-          builder: (_) => ChangePasswordScreen()
+          builder: (_) => const ChangePasswordScreen(),
         );
-        
+
       case RouteNames.dashboard:
         return MaterialPageRoute(
           settings: settings,
-          builder: (_) => DashboardScreen()
+          builder: (_) => const DashboardScreen(),
         );
-        
+
       case RouteNames.profile:
         return MaterialPageRoute(
           settings: settings,
-          builder: (_) => ProfileScreen()
+          builder: (_) => const ProfileScreen(),
         );
-        
+
       case RouteNames.reports:
         return MaterialPageRoute(
           settings: settings,
-          builder: (_) => ReportsScreen()
+          builder: (_) => const ReportsScreen(),
         );
-        
+
       case RouteNames.monthlyReport:
         return MaterialPageRoute(
           settings: settings,
-          builder: (_) => MonthlyReportScreen()
+          builder: (_) => const MonthlyReportScreen(),
         );
-        
+
       case RouteNames.annualReport:
         return MaterialPageRoute(
           settings: settings,
-          builder: (_) => AnnualReportScreen()
+          builder: (_) => const AnnualReportScreen(),
         );
-        
+
       case RouteNames.budgetReport:
         return MaterialPageRoute(
           settings: settings,
-          builder: (_) => BudgetReportScreen()
+          builder: (_) => const BudgetReportScreen(),
         );
-        
+
       case RouteNames.cashflowReport:
         return MaterialPageRoute(
           settings: settings,
-          builder: (_) => CashflowReportScreen()
+          builder: (_) => const CashflowReportScreen(),
         );
 
       case RouteNames.expenseList:
         return MaterialPageRoute(
           settings: settings,
-          builder: (_) => ExpenseListScreen()
+          builder: (_) => const ExpenseListScreen(),
         );
-        
+
       case RouteNames.expenseDetail:
         return MaterialPageRoute(
           settings: settings,
           builder: (_) => ExpenseDetailScreen(
             expenseId: args['expenseId'],
-          )
+          ),
         );
-        
+
       case RouteNames.addExpense:
         return MaterialPageRoute(
           settings: settings,
-          builder: (_) => AddExpenseScreen()
+          builder: (_) => const AddExpenseScreen(),
         );
-      
-      // Income Routes  
+
+      // Income Routes
       case RouteNames.incomeList:
         return MaterialPageRoute(
           settings: settings,
-          builder: (_) => IncomeListScreen()
+          builder: (_) => const IncomeListScreen(),
         );
-        
+
       case RouteNames.incomeDetail:
         return MaterialPageRoute(
           settings: settings,
           builder: (_) => IncomeDetailScreen(
             incomeId: args['incomeId'],
-          )
+          ),
         );
-        
+
       case RouteNames.addIncome:
         return MaterialPageRoute(
           settings: settings,
-          builder: (_) => AddIncomeScreen()
+          builder: (_) => const AddIncomeScreen(),
         );
-        
+
       case RouteNames.editIncome:
         return MaterialPageRoute(
           settings: settings,
           builder: (_) => EditIncomeScreen(
             incomeId: args['incomeId'],
-          )
+          ),
         );
-        
+
       // Add more routes as needed for categories, etc.
-        
+
       default:
         // If the route doesn't exist, show an error page
         return MaterialPageRoute(
           settings: settings,
-          builder: (_) => Scaffold(
-            appBar: AppBar(title: Text('Not Found')),
-            body: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.error_outline, size: 64, color: Colors.red),
-                  SizedBox(height: 16),
-                  Text(
-                    'Route not found',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(height: 8),
-                  Text('The page you requested could not be found.'),
-                  SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () => Navigator.of(_).pushReplacementNamed(RouteNames.dashboard),
-                    child: Text('Go to Dashboard'),
-                  ),
-                ],
+          builder: (_) => Material(
+            child: Scaffold(
+              appBar: AppBar(title: const Text('Not Found')),
+              body: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.error_outline,
+                      size: 64,
+                      color: Colors.red,
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Route not found',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

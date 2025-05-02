@@ -13,7 +13,7 @@ class CurrencyInputField extends StatelessWidget {
   final Function(String)? onChanged;
   
   const CurrencyInputField({
-    Key? key,
+    super.key,
     required this.controller,
     required this.label,
     this.hint = 'Enter amount',
@@ -21,7 +21,7 @@ class CurrencyInputField extends StatelessWidget {
     this.isRequired = true,
     this.validator,
     this.onChanged,
-  }) : super(key: key);
+  });
   
   @override
   Widget build(BuildContext context) {
@@ -36,14 +36,14 @@ class CurrencyInputField extends StatelessWidget {
           padding: const EdgeInsets.all(12.0),
           child: Text(
             sym,
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
         ),
       ),
-      keyboardType: TextInputType.numberWithOptions(decimal: true),
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
       inputFormatters: [
         FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
       ],
@@ -73,13 +73,13 @@ class DateInputField extends StatelessWidget {
   final DateTime? lastDate;
   
   const DateInputField({
-    Key? key,
+    super.key,
     required this.value,
     required this.label,
     required this.onDateSelected,
     this.firstDate,
     this.lastDate,
-  }) : super(key: key);
+  });
   
   @override
   Widget build(BuildContext context) {
@@ -89,7 +89,7 @@ class DateInputField extends StatelessWidget {
           context: context,
           initialDate: value,
           firstDate: firstDate ?? DateTime(2020),
-          lastDate: lastDate ?? DateTime.now().add(Duration(days: 365)),
+          lastDate: lastDate ?? DateTime.now().add(const Duration(days: 365)),
         );
         if (picked != null && picked != value) {
           onDateSelected(picked);
@@ -99,11 +99,11 @@ class DateInputField extends StatelessWidget {
       child: InputDecorator(
         decoration: InputDecoration(
           labelText: label,
-          prefixIcon: Icon(Icons.calendar_today),
+          prefixIcon: const Icon(Icons.calendar_today),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          suffixIcon: Icon(Icons.arrow_drop_down),
+          suffixIcon: const Icon(Icons.arrow_drop_down),
         ),
         child: Text(
           DateFormat('MMM d, yyyy').format(value),
@@ -122,14 +122,14 @@ class DropdownField<T> extends StatelessWidget {
   final Widget? icon;
   
   const DropdownField({
-    Key? key,
+    super.key,
     required this.label,
     required this.value,
     required this.items,
     required this.onChanged,
     this.validator,
     this.icon,
-  }) : super(key: key);
+  });
   
   @override
   Widget build(BuildContext context) {
@@ -158,14 +158,14 @@ class SearchInputField extends StatelessWidget {
   final Function()? onClear;
   
   const SearchInputField({
-    Key? key,
+    super.key,
     required this.controller,
     required this.label,
     this.hint,
     this.onChanged,
     this.onSubmitted,
     this.onClear,
-  }) : super(key: key);
+  });
   
   @override
   Widget build(BuildContext context) {
@@ -174,11 +174,11 @@ class SearchInputField extends StatelessWidget {
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
-        prefixIcon: Icon(Icons.search),
+        prefixIcon: const Icon(Icons.search),
         suffixIcon: controller.text.isEmpty
             ? null
             : IconButton(
-                icon: Icon(Icons.clear),
+                icon: const Icon(Icons.clear),
                 onPressed: () {
                   controller.clear();
                   if (onClear != null) onClear!();

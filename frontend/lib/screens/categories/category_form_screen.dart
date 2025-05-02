@@ -7,11 +7,11 @@ class CategoryFormScreen extends StatefulWidget {
   final Category? category;
   final bool isExpense;
   
-  CategoryFormScreen({
-    Key? key,
+  const CategoryFormScreen({
+    super.key,
     this.category,
     this.isExpense = true,
-  }) : super(key: key);
+  });
 
   @override
   _CategoryFormScreenState createState() => _CategoryFormScreenState();
@@ -143,7 +143,7 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
         title: Text(widget.category == null ? 'Add Category' : 'Edit Category'),
       ),
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Form(
           key: _formKey,
           child: Column(
@@ -152,7 +152,7 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
               // Name field
               TextFormField(
                 controller: _nameController,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Category Name',
                   border: OutlineInputBorder(),
                 ),
@@ -163,17 +163,17 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
                   return null;
                 },
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               
               // Description field
               TextFormField(
                 controller: _descriptionController,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Description (Optional)',
                   border: OutlineInputBorder(),
                 ),
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               
               // Category type selector
               Card(
@@ -184,19 +184,19 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
                   side: BorderSide(color: theme.dividerColor),
                 ),
                 child: Padding(
-                  padding: EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
+                      const Text(
                         'Category Type',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      SizedBox(height: 16),
+                      const SizedBox(height: 16),
                       SegmentedButton<bool>(
-                        segments: [
+                        segments: const [
                           ButtonSegment(
                             value: false,
                             label: Text('Expense'),
@@ -219,7 +219,7 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
                   ),
                 ),
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               
               // Color selector
               Card(
@@ -230,17 +230,17 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
                   side: BorderSide(color: theme.dividerColor),
                 ),
                 child: Padding(
-                  padding: EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
+                      const Text(
                         'Category Color',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      SizedBox(height: 16),
+                      const SizedBox(height: 16),
                       Wrap(
                         spacing: 12,
                         runSpacing: 12,
@@ -267,12 +267,12 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
                                   ? [BoxShadow(
                                       color: Colors.black.withOpacity(0.3),
                                       blurRadius: 4,
-                                      offset: Offset(0, 2),
+                                      offset: const Offset(0, 2),
                                     )]
                                   : null,
                               ),
                               child: isSelected
-                                ? Icon(
+                                ? const Icon(
                                     Icons.check,
                                     color: Colors.white,
                                   )
@@ -285,7 +285,7 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
                   ),
                 ),
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               
               // Budget section (only for expense categories)
               if (!_isIncome) ...[
@@ -297,14 +297,14 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
                     side: BorderSide(color: theme.dividerColor),
                   ),
                   child: Padding(
-                    padding: EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(16),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
+                            const Text(
                               'Budget',
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
@@ -321,15 +321,15 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
                           ],
                         ),
                         if (_hasBudget) ...[
-                          SizedBox(height: 16),
+                          const SizedBox(height: 16),
                           TextFormField(
                             controller: _budgetLimitController,
-                            decoration: InputDecoration(
+                            decoration: const InputDecoration(
                               labelText: 'Budget Amount',
                               border: OutlineInputBorder(),
                               prefixIcon: Icon(Icons.attach_money),
                             ),
-                            keyboardType: TextInputType.numberWithOptions(decimal: true),
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
                             validator: (value) {
                               if (_hasBudget && (value == null || value.isEmpty)) {
                                 return 'Please enter a budget amount';
@@ -340,9 +340,9 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
                               return null;
                             },
                           ),
-                          SizedBox(height: 16),
-                          Text('Budget Start Day'),
-                          SizedBox(height: 8),
+                          const SizedBox(height: 16),
+                          const Text('Budget Start Day'),
+                          const SizedBox(height: 8),
                           Slider(
                             value: _budgetStartDay.toDouble(),
                             min: 1,
@@ -368,7 +368,7 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
                     ),
                   ),
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
               ],
               
               // Active toggle (only for editing)
@@ -381,11 +381,11 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
                     side: BorderSide(color: theme.dividerColor),
                   ),
                   child: Padding(
-                    padding: EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(16),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
+                        const Text(
                           'Category Status',
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
@@ -394,7 +394,7 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
                         Row(
                           children: [
                             Text(_isActive ? 'Active' : 'Inactive'),
-                            SizedBox(width: 8),
+                            const SizedBox(width: 8),
                             Switch(
                               value: _isActive,
                               onChanged: (value) {
@@ -409,7 +409,7 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
                     ),
                   ),
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
               ],
               
               // Submit button
@@ -419,10 +419,10 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
                 child: ElevatedButton(
                   onPressed: categoryProvider.isLoading ? null : _submitForm,
                   child: categoryProvider.isLoading
-                    ? CircularProgressIndicator(color: Colors.white)
+                    ? const CircularProgressIndicator(color: Colors.white)
                     : Text(
                         widget.category == null ? 'Add Category' : 'Save Changes',
-                        style: TextStyle(fontSize: 16),
+                        style: const TextStyle(fontSize: 16),
                       ),
                 ),
               ),

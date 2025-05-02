@@ -9,6 +9,8 @@ import '../../routes/route_names.dart';
 import '../../utils/data_utils.dart';
 
 class CashflowReportScreen extends StatefulWidget {
+  const CashflowReportScreen({super.key});
+
   @override
   _CashflowReportScreenState createState() => _CashflowReportScreenState();
 }
@@ -81,7 +83,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
       firstDate: DateTime(2020),
       lastDate: DateTime.now(),
       initialDateRange: DateTimeRange(
-        start: _startDate ?? DateTime.now().subtract(Duration(days: 30)),
+        start: _startDate ?? DateTime.now().subtract(const Duration(days: 30)),
         end: _endDate ?? DateTime.now(),
       ),
     );
@@ -162,7 +164,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
       firstDate: DateTime(2020),
       lastDate: DateTime.now(),
       initialDateRange: DateTimeRange(
-        start: _startDate ?? DateTime.now().subtract(Duration(days: 30)),
+        start: _startDate ?? DateTime.now().subtract(const Duration(days: 30)),
         end: _endDate ?? DateTime.now(),
       ),
     );
@@ -209,39 +211,39 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final currencyFormatter = NumberFormat.currency(symbol: '\);
+    final currencyFormatter = NumberFormat.currency(symbol: ');
     
     return Scaffold(
       appBar: AppBar(
-        title: Text('Cashflow Report'),
+        title: const Text('Cashflow Report'),
       ),
       body: _isLoading 
-        ? LoadingIndicator(message: 'Loading cashflow report...')
+        ? const LoadingIndicator(message: 'Loading cashflow report...')
         : _error != null
           ? ErrorDisplay(
               error: _error!,
               onRetry: _fetchCashflowReport,
             )
           : _reportData == null
-            ? Center(child: Text('No report data available'))
+            ? const Center(child: Text('No report data available'))
             : RefreshIndicator(
                 onRefresh: _refreshData,
                 child: SingleChildScrollView(
-                  padding: EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Period selector
                       _buildPeriodSelector(theme),
-                      SizedBox(height: 24),
+                      const SizedBox(height: 24),
                       
                       // Cashflow summary
                       _buildCashflowSummary(theme, currencyFormatter),
-                      SizedBox(height: 24),
+                      const SizedBox(height: 24),
                       
                       // Daily cashflow chart
                       _buildDailyCashflowChart(theme),
-                      SizedBox(height: 24),
+                      const SizedBox(height: 24),
                       
                       // Transactions lists
                       _buildTransactionLists(theme, currencyFormatter),
@@ -257,7 +259,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -267,7 +269,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             
             // Period buttons
             Row(
@@ -279,7 +281,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
                     onTap: () => _changePeriod('month'),
                   ),
                 ),
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
                 Expanded(
                   child: _buildPeriodButton(
                     label: 'This Year',
@@ -287,7 +289,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
                     onTap: () => _changePeriod('year'),
                   ),
                 ),
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
                 Expanded(
                   child: _buildPeriodButton(
                     label: 'Custom',
@@ -300,12 +302,12 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
             
             // Date range (only show for custom)
             if (_selectedPeriod == 'custom' && _startDate != null && _endDate != null) ...[
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(Icons.date_range, size: 16, color: Colors.grey[600]),
-                  SizedBox(width: 8),
+                  const SizedBox(width: 8),
                   Text(
                     '${DateFormat('MMM d, yyyy').format(_startDate!)} - ${DateFormat('MMM d, yyyy').format(_endDate!)}',
                     style: TextStyle(
@@ -331,7 +333,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
       child: Container(
-        padding: EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
         decoration: BoxDecoration(
           color: isSelected 
               ? Theme.of(context).primaryColor.withOpacity(0.1)
@@ -367,7 +369,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -377,7 +379,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             
             Row(
               children: [
@@ -390,7 +392,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
                     icon: Icons.arrow_upward,
                   ),
                 ),
-                SizedBox(width: 16),
+                const SizedBox(width: 16),
                 Expanded(
                   child: _buildSummaryItem(
                     title: 'Expenses',
@@ -400,7 +402,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
                     icon: Icons.arrow_downward,
                   ),
                 ),
-                SizedBox(width: 16),
+                const SizedBox(width: 16),
                 Expanded(
                   child: _buildSummaryItem(
                     title: 'Net Cashflow',
@@ -428,7 +430,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
     return Column(
       children: [
         Container(
-          padding: EdgeInsets.all(12),
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: color.withOpacity(0.1),
             shape: BoxShape.circle,
@@ -439,7 +441,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
             size: 24,
           ),
         ),
-        SizedBox(height: 8),
+        const SizedBox(height: 8),
         Text(
           title,
           style: TextStyle(
@@ -447,7 +449,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
             color: Colors.grey[700],
           ),
         ),
-        SizedBox(height: 4),
+        const SizedBox(height: 4),
         Text(
           currencyFormatter.format(amount),
           style: TextStyle(
@@ -464,7 +466,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
     final dailyCashflow = _reportData!['daily_cashflow'] as List<dynamic>;
     
     if (dailyCashflow.isEmpty) {
-      return SizedBox.shrink();
+      return const SizedBox.shrink();
     }
     
     // Extract data for the chart
@@ -492,13 +494,13 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
               toY: income,
               color: Colors.green,
               width: 8,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(4)),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
             ),
             BarChartRodData(
               toY: expenses,
               color: Colors.red,
               width: 8,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(4)),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
             ),
           ],
           barsSpace: 4,
@@ -517,7 +519,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -527,10 +529,10 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
             
             // Chart
-            Container(
+            SizedBox(
               height: 240,
               child: BarChart(
                 BarChartData(
@@ -560,7 +562,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
                           final index = value.toInt();
                           if (index >= 0 && index < days.length && index % 5 == 0) {
                             return Padding(
-                              padding: EdgeInsets.only(top: 8),
+                              padding: const EdgeInsets.only(top: 8),
                               child: Text(
                                 days[index],
                                 style: TextStyle(
@@ -571,7 +573,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
                               ),
                             );
                           }
-                          return Text('');
+                          return const Text('');
                         },
                       ),
                     ),
@@ -580,7 +582,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
                         showTitles: true,
                         reservedSize: 40,
                         getTitlesWidget: (value, meta) {
-                          if (value == 0) return Text('');
+                          if (value == 0) return const Text('');
                           return Text(
                             '\${value.toInt()}',
                             style: TextStyle(
@@ -592,10 +594,10 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
                         interval: maxY / 5,
                       ),
                     ),
-                    topTitles: AxisTitles(
+                    topTitles: const AxisTitles(
                       sideTitles: SideTitles(showTitles: false),
                     ),
-                    rightTitles: AxisTitles(
+                    rightTitles: const AxisTitles(
                       sideTitles: SideTitles(showTitles: false),
                     ),
                   ),
@@ -605,7 +607,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
               ),
             ),
             
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             
             // Legend
             Row(
@@ -615,7 +617,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
                   label: 'Income',
                   color: Colors.green,
                 ),
-                SizedBox(width: 24),
+                const SizedBox(width: 24),
                 _buildLegendItem(
                   label: 'Expenses',
                   color: Colors.red,
@@ -639,7 +641,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
             shape: BoxShape.circle,
           ),
         ),
-        SizedBox(width: 4),
+        const SizedBox(width: 4),
         Text(
           label,
           style: TextStyle(
@@ -659,7 +661,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
       return Card(
         elevation: 2,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: Padding(
+        child: const Padding(
           padding: EdgeInsets.all(16),
           child: Center(
             child: Text('No transactions found for this period'),
@@ -679,15 +681,15 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
               fontWeight: FontWeight.bold,
             ),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Card(
             elevation: 2,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             child: ListView.separated(
               shrinkWrap: true,
-              physics: NeverScrollableScrollPhysics(),
+              physics: const NeverScrollableScrollPhysics(),
               itemCount: incomeEntries.length,
-              separatorBuilder: (context, index) => Divider(height: 1),
+              separatorBuilder: (context, index) => const Divider(height: 1),
               itemBuilder: (context, index) {
                 final entry = incomeEntries[index];
                 final date = DateFormat('MMM d, yyyy').format(DateTime.parse(entry['date'] as String));
@@ -700,7 +702,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
                   subtitle: Text('$date${description.isNotEmpty ? ' • $description' : ''}'),
                   trailing: Text(
                     currencyFormatter.format(amount),
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: Colors.green,
                       fontWeight: FontWeight.bold,
                     ),
@@ -709,7 +711,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
               },
             ),
           ),
-          SizedBox(height: 24),
+          const SizedBox(height: 24),
         ],
         
         // Expense entries
@@ -720,15 +722,15 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
               fontWeight: FontWeight.bold,
             ),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Card(
             elevation: 2,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             child: ListView.separated(
               shrinkWrap: true,
-              physics: NeverScrollableScrollPhysics(),
+              physics: const NeverScrollableScrollPhysics(),
               itemCount: expenseEntries.length,
-              separatorBuilder: (context, index) => Divider(height: 1),
+              separatorBuilder: (context, index) => const Divider(height: 1),
               itemBuilder: (context, index) {
                 final entry = expenseEntries[index];
                 final date = DateFormat('MMM d, yyyy').format(DateTime.parse(entry['date'] as String));
@@ -741,7 +743,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
                   subtitle: Text('$date • $category'),
                   trailing: Text(
                     currencyFormatter.format(amount),
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: Colors.red,
                       fontWeight: FontWeight.bold,
                     ),
@@ -756,37 +758,37 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
   });
     
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Cashflow Report'),
+      appBar = AppBar(
+        title: const Text('Cashflow Report'),
       ),
-      drawer: AppDrawer(currentRoute: RouteNames.cashflowReport),
-      body: _isLoading 
-        ? LoadingIndicator(message: 'Loading cashflow report...')
+      drawer = const AppDrawer(currentRoute: RouteNames.cashflowReport),
+      body = _isLoading 
+        ? const LoadingIndicator(message: 'Loading cashflow report...')
         : _error != null
           ? ErrorDisplay(
               error: _error!,
               onRetry: _fetchCashflowReport,
             )
           : _reportData == null
-            ? Center(child: Text('No report data available'))
+            ? const Center(child: Text('No report data available'))
             : RefreshIndicator(
                 onRefresh: _refreshData,
                 child: SingleChildScrollView(
-                  padding: EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Period selector
                       _buildPeriodSelector(theme),
-                      SizedBox(height: 24),
+                      const SizedBox(height: 24),
                       
                       // Cashflow summary
                       _buildCashflowSummary(theme, currencyFormatter),
-                      SizedBox(height: 24),
+                      const SizedBox(height: 24),
                       
                       // Daily cashflow chart
                       _buildDailyCashflowChart(theme),
-                      SizedBox(height: 24),
+                      const SizedBox(height: 24),
                       
                       // Transactions lists
                       _buildTransactionLists(theme, currencyFormatter),
@@ -802,7 +804,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -812,7 +814,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             
             // Period buttons
             Row(
@@ -824,7 +826,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
                     onTap: () => _changePeriod('month'),
                   ),
                 ),
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
                 Expanded(
                   child: _buildPeriodButton(
                     label: 'This Year',
@@ -832,7 +834,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
                     onTap: () => _changePeriod('year'),
                   ),
                 ),
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
                 Expanded(
                   child: _buildPeriodButton(
                     label: 'Custom',
@@ -845,12 +847,12 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
             
             // Date range (only show for custom)
             if (_selectedPeriod == 'custom' && _startDate != null && _endDate != null) ...[
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(Icons.date_range, size: 16, color: Colors.grey[600]),
-                  SizedBox(width: 8),
+                  const SizedBox(width: 8),
                   Text(
                     '${DateFormat('MMM d, yyyy').format(_startDate!)} - ${DateFormat('MMM d, yyyy').format(_endDate!)}',
                     style: TextStyle(
@@ -876,7 +878,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
       child: Container(
-        padding: EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
         decoration: BoxDecoration(
           color: isSelected 
               ? Theme.of(context).primaryColor.withOpacity(0.1)
@@ -912,7 +914,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -922,7 +924,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             
             Row(
               children: [
@@ -935,7 +937,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
                     icon: Icons.arrow_upward,
                   ),
                 ),
-                SizedBox(width: 16),
+                const SizedBox(width: 16),
                 Expanded(
                   child: _buildSummaryItem(
                     title: 'Expenses',
@@ -945,7 +947,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
                     icon: Icons.arrow_downward,
                   ),
                 ),
-                SizedBox(width: 16),
+                const SizedBox(width: 16),
                 Expanded(
                   child: _buildSummaryItem(
                     title: 'Net Cashflow',
@@ -973,7 +975,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
     return Column(
       children: [
         Container(
-          padding: EdgeInsets.all(12),
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: color.withOpacity(0.1),
             shape: BoxShape.circle,
@@ -984,7 +986,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
             size: 24,
           ),
         ),
-        SizedBox(height: 8),
+        const SizedBox(height: 8),
         Text(
           title,
           style: TextStyle(
@@ -992,7 +994,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
             color: Colors.grey[700],
           ),
         ),
-        SizedBox(height: 4),
+        const SizedBox(height: 4),
         Text(
           currencyFormatter.format(amount),
           style: TextStyle(
@@ -1009,7 +1011,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
     final dailyCashflow = _reportData!['daily_cashflow'] as List<dynamic>;
     
     if (dailyCashflow.isEmpty) {
-      return SizedBox.shrink();
+      return const SizedBox.shrink();
     }
     
     // Extract data for the chart
@@ -1037,13 +1039,13 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
               toY: income,
               color: Colors.green,
               width: 8,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(4)),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
             ),
             BarChartRodData(
               toY: expenses,
               color: Colors.red,
               width: 8,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(4)),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
             ),
           ],
           barsSpace: 4,
@@ -1062,7 +1064,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -1072,10 +1074,10 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
             
             // Chart
-            Container(
+            SizedBox(
               height: 240,
               child: BarChart(
                 BarChartData(
@@ -1105,7 +1107,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
                           final index = value.toInt();
                           if (index >= 0 && index < days.length && index % 5 == 0) {
                             return Padding(
-                              padding: EdgeInsets.only(top: 8),
+                              padding: const EdgeInsets.only(top: 8),
                               child: Text(
                                 days[index],
                                 style: TextStyle(
@@ -1116,7 +1118,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
                               ),
                             );
                           }
-                          return Text('');
+                          return const Text('');
                         },
                       ),
                     ),
@@ -1125,7 +1127,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
                         showTitles: true,
                         reservedSize: 40,
                         getTitlesWidget: (value, meta) {
-                          if (value == 0) return Text('');
+                          if (value == 0) return const Text('');
                           return Text(
                             '\${value.toInt()}',
                             style: TextStyle(
@@ -1137,10 +1139,10 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
                         interval: maxY / 5,
                       ),
                     ),
-                    topTitles: AxisTitles(
+                    topTitles: const AxisTitles(
                       sideTitles: SideTitles(showTitles: false),
                     ),
-                    rightTitles: AxisTitles(
+                    rightTitles: const AxisTitles(
                       sideTitles: SideTitles(showTitles: false),
                     ),
                   ),
@@ -1150,7 +1152,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
               ),
             ),
             
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             
             // Legend
             Row(
@@ -1160,7 +1162,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
                   label: 'Income',
                   color: Colors.green,
                 ),
-                SizedBox(width: 24),
+                const SizedBox(width: 24),
                 _buildLegendItem(
                   label: 'Expenses',
                   color: Colors.red,
@@ -1184,7 +1186,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
             shape: BoxShape.circle,
           ),
         ),
-        SizedBox(width: 4),
+        const SizedBox(width: 4),
         Text(
           label,
           style: TextStyle(
@@ -1204,7 +1206,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
       return Card(
         elevation: 2,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: Padding(
+        child: const Padding(
           padding: EdgeInsets.all(16),
           child: Center(
             child: Text('No transactions found for this period'),
@@ -1224,15 +1226,15 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
               fontWeight: FontWeight.bold,
             ),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Card(
             elevation: 2,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             child: ListView.separated(
               shrinkWrap: true,
-              physics: NeverScrollableScrollPhysics(),
+              physics: const NeverScrollableScrollPhysics(),
               itemCount: incomeEntries.length,
-              separatorBuilder: (context, index) => Divider(height: 1),
+              separatorBuilder: (context, index) => const Divider(height: 1),
               itemBuilder: (context, index) {
                 final entry = incomeEntries[index];
                 final date = DateFormat('MMM d, yyyy').format(DateTime.parse(entry['date'] as String));
@@ -1245,7 +1247,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
                   subtitle: Text('$date${description.isNotEmpty ? ' • $description' : ''}'),
                   trailing: Text(
                     currencyFormatter.format(amount),
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: Colors.green,
                       fontWeight: FontWeight.bold,
                     ),
@@ -1254,7 +1256,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
               },
             ),
           ),
-          SizedBox(height: 24),
+          const SizedBox(height: 24),
         ],
         
         // Expense entries
@@ -1265,15 +1267,15 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
               fontWeight: FontWeight.bold,
             ),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Card(
             elevation: 2,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             child: ListView.separated(
               shrinkWrap: true,
-              physics: NeverScrollableScrollPhysics(),
+              physics: const NeverScrollableScrollPhysics(),
               itemCount: expenseEntries.length,
-              separatorBuilder: (context, index) => Divider(height: 1),
+              separatorBuilder: (context, index) => const Divider(height: 1),
               itemBuilder: (context, index) {
                 final entry = expenseEntries[index];
                 final date = DateFormat('MMM d, yyyy').format(DateTime.parse(entry['date'] as String));
@@ -1286,7 +1288,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
                   subtitle: Text('$date • $category'),
                   trailing: Text(
                     currencyFormatter.format(amount),
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: Colors.red,
                       fontWeight: FontWeight.bold,
                     ),
@@ -1332,7 +1334,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
       firstDate: DateTime(2020),
       lastDate: DateTime.now(),
       initialDateRange: DateTimeRange(
-        start: _startDate ?? DateTime.now().subtract(Duration(days: 30)),
+        start: _startDate ?? DateTime.now().subtract(const Duration(days: 30)),
         end: _endDate ?? DateTime.now(),
       ),
     );
@@ -1379,39 +1381,39 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final currencyFormatter = NumberFormat.currency(symbol: '\);
+    final currencyFormatter = NumberFormat.currency(symbol: ');
     
     return Scaffold(
       appBar: AppBar(
-        title: Text('Cashflow Report'),
+        title: const Text('Cashflow Report'),
       ),
       body: _isLoading 
-        ? LoadingIndicator(message: 'Loading cashflow report...')
+        ? const LoadingIndicator(message: 'Loading cashflow report...')
         : _error != null
           ? ErrorDisplay(
               error: _error!,
               onRetry: _fetchCashflowReport,
             )
           : _reportData == null
-            ? Center(child: Text('No report data available'))
+            ? const Center(child: Text('No report data available'))
             : RefreshIndicator(
                 onRefresh: _refreshData,
                 child: SingleChildScrollView(
-                  padding: EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Period selector
                       _buildPeriodSelector(theme),
-                      SizedBox(height: 24),
+                      const SizedBox(height: 24),
                       
                       // Cashflow summary
                       _buildCashflowSummary(theme, currencyFormatter),
-                      SizedBox(height: 24),
+                      const SizedBox(height: 24),
                       
                       // Daily cashflow chart
                       _buildDailyCashflowChart(theme),
-                      SizedBox(height: 24),
+                      const SizedBox(height: 24),
                       
                       // Transactions lists
                       _buildTransactionLists(theme, currencyFormatter),
@@ -1427,7 +1429,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -1437,7 +1439,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             
             // Period buttons
             Row(
@@ -1449,7 +1451,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
                     onTap: () => _changePeriod('month'),
                   ),
                 ),
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
                 Expanded(
                   child: _buildPeriodButton(
                     label: 'This Year',
@@ -1457,7 +1459,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
                     onTap: () => _changePeriod('year'),
                   ),
                 ),
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
                 Expanded(
                   child: _buildPeriodButton(
                     label: 'Custom',
@@ -1470,12 +1472,12 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
             
             // Date range (only show for custom)
             if (_selectedPeriod == 'custom' && _startDate != null && _endDate != null) ...[
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(Icons.date_range, size: 16, color: Colors.grey[600]),
-                  SizedBox(width: 8),
+                  const SizedBox(width: 8),
                   Text(
                     '${DateFormat('MMM d, yyyy').format(_startDate!)} - ${DateFormat('MMM d, yyyy').format(_endDate!)}',
                     style: TextStyle(
@@ -1501,7 +1503,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
       child: Container(
-        padding: EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
         decoration: BoxDecoration(
           color: isSelected 
               ? Theme.of(context).primaryColor.withOpacity(0.1)
@@ -1537,7 +1539,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -1547,7 +1549,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             
             Row(
               children: [
@@ -1560,7 +1562,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
                     icon: Icons.arrow_upward,
                   ),
                 ),
-                SizedBox(width: 16),
+                const SizedBox(width: 16),
                 Expanded(
                   child: _buildSummaryItem(
                     title: 'Expenses',
@@ -1570,7 +1572,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
                     icon: Icons.arrow_downward,
                   ),
                 ),
-                SizedBox(width: 16),
+                const SizedBox(width: 16),
                 Expanded(
                   child: _buildSummaryItem(
                     title: 'Net Cashflow',
@@ -1598,7 +1600,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
     return Column(
       children: [
         Container(
-          padding: EdgeInsets.all(12),
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: color.withOpacity(0.1),
             shape: BoxShape.circle,
@@ -1609,7 +1611,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
             size: 24,
           ),
         ),
-        SizedBox(height: 8),
+        const SizedBox(height: 8),
         Text(
           title,
           style: TextStyle(
@@ -1617,7 +1619,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
             color: Colors.grey[700],
           ),
         ),
-        SizedBox(height: 4),
+        const SizedBox(height: 4),
         Text(
           currencyFormatter.format(amount),
           style: TextStyle(
@@ -1634,7 +1636,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
     final dailyCashflow = _reportData!['daily_cashflow'] as List<dynamic>;
     
     if (dailyCashflow.isEmpty) {
-      return SizedBox.shrink();
+      return const SizedBox.shrink();
     }
     
     // Extract data for the chart
@@ -1662,13 +1664,13 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
               toY: income,
               color: Colors.green,
               width: 8,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(4)),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
             ),
             BarChartRodData(
               toY: expenses,
               color: Colors.red,
               width: 8,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(4)),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
             ),
           ],
           barsSpace: 4,
@@ -1687,7 +1689,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -1697,10 +1699,10 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
             
             // Chart
-            Container(
+            SizedBox(
               height: 240,
               child: BarChart(
                 BarChartData(
@@ -1730,7 +1732,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
                           final index = value.toInt();
                           if (index >= 0 && index < days.length && index % 5 == 0) {
                             return Padding(
-                              padding: EdgeInsets.only(top: 8),
+                              padding: const EdgeInsets.only(top: 8),
                               child: Text(
                                 days[index],
                                 style: TextStyle(
@@ -1741,7 +1743,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
                               ),
                             );
                           }
-                          return Text('');
+                          return const Text('');
                         },
                       ),
                     ),
@@ -1750,7 +1752,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
                         showTitles: true,
                         reservedSize: 40,
                         getTitlesWidget: (value, meta) {
-                          if (value == 0) return Text('');
+                          if (value == 0) return const Text('');
                           return Text(
                             '\${value.toInt()}',
                             style: TextStyle(
@@ -1762,10 +1764,10 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
                         interval: maxY / 5,
                       ),
                     ),
-                    topTitles: AxisTitles(
+                    topTitles: const AxisTitles(
                       sideTitles: SideTitles(showTitles: false),
                     ),
-                    rightTitles: AxisTitles(
+                    rightTitles: const AxisTitles(
                       sideTitles: SideTitles(showTitles: false),
                     ),
                   ),
@@ -1775,7 +1777,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
               ),
             ),
             
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             
             // Legend
             Row(
@@ -1785,7 +1787,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
                   label: 'Income',
                   color: Colors.green,
                 ),
-                SizedBox(width: 24),
+                const SizedBox(width: 24),
                 _buildLegendItem(
                   label: 'Expenses',
                   color: Colors.red,
@@ -1809,7 +1811,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
             shape: BoxShape.circle,
           ),
         ),
-        SizedBox(width: 4),
+        const SizedBox(width: 4),
         Text(
           label,
           style: TextStyle(
@@ -1829,7 +1831,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
       return Card(
         elevation: 2,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: Padding(
+        child: const Padding(
           padding: EdgeInsets.all(16),
           child: Center(
             child: Text('No transactions found for this period'),
@@ -1849,15 +1851,15 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
               fontWeight: FontWeight.bold,
             ),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Card(
             elevation: 2,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             child: ListView.separated(
               shrinkWrap: true,
-              physics: NeverScrollableScrollPhysics(),
+              physics: const NeverScrollableScrollPhysics(),
               itemCount: incomeEntries.length,
-              separatorBuilder: (context, index) => Divider(height: 1),
+              separatorBuilder: (context, index) => const Divider(height: 1),
               itemBuilder: (context, index) {
                 final entry = incomeEntries[index];
                 final date = DateFormat('MMM d, yyyy').format(DateTime.parse(entry['date'] as String));
@@ -1870,7 +1872,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
                   subtitle: Text('$date${description.isNotEmpty ? ' • $description' : ''}'),
                   trailing: Text(
                     currencyFormatter.format(amount),
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: Colors.green,
                       fontWeight: FontWeight.bold,
                     ),
@@ -1879,7 +1881,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
               },
             ),
           ),
-          SizedBox(height: 24),
+          const SizedBox(height: 24),
         ],
         
         // Expense entries
@@ -1890,15 +1892,15 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
               fontWeight: FontWeight.bold,
             ),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Card(
             elevation: 2,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             child: ListView.separated(
               shrinkWrap: true,
-              physics: NeverScrollableScrollPhysics(),
+              physics: const NeverScrollableScrollPhysics(),
               itemCount: expenseEntries.length,
-              separatorBuilder: (context, index) => Divider(height: 1),
+              separatorBuilder: (context, index) => const Divider(height: 1),
               itemBuilder: (context, index) {
                 final entry = expenseEntries[index];
                 final date = DateFormat('MMM d, yyyy').format(DateTime.parse(entry['date'] as String));
@@ -1911,7 +1913,7 @@ class _CashflowReportScreenState extends State<CashflowReportScreen> {
                   subtitle: Text('$date • $category'),
                   trailing: Text(
                     currencyFormatter.format(amount),
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: Colors.red,
                       fontWeight: FontWeight.bold,
                     ),

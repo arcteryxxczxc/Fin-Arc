@@ -5,6 +5,8 @@ import 'dart:math';
 import 'package:zxcvbn/zxcvbn.dart';
 
 class ChangePasswordScreen extends StatefulWidget {
+  const ChangePasswordScreen({super.key});
+
   @override
   _ChangePasswordScreenState createState() => _ChangePasswordScreenState();
 }
@@ -41,7 +43,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> with Single
     super.initState();
     _animationController = AnimationController(
       vsync: this,
-      duration: Duration(milliseconds: 500),
+      duration: const Duration(milliseconds: 500),
     );
     _strengthAnimation = Tween<double>(begin: 0, end: 0).animate(
       CurvedAnimation(
@@ -196,7 +198,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> with Single
         
         // Show success message and navigate back after delay
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text('Password changed successfully'),
             backgroundColor: Colors.green,
             duration: Duration(seconds: 3),
@@ -204,7 +206,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> with Single
         );
         
         // Delay navigation to show the success animation
-        Future.delayed(Duration(seconds: 2), () {
+        Future.delayed(const Duration(seconds: 2), () {
           if (mounted) {
             Navigator.of(context).pop();
           }
@@ -232,10 +234,10 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> with Single
     
     return Scaffold(
       appBar: AppBar(
-        title: Text('Change Password'),
+        title: const Text('Change Password'),
       ),
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Form(
           key: _formKey,
           child: Column(
@@ -253,15 +255,15 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> with Single
                         color: Theme.of(context).primaryColor,
                       ),
                     ),
-                    SizedBox(height: 16),
-                    Text(
+                    const SizedBox(height: 16),
+                    const Text(
                       'Update Your Password',
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    SizedBox(height: 8),
+                    const SizedBox(height: 8),
                     Text(
                       'Choose a strong password for better security',
                       style: TextStyle(
@@ -273,7 +275,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> with Single
                   ],
                 ),
               ),
-              SizedBox(height: 32),
+              const SizedBox(height: 32),
               
               // Current password field
               TextFormField(
@@ -282,7 +284,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> with Single
                 decoration: InputDecoration(
                   labelText: 'Current Password',
                   hintText: 'Enter your current password',
-                  prefixIcon: Icon(Icons.lock),
+                  prefixIcon: const Icon(Icons.lock),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
@@ -304,7 +306,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> with Single
                   return null;
                 },
               ),
-              SizedBox(height: 24),
+              const SizedBox(height: 24),
               
               // New password field
               TextFormField(
@@ -313,7 +315,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> with Single
                 decoration: InputDecoration(
                   labelText: 'New Password',
                   hintText: 'Create a strong password',
-                  prefixIcon: Icon(Icons.lock_outline),
+                  prefixIcon: const Icon(Icons.lock_outline),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
@@ -351,14 +353,14 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> with Single
                 },
                 onChanged: _checkPasswordStrength,
               ),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               
               // Password strength indicator
               if (_newPasswordController.text.isNotEmpty) ...[
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
+                    const Text(
                       'Password Strength:',
                       style: TextStyle(fontSize: 12),
                     ),
@@ -372,7 +374,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> with Single
                     ),
                   ],
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 AnimatedBuilder(
                   animation: _strengthAnimation,
                   builder: (context, child) {
@@ -390,20 +392,20 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> with Single
                   },
                 ),
                 if (_strengthAnimation.value > 0) ...[
-                  SizedBox(height: 4),
+                  const SizedBox(height: 4),
                   Text(
                     'Estimated entropy: ${_calculateEntropy(_newPasswordController.text).toStringAsFixed(1)} bits',
                     style: TextStyle(fontSize: 10, color: Colors.grey[600]),
                   ),
                 ],
               ],
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               
               // Password requirements
               AnimatedContainer(
-                duration: Duration(milliseconds: 300),
+                duration: const Duration(milliseconds: 300),
                 curve: Curves.easeInOut,
-                padding: EdgeInsets.all(12),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: Colors.grey[100],
                   borderRadius: BorderRadius.circular(10),
@@ -415,24 +417,24 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> with Single
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    const Text(
                       'Password Requirements:',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    SizedBox(height: 8),
+                    const SizedBox(height: 8),
                     _buildRequirement('At least 8 characters', _hasLength),
-                    SizedBox(height: 4),
+                    const SizedBox(height: 4),
                     _buildRequirement('At least one uppercase letter (A-Z)', _hasUppercase),
-                    SizedBox(height: 4),
+                    const SizedBox(height: 4),
                     _buildRequirement('At least one lowercase letter (a-z)', _hasLowercase),
-                    SizedBox(height: 4),
+                    const SizedBox(height: 4),
                     _buildRequirement('At least one number (0-9)', _hasNumber),
-                    SizedBox(height: 4),
+                    const SizedBox(height: 4),
                     _buildRequirement('At least one special character (!@#$...)', _hasSpecial),
                   ],
                 ),
               ),
-              SizedBox(height: 24),
+              const SizedBox(height: 24),
               
               // Confirm password field
               TextFormField(
@@ -441,7 +443,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> with Single
                 decoration: InputDecoration(
                   labelText: 'Confirm New Password',
                   hintText: 'Repeat your new password',
-                  prefixIcon: Icon(Icons.lock_outline),
+                  prefixIcon: const Icon(Icons.lock_outline),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
@@ -450,7 +452,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> with Single
                     children: [
                       if (_confirmPasswordController.text.isNotEmpty)
                         Padding(
-                          padding: EdgeInsets.only(right: 8),
+                          padding: const EdgeInsets.only(right: 8),
                           child: Icon(
                             _passwordsMatch ? Icons.check_circle : Icons.cancel,
                             color: _passwordsMatch ? Colors.green : Colors.red,
@@ -481,7 +483,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> with Single
                 },
               ),
               if (_confirmPasswordController.text.isNotEmpty && !_passwordsMatch)
-                Padding(
+                const Padding(
                   padding: EdgeInsets.only(top: 8, left: 12),
                   child: Text(
                     'Passwords do not match',
@@ -491,7 +493,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> with Single
                     ),
                   ),
                 ),
-              SizedBox(height: 32),
+              const SizedBox(height: 32),
               
               // Password suggestions (if new password is weak)
               if (_newPasswordController.text.isNotEmpty && _zxcvbnScore < 3)
@@ -509,15 +511,15 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> with Single
                     ),
                   ),
                   child: authProvider.isLoading
-                      ? CircularProgressIndicator(color: Colors.white)
-                      : Text('CHANGE PASSWORD', style: TextStyle(fontSize: 16)),
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text('CHANGE PASSWORD', style: TextStyle(fontSize: 16)),
                 ),
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               
               // Security tip
               Container(
-                padding: EdgeInsets.all(12),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: Colors.blue[50],
                   borderRadius: BorderRadius.circular(10),
@@ -526,8 +528,8 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> with Single
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.info_outline, color: Colors.blue, size: 20),
-                    SizedBox(width: 8),
+                    const Icon(Icons.info_outline, color: Colors.blue, size: 20),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -539,7 +541,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> with Single
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          SizedBox(height: 4),
+                          const SizedBox(height: 4),
                           Text(
                             '• For security reasons, you will be logged out after changing your password.\n'
                             '• Use a unique password for each of your accounts.\n'
@@ -561,7 +563,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> with Single
   
   // Success screen animation
   Widget _buildSuccessScreen() {
-    return Scaffold(
+    return const Scaffold(
       backgroundColor: Colors.green,
       body: Center(
         child: Column(
@@ -606,8 +608,8 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> with Single
   // Password suggestion widget
   Widget _buildPasswordSuggestions() {
     return Container(
-      margin: EdgeInsets.only(bottom: 16),
-      padding: EdgeInsets.all(12),
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.amber[50],
         borderRadius: BorderRadius.circular(10),
@@ -623,7 +625,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> with Single
               color: Colors.amber[800],
             ),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Text(
             '• Make it longer (12+ characters is recommended)\n'
             '• Use a mix of characters, not just letters\n'
@@ -643,12 +645,12 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> with Single
   // Password requirement item with animation
   Widget _buildRequirement(String text, bool isMet) {
     return AnimatedContainer(
-      duration: Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
       child: Row(
         children: [
           AnimatedContainer(
-            duration: Duration(milliseconds: 300),
+            duration: const Duration(milliseconds: 300),
             curve: Curves.easeInOut,
             width: 20,
             height: 20,
@@ -668,7 +670,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> with Single
               ),
             ),
           ),
-          SizedBox(width: 8),
+          const SizedBox(width: 8),
           Expanded(
             child: Text(
               text,

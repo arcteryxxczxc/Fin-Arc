@@ -488,7 +488,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     horizontalInterval: maxY / 5,
                     getDrawingHorizontalLine: (value) {
                       return FlLine(
-                        color: ColorUtils.withOpacity(theme.dividerColor, 0.2),
+                        color: ColorUtils.withOpacity(themeData.dividerColor, 0.2),
                         strokeWidth: 1,
                       );
                     },

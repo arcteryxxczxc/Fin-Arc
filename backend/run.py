@@ -20,25 +20,6 @@ from app.utils.api import api_success
 
 app = create_app()
 
-# API route for root - must be defined here to avoid circular imports
-@app.route('/api')
-def api_root():
-    """API root endpoint with available endpoints"""
-    return api_success({
-        "name": "Fin-Arc API",
-        "version": "1.0",
-        "endpoints": {
-            "auth": "/api/auth",
-            "expenses": "/api/expenses",
-            "categories": "/api/categories",
-            "income": "/api/income",
-            "reports": "/api/reports",
-            "settings": "/api/settings",
-            "currencies": "/api/currencies",
-            "notifications": "/api/notifications"
-        }
-    })
-
 # Health check endpoint for monitoring
 @app.route('/api/health')
 def health_check():

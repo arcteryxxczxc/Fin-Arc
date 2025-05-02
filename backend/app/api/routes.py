@@ -8,6 +8,25 @@ def test():
     """Test endpoint to verify API is working"""
     return api_success({"msg": "API is working!"})
 
+# API route for root - must be defined here to avoid circular imports
+@api_bp.route('/api')
+def api_root():
+    """API root endpoint with available endpoints"""
+    return api_success({
+        "name": "Fin-Arc API",
+        "version": "1.0",
+        "endpoints": {
+            "auth": "/auth",
+            "expenses": "/expenses",
+            "categories": "/categories",
+            "income": "/income",
+            "reports": "/reports",
+            "settings": "/settings",
+            "currencies": "/currencies",
+            "notifications": "/notifications"
+        }
+    })
+
 @api_bp.route('/health', methods=['GET'])
 def health_check():
     """Health check endpoint for monitoring"""

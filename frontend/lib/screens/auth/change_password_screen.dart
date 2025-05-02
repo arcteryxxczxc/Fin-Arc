@@ -430,7 +430,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> with Single
                     const SizedBox(height: 4),
                     _buildRequirement('At least one number (0-9)', _hasNumber),
                     const SizedBox(height: 4),
-                    _buildRequirement('At least one special character (!@#$...)', _hasSpecial),
+                    _buildRequirement('At least one special character (!@#\$...)', _hasSpecial),
                   ],
                 ),
               ),

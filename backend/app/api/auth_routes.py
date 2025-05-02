@@ -9,7 +9,7 @@ import logging
 # Set up logging
 logger = logging.getLogger(__name__)
 
-@api_bp.route('/api/auth/register', methods=['POST'])
+@api_bp.route('/auth/register', methods=['POST'])
 def api_register():
     """API endpoint for user registration"""
     data = request.get_json()
@@ -66,7 +66,7 @@ def api_register():
         logger.error(f"API: Error creating user: {str(e)}")
         return jsonify({"error": f"Error creating user: {str(e)}"}), 500
 
-@api_bp.route('/api/auth/login', methods=['POST'])
+@api_bp.route('/auth/login', methods=['POST'])
 def api_login():
     """API endpoint for user login"""
     data = request.get_json()
@@ -145,7 +145,7 @@ def api_login():
         logger.warning(f"API: Failed login attempt for user: {username}")
         return jsonify({"error": "Invalid username or password"}), 401
 
-@api_bp.route('/api/auth/profile', methods=['GET'])
+@api_bp.route('/auth/profile', methods=['GET'])
 @jwt_required()
 def api_profile():
     """API endpoint to get user profile information"""
@@ -179,7 +179,7 @@ def api_profile():
         "login_history": login_history
     }), 200
 
-@api_bp.route('/api/auth/change-password', methods=['POST'])
+@api_bp.route('/auth/change-password', methods=['POST'])
 @jwt_required()
 def api_change_password():
     """API endpoint to change password"""
@@ -214,7 +214,7 @@ def api_change_password():
         logger.error(f"API: Error changing password: {str(e)}")
         return jsonify({"error": "Error changing password"}), 500
 
-@api_bp.route('/api/auth/logout', methods=['POST'])
+@api_bp.route('/auth/logout', methods=['POST'])
 @jwt_required()
 def api_logout():
     """API endpoint for user logout

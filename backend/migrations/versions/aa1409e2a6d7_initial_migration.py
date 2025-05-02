@@ -1,8 +1,8 @@
-"""Initial migration for PostgreSQL
+"""Initial migration
 
-Revision ID: 7d03e0ec273e
+Revision ID: aa1409e2a6d7
 Revises: 
-Create Date: 2025-04-29 11:28:39.164971
+Create Date: 2025-05-02 21:11:19.390259
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '7d03e0ec273e'
+revision = 'aa1409e2a6d7'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -75,6 +75,18 @@ def upgrade():
     sa.Column('user_agent', sa.String(length=255), nullable=True),
     sa.Column('success', sa.Boolean(), nullable=True),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('reports',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('name', sa.String(length=100), nullable=False),
+    sa.Column('type', sa.String(length=50), nullable=False),
+    sa.Column('parameters', sa.JSON(), nullable=True),
+    sa.Column('data', sa.JSON(), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.Column('updated_at', sa.DateTime(), nullable=True),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('user_settings',
@@ -147,6 +159,7 @@ def downgrade():
     op.drop_table('expenses')
     op.drop_table('budget_notifications')
     op.drop_table('user_settings')
+    op.drop_table('reports')
     op.drop_table('login_attempts')
     op.drop_table('categories')
     with op.batch_alter_table('users', schema=None) as batch_op:

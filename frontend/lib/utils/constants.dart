@@ -2,6 +2,7 @@ class AppConstants {
   // API URLs
   //static const String baseUrl = 'http://10.0.2.2:5000/api'; // For emulator use
   static const String baseUrl = 'http://localhost:5000/api'; // For web use
+  //static const String baseUrl = 'http://127.0.0.1:5000/api';
   
   // Storage Keys
   static const String tokenKey = 'auth_token';

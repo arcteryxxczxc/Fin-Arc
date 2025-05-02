@@ -20,7 +20,7 @@ RUN mkdir -p app/uploads && chmod 777 app/uploads
 COPY . .
 
 # Expose port
-EXPOSE 5000
+EXPOSE 8111
 
 # Run gunicorn in production, Flask development server otherwise
-CMD ["sh", "-c", "if [ \"$FLASK_ENV\" = \"production\" ]; then gunicorn --bind 0.0.0.0:5000 \"run:app\"; else flask run --host=0.0.0.0; fi"]
+CMD ["sh", "-c", "if [ \"$FLASK_ENV\" = \"production\" ]; then gunicorn --bind 0.0.0.0:8111 \"run:app\"; else flask run --host=0.0.0.0; fi"]

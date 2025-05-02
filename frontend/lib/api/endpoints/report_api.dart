@@ -122,8 +122,8 @@ class ReportApi {
         return {
           'success': true,
           'data': response.bodyBytes,
-          'content-type': response.headers['content-type'] ?? 'text/csv',
-          'filename': _getFilenameFromHeader(response) ?? 'report.csv',
+          'content-type': response.headers['content-type'] ?? 'application/json',
+          'filename': _getFilenameFromHeader(response) ?? 'report.json',
         };
       } else {
         Map<String, dynamic> data;

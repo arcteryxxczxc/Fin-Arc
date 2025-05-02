@@ -27,21 +27,43 @@ class AuthApi {
 
       print('AuthApi: Making register API call to $baseUrl/auth/register');
       
+      // Direct HTTP call with proper CORS handling
       final response = await http.post(
         Uri.parse('$baseUrl/auth/register'),
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
         body: jsonEncode(body),
       );
 
       print('AuthApi: Register response status: ${response.statusCode}');
-      print('AuthApi: Register response body length: ${response.body.length}');
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        print('AuthApi: Register error response body: ${response.body}');
+      } else {
+        print('AuthApi: Register successful response');
+      }
       
-      final data = jsonDecode(response.body);
+      // Parse response
+      Map<String, dynamic> data;
+      try {
+        data = jsonDecode(response.body);
+      } catch (e) {
+        print('AuthApi: JSON parse error: $e');
+        return {
+          'success': false,
+          'message': 'Failed to parse response: ${response.body.substring(0, response.body.length > 100 ? 100 : response.body.length)}...'
+        };
+      }
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         return {'success': true, 'data': data};
       } else {
-        return {'success': false, 'message': data['error'] ?? 'Registration failed'};
+        return {
+          'success': false,
+          'statusCode': response.statusCode,
+          'message': data['msg'] ?? data['error'] ?? 'Registration failed',
+        };
       }
     } catch (e) {
       print('AuthApi: Registration network error: $e');
@@ -62,23 +84,43 @@ class AuthApi {
 
       print('AuthApi: Making login API call to $baseUrl/auth/login');
       
+      // Direct HTTP call with proper CORS handling
       final response = await http.post(
         Uri.parse('$baseUrl/auth/login'),
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
         body: jsonEncode(body),
       );
 
       print('AuthApi: Login response status: ${response.statusCode}');
       if (response.statusCode < 200 || response.statusCode >= 300) {
         print('AuthApi: Login error response body: ${response.body}');
+      } else {
+        print('AuthApi: Login successful response');
       }
       
-      final data = jsonDecode(response.body);
+      // Parse response
+      Map<String, dynamic> data;
+      try {
+        data = jsonDecode(response.body);
+      } catch (e) {
+        print('AuthApi: JSON parse error: $e');
+        return {
+          'success': false,
+          'message': 'Failed to parse response: ${response.body.substring(0, response.body.length > 100 ? 100 : response.body.length)}...'
+        };
+      }
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         return {'success': true, 'data': data};
       } else {
-        return {'success': false, 'message': data['error'] ?? 'Login failed'};
+        return {
+          'success': false,
+          'statusCode': response.statusCode,
+          'message': data['msg'] ?? data['error'] ?? 'Login failed',
+        };
       }
     } catch (e) {
       print('AuthApi: Login network error: $e');
@@ -128,15 +170,32 @@ class AuthApi {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/auth/refresh'),
-        headers: {'Authorization': 'Bearer $refreshToken'},
+        headers: {
+          'Authorization': 'Bearer $refreshToken',
+          'Accept': 'application/json',
+        },
       );
 
-      final data = jsonDecode(response.body);
+      // Parse response
+      Map<String, dynamic> data;
+      try {
+        data = jsonDecode(response.body);
+      } catch (e) {
+        print('AuthApi: JSON parse error: $e');
+        return {
+          'success': false,
+          'message': 'Failed to parse response'
+        };
+      }
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         return {'success': true, 'data': data};
       } else {
-        return {'success': false, 'message': data['error'] ?? 'Failed to refresh token'};
+        return {
+          'success': false,
+          'statusCode': response.statusCode,
+          'message': data['msg'] ?? data['error'] ?? 'Failed to refresh token',
+        };
       }
     } catch (e) {
       print('AuthApi: Refresh token error: $e');

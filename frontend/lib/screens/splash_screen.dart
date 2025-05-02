@@ -33,7 +33,7 @@ class SplashScreen extends StatelessWidget {
               'Personal Finance Application',
               style: TextStyle(
                 fontSize: 16,
-                color: Colors.white.withOpacity(0.8),
+                color: Colors.white.withAlpha((0.1 * 255).round()),
               ),
             ),
             const SizedBox(height: 40),

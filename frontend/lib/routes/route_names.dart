@@ -36,4 +36,7 @@ class RouteNames {
   // User
   static const String profile = '/profile';
   static const String settings = '/settings';
+  
+  // Debug tools
+  static const String apiTest = '/debug/api-test';
 }

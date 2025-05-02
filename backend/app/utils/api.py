@@ -23,7 +23,10 @@ def api_error(message, code=400, errors=None, log_error=True):
     if errors:
         response["errors"] = errors
     
-    return jsonify(response), code
+    response_obj = jsonify(response), code
+    # Add CORS headers to error responses
+    response_obj[0].headers.add('Access-Control-Allow-Origin', '*')  # This will be overridden by CORS middleware
+    return response_obj
 
 def api_success(data=None, message=None, code=200):
     """
@@ -51,4 +54,7 @@ def api_success(data=None, message=None, code=200):
             # Use data as is
             response["data"] = data
     
-    return jsonify(response), code
+    response_obj = jsonify(response), code
+    # Add CORS headers to success responses
+    response_obj[0].headers.add('Access-Control-Allow-Origin', '*')  # This will be overridden by CORS middleware
+    return response_obj

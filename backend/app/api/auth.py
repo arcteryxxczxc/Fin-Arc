@@ -1,4 +1,4 @@
-from flask import request
+from flask import request, jsonify
 from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, get_jwt_identity
 from app.api import api_bp
 from app.models.user import User, LoginAttempt
@@ -68,10 +68,14 @@ def register():
         logger.error(f"Error creating user: {str(e)}")
         return api_error(f"Error creating user: {str(e)}", 500)
 
-@api_bp.route('/auth/login', methods=['POST'])
+@api_bp.route('/auth/login', methods=['POST', 'OPTIONS'])
 @validate_json(LOGIN_SCHEMA)
 def login():
     """API endpoint for user login"""
+    # Handle OPTIONS request for CORS preflight
+    if request.method == 'OPTIONS':
+        return api_success({'message': 'CORS preflight accepted'})
+        
     try:
         data = request.get_json()
         username = data['username']

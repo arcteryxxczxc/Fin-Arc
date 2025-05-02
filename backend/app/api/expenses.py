@@ -689,7 +689,7 @@ def export_expenses():
         return {
             "content": output.getvalue(),
             "status": 200,
-            "mimetype": "text/csv",
+            "mimetype": "application/json",
             "headers": {
                 "Content-Disposition": f"attachment;filename=expenses_{datetime.now().strftime('%Y%m%d')}.csv"
             }

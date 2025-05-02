@@ -64,7 +64,7 @@ The project consists of two main parts:
    ```bash
    flask run
    ```
-   The API server will be available at http://localhost:5000
+   The API server will be available at http://localhost:8111
 
 ### Backend Docker Setup (Alternative)
 

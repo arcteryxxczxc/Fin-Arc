@@ -8,6 +8,7 @@ import '../screens/auth/register_screen.dart';
 import '../screens/auth/change_password_screen.dart';
 import '../screens/dashboard/dashboard_screen.dart';
 import '../screens/profile_screen.dart';
+import '../screens/debug/api_test_screen.dart';
 
 // Routes
 import 'route_names.dart';
@@ -53,6 +54,12 @@ class AppRouter {
         return MaterialPageRoute(
           settings: settings,
           builder: (_) => const ProfileScreen(),
+        );
+        
+      case RouteNames.apiTest:
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => const ApiTestScreen(),
         );
 
       // We'll add these back when the screens are available
@@ -159,6 +166,13 @@ class AppRouter {
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
+                  ),
+                  // Add debug info button
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(_).pushNamed(RouteNames.apiTest);
+                    },
+                    child: const Text('Run API Diagnostics'),
                   ),
                 ],
               ),

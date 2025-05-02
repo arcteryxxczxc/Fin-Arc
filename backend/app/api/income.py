@@ -720,7 +720,7 @@ def export_income():
         return {
             "content": output.getvalue(),
             "status": 200,
-            "mimetype": "text/csv",
+            "mimetype": "application/json",
             "headers": {
                 "Content-Disposition": f"attachment;filename=income_{datetime.now().strftime('%Y%m%d')}.csv"
             }

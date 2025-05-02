@@ -35,9 +35,10 @@ class ApiClient {
 
       print('GET API call to $uri');
 
-      // Set up headers
+      // Set up headers with proper CORS handling
       final headers = {
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
         if (requiresAuth && token != null) 'Authorization': 'Bearer $token',
       };
 
@@ -65,7 +66,7 @@ class ApiClient {
       String? token;
       if (requiresAuth) {
         token = await _getToken();
-        if (token == null) {
+        if (token == null && requiresAuth) {
           return {'success': false, 'message': 'Not authenticated'};
         }
       }
@@ -73,10 +74,14 @@ class ApiClient {
       // Build URI
       final uri = Uri.parse('$baseUrl/$endpoint');
       print('POST API call to $uri');
+      if (body != null) {
+        print('POST body: ${jsonEncode(body)}');
+      }
 
-      // Set up headers
+      // Set up headers with proper CORS handling
       final headers = {
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
         if (requiresAuth && token != null) 'Authorization': 'Bearer $token',
       };
 
@@ -88,6 +93,7 @@ class ApiClient {
       );
       
       print('POST response status: ${response.statusCode}');
+      print('POST response body: ${response.body}');
 
       // Handle response
       return _handleResponse(response);
@@ -118,9 +124,10 @@ class ApiClient {
       final uri = Uri.parse('$baseUrl/$endpoint');
       print('PUT API call to $uri');
 
-      // Set up headers
+      // Set up headers with proper CORS handling
       final headers = {
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
         if (requiresAuth && token != null) 'Authorization': 'Bearer $token',
       };
 
@@ -161,9 +168,10 @@ class ApiClient {
       final uri = Uri.parse('$baseUrl/$endpoint');
       print('DELETE API call to $uri');
 
-      // Set up headers
+      // Set up headers with proper CORS handling
       final headers = {
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
         if (requiresAuth && token != null) 'Authorization': 'Bearer $token',
       };
 
@@ -203,8 +211,9 @@ class ApiClient {
 
     print('GET RAW API call to $uri');
 
-    // Set up headers
+    // Set up headers with proper CORS handling
     final headers = {
+      'Accept': '*/*',
       if (requiresAuth && token != null) 'Authorization': 'Bearer $token',
     };
 
@@ -289,7 +298,10 @@ class ApiClient {
       
       final response = await http.post(
         Uri.parse('$baseUrl/auth/refresh'),
-        headers: {'Authorization': 'Bearer $refreshToken'},
+        headers: {
+          'Authorization': 'Bearer $refreshToken',
+          'Accept': 'application/json',
+        },
       );
       
       if (response.statusCode >= 200 && response.statusCode < 300) {

@@ -11,6 +11,7 @@ from sqlalchemy.exc import SQLAlchemyError
 import logging
 import psycopg2
 import traceback
+import re
 
 # Load environment variables from .env file
 load_dotenv()
@@ -25,18 +26,7 @@ bcrypt = Bcrypt()
 logger = logging.getLogger(__name__)
 
 def create_app(config=None):
-    """Application factory function that creates a Flask API-only backend
-    
-    Creates and configures the Flask application based on provided config
-    or environment settings. Initializes all extensions and registers
-    all API blueprints.
-    
-    Args:
-        config: Configuration object to use (optional)
-        
-    Returns:
-        Configured Flask application
-    """
+    """Application factory function that creates a Flask API-only backend"""
     app = Flask(__name__)
     
     # Configure the app
@@ -111,32 +101,61 @@ def create_app(config=None):
     jwt.init_app(app)
     bcrypt.init_app(app)
     
+    # УЛУЧШЕННАЯ НАСТРОЙКА CORS
+    # Создаем регулярное выражение для соответствия любому порту localhost
+    localhost_pattern = re.compile(r'https?://(localhost|127\.0\.0\.1)(:\d+)?$')
+    
+    # Определение функции для валидации динамических origins
+    def validate_origin(origin):
+        """Проверяет, разрешен ли данный origin"""
+        # В режиме разработки разрешаем любые localhost origins
+        if app.config.get('FLASK_ENV') == 'development':
+            if localhost_pattern.match(origin):
+                app.logger.debug(f"CORS: Allowing localhost origin: {origin}")
+                return True
+        
+        # Проверяем статические разрешенные origins из конфигурации
+        allowed_origins = origins + production_origins
+        if origin in allowed_origins:
+            return True
+        
+        app.logger.warning(f"CORS: Rejecting origin: {origin}")
+        return False
+
     # Configure CORS for Flutter Web/Mobile client
     origins = [
         'http://localhost:8080',  # Flutter web default dev port
         'http://127.0.0.1:8080',
         'http://localhost:3000',  # Alternative dev server
+        'http://127.0.0.1:3000',
         'capacitor://localhost',  # Capacitor for mobile
         'ionic://localhost',      # Ionic for mobile
         'http://localhost',       # General localhost
+        'http://127.0.0.1',
         'file://'                 # File protocol for mobile apps
-        '*'
     ]
     
+    # Add additional Flutter development ports
+    flutter_dev_ports = ['8000', '8081', '8082', '8083', '8084', '8085', '8888', '8889', 
+                         '1234', '4200', '4000', '4001', '5000', '5500', '8111']
+    for port in flutter_dev_ports:
+        origins.append(f'http://localhost:{port}')
+        origins.append(f'http://127.0.0.1:{port}')
+    
     # Add production URLs if in production
+    production_origins = []
     if app.config.get('FLASK_ENV') == 'production':
         production_urls = app.config.get('FLUTTER_WEB_URLS', '').split(',')
         for url in production_urls:
             if url and url.strip():
-                origins.append(url.strip())
+                production_origins.append(url.strip())
     
-    # Configure CORS with more flexible settings for APIs
+    # Настройка CORS с динамической валидацией origins
     CORS(app, 
-         resources={r"/api/*": {"origins": origins}}, 
-         supports_credentials=True,
-         allow_headers=["Content-Type", "Authorization", "Access-Control-Allow-Credentials"],
-         methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-         expose_headers=["Content-Disposition"])  # For file downloads
+     origins=origins + production_origins,
+     supports_credentials=True,
+     allow_headers=["Content-Type", "Authorization", "X-Requested-With", "Accept"],
+     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"])
 
     # Configure JWT settings
     app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)
@@ -152,6 +171,15 @@ def create_app(config=None):
             app.logger.info("Database tables created or confirmed to exist")
         except Exception as e:
             app.logger.error(f"Error creating database tables: {str(e)}")
+    
+    # Initialize custom middleware
+    #try:
+    #    from app.middleware import CORSMiddleware
+    #    cors_middleware = CORSMiddleware()
+    #    cors_middleware.init_app(app)
+    #    app.logger.info("CORS middleware initialized")
+ #   except ImportError:
+  #      app.logger.warning("CORS middleware not available")
     
     # Register API blueprint
     from app.api import api_bp
@@ -223,6 +251,22 @@ def create_app(config=None):
             'error': 'Token has been revoked',
             'status': 401
         }), 401
+
+    @app.after_request
+    def after_request(response):
+        app.logger.debug(f"Response headers: {dict(response.headers)}")
+        
+        if hasattr(response, 'json') and response.json is not None and response.headers.get('Content-Type') == 'text/html; charset=utf-8':
+             response.headers['Content-Type'] = 'application/json; charset=utf-8'
+    
+        headers = dict(response.headers)
+        for header in ['Access-Control-Allow-Origin', 'Access-Control-Allow-Headers', 'Access-Control-Allow-Methods']:
+            if header in headers and headers[header].count(',') > 5:
+                values = headers[header].split(',')
+                unique_values = list(set([v.strip() for v in values]))
+                response.headers[header] = ', '.join(unique_values)
+    
+        return response
 
     # Log successful app creation
     app.logger.info(f"App created in {app.config.get('FLASK_ENV', 'default')} mode")

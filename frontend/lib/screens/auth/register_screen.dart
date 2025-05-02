@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../utils/constants.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -19,6 +20,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _lastNameController = TextEditingController();
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+  bool _debugMode = false; // For showing debugging information
 
   @override
   void dispose() {
@@ -44,6 +46,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     }
 
+    // Show debug info if enabled
+    if (_debugMode) {
+      print('Submitting registration form with username: ${_usernameController.text}');
+      print('API base URL: ${AppConstants.baseUrl}');
+    }
+
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     
     final success = await authProvider.register(
@@ -56,6 +64,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
     
     if (success && mounted) {
       Navigator.of(context).pushReplacementNamed('/dashboard');
+    } else if (mounted) {
+      // Show a more detailed error message if there's an issue
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(authProvider.error ?? 'Registration failed. Please try again.'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 5),
+        ),
+      );
     }
   }
 
@@ -66,6 +83,36 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Register for Fin-Arc'),
+        actions: [
+          // Debug button - toggle with long press
+          IconButton(
+            icon: Icon(
+              _debugMode ? Icons.bug_report : Icons.info_outline,
+              color: _debugMode ? Colors.red : null,
+            ),
+            onPressed: () {
+              // Show API URL info
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('API URL: ${AppConstants.baseUrl}'),
+                  duration: const Duration(seconds: 3),
+                ),
+              );
+            },
+            onLongPress: () {
+              // Toggle debug mode
+              setState(() {
+                _debugMode = !_debugMode;
+              });
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Debug mode: ${_debugMode ? 'ON' : 'OFF'}'),
+                  backgroundColor: _debugMode ? Colors.orange : Colors.green,
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: Center(
         child: SingleChildScrollView(
@@ -97,6 +144,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                     ),
                     const SizedBox(height: 20),
+                    
+                    // Debug information
+                    if (_debugMode)
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        margin: const EdgeInsets.only(bottom: 20),
+                        width: double.infinity,
+                        color: Colors.yellow.shade100,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('API URL: ${AppConstants.baseUrl}'),
+                            Text('Auth initialized: ${authProvider.initialized}'),
+                            Text('Auth state: ${authProvider.isAuthenticated ? 'Authenticated' : 'Not authenticated'}'),
+                          ],
+                        ),
+                      ),
                     
                     // Error message
                     if (authProvider.error != null)

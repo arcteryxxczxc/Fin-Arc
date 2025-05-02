@@ -238,8 +238,8 @@ class ExpenseApi {
         return {
           'success': true,
           'data': response.bodyBytes,
-          'content-type': response.headers['content-type'] ?? 'text/csv',
-          'filename': _getFilenameFromHeader(response) ?? 'expenses.csv',
+          'content-type': response.headers['content-type'] ?? 'application/json',
+          'filename': _getFilenameFromHeader(response) ?? 'expenses.json',
         };
       } else {
         Map<String, dynamic> data;

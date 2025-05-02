@@ -154,8 +154,8 @@ class ApiConnectionChecker {
     print('   - Navigate to the backend directory');
     print('   - Run: python run.py');
     print('\n2. Check your baseUrl in constants.dart:');
-    print('   - For Android emulator: http://10.0.2.2:5000/api');
-    print('   - For iOS simulator or web: http://localhost:5000/api');
+    print('   - For Android emulator: http://10.0.2.2:8111/api');
+    print('   - For iOS simulator or web: http://localhost:8111/api');
     print('\n3. Check CORS settings in the Flask app:');
     print('   - Make sure your Flutter app origin is allowed');
     print('\n4. Make sure PostgreSQL is running and configured correctly:');
@@ -170,8 +170,8 @@ class ApiConnectionChecker {
 void main() async {
   // Test with different base URLs
   final urls = [
-    'http://localhost:5000/api',
-    'http://10.0.2.2:5000/api'
+    'http://localhost:8111/api',
+    'http://10.0.2.2:8111/api'
   ];
   
   bool success = false;

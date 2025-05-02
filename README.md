@@ -97,7 +97,7 @@ finance-app/
    python run.py
    ```
 
-2. The API will be available at http://localhost:5000/api
+2. The API will be available at http://localhost:8111/api
 
 3. Run the diagnostic script to verify API functionality:
    ```bash
@@ -116,10 +116,10 @@ finance-app/
 2. Update the API URL in `lib/utils/constants.dart`:
    ```dart
    // For Android emulator
-   static const String baseUrl = 'http://10.0.2.2:5000/api';
+   static const String baseUrl = 'http://10.0.2.2:8111/api';
    
    // For web or iOS simulator
-   // static const String baseUrl = 'http://localhost:5000/api';
+   // static const String baseUrl = 'http://localhost:8111/api';
    ```
 
 3. Install Flutter dependencies:
@@ -201,7 +201,7 @@ finance-app/
 2. Configure environment variables for production
 3. Use Gunicorn as the WSGI server:
    ```bash
-   gunicorn -w 4 -b 0.0.0.0:5000 "app:create_app()"
+   gunicorn -w 4 -b 0.0.0.0:8111 "app:create_app()"
    ```
 
 ### Frontend Deployment

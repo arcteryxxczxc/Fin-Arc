@@ -26,7 +26,7 @@ logging.basicConfig(
 logger = logging.getLogger("fin-arc-diagnostics")
 
 # Configuration
-BASE_URL = "http://localhost:5000/api"
+BASE_URL = "http://localhost:8111/api"
 TEST_USERNAME = "test_diagnostic_user"
 TEST_EMAIL = "test_diagnostic@gmail.com"
 TEST_PASSWORD = "Test12345!"
@@ -54,7 +54,7 @@ def test_server_connectivity():
             return False
     except requests.RequestException as e:
         logger.error(f"Connection error: {e}")
-        logger.error("Make sure the Flask server is running on localhost:5000")
+        logger.error("Make sure the Flask server is running on localhost:8111")
         return False
 
 def test_authentication_flow():

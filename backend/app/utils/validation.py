@@ -18,6 +18,10 @@ def validate_json(schema):
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
+            # Skip validation for OPTIONS requests (CORS preflight)
+            if request.method == 'OPTIONS':
+                return func(*args, **kwargs)
+                
             # Get JSON data from request
             data = request.get_json()
             

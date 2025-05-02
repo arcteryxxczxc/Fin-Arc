@@ -1,3 +1,4 @@
+// lib/providers/auth_provider.dart
 import 'package:flutter/foundation.dart';
 import '../services/auth_service.dart';
 import '../models/user.dart';
@@ -9,6 +10,7 @@ class AuthProvider with ChangeNotifier {
   bool _isLoading = false;
   String? _error;
   bool _initialized = false; // Track initialization status
+  bool _isInitializing = false; // Prevent concurrent initializations
   
   // Getters
   User? get user => _user;
@@ -19,9 +21,11 @@ class AuthProvider with ChangeNotifier {
   
   // Initialize auth state on app start
   Future<void> initAuth() async {
-    // Skip if already initialized to prevent infinite loops
+    // Skip if already initialized or currently initializing to prevent infinite loops
     if (_initialized && !_isLoading) return;
+    if (_isInitializing) return;
     
+    _isInitializing = true; // Set flag to prevent concurrent initialization
     print('Starting auth initialization');
     _isLoading = true;
     notifyListeners();
@@ -37,15 +41,18 @@ class AuthProvider with ChangeNotifier {
         print('User retrieved: ${_user?.username}');
       } else {
         print('User is not authenticated');
+        _user = null; // Ensure user is null if not authenticated
       }
       
       _initialized = true;
+      _error = null; // Clear any previous errors
     } catch (e) {
       print('Auth initialization error: $e');
-      _error = e.toString();
+      _error = 'Authentication error: ${e.toString()}';
       _initialized = true; // Still mark as initialized even if there's an error
     } finally {
       _isLoading = false;
+      _isInitializing = false; // Reset flag
       notifyListeners();
       print('Auth initialization complete. Authenticated: ${_user != null}');
     }
@@ -82,14 +89,14 @@ class AuthProvider with ChangeNotifier {
         notifyListeners();
         return true;
       } else {
-        _error = result['message'];
+        _error = result['message'] ?? 'Registration failed';
         print('Registration failed: $_error');
         _isLoading = false;
         notifyListeners();
         return false;
       }
     } catch (e) {
-      _error = e.toString();
+      _error = 'Registration error: ${e.toString()}';
       print('Registration error: $_error');
       _isLoading = false;
       notifyListeners();
@@ -122,14 +129,14 @@ class AuthProvider with ChangeNotifier {
         notifyListeners();
         return true;
       } else {
-        _error = result['message'];
+        _error = result['message'] ?? 'Login failed';
         print('Login failed: $_error');
         _isLoading = false;
         notifyListeners();
         return false;
       }
     } catch (e) {
-      _error = e.toString();
+      _error = 'Login error: ${e.toString()}';
       print('Login error: $_error');
       _isLoading = false;
       notifyListeners();
@@ -146,12 +153,13 @@ class AuthProvider with ChangeNotifier {
     try {
       await _authService.logout();
       _user = null;
+      _error = null;
       print('User successfully logged out');
     } catch (e) {
       print('Logout error: $e');
       // Still log out locally even if the server request fails
       _user = null;
-      _error = e.toString();
+      _error = 'Logout error: ${e.toString()}';
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -181,13 +189,13 @@ class AuthProvider with ChangeNotifier {
         notifyListeners();
         return true;
       } else {
-        _error = result['message'];
+        _error = result['message'] ?? 'Password change failed';
         print('Password change failed: $_error');
         notifyListeners();
         return false;
       }
     } catch (e) {
-      _error = e.toString();
+      _error = 'Password change error: ${e.toString()}';
       print('Password change error: $_error');
       _isLoading = false;
       notifyListeners();
@@ -198,21 +206,25 @@ class AuthProvider with ChangeNotifier {
   // Get fresh user profile data
   Future<void> refreshUserProfile() async {
     print('Refreshing user profile');
+    _isLoading = true;
+    notifyListeners();
+    
     try {
       final result = await _authService.getUserProfile();
       
       if (result['success']) {
         _user = User.fromJson(result['data']);
+        _error = null;
         print('User profile refreshed successfully: ${_user?.username}');
-        notifyListeners();
       } else {
-        _error = result['message'];
+        _error = result['message'] ?? 'Failed to refresh profile';
         print('Failed to refresh profile: $_error');
-        notifyListeners();
       }
     } catch (e) {
-      _error = e.toString();
+      _error = 'Error refreshing profile: ${e.toString()}';
       print('Error refreshing profile: $_error');
+    } finally {
+      _isLoading = false;
       notifyListeners();
     }
   }
@@ -226,5 +238,6 @@ class AuthProvider with ChangeNotifier {
   // Reset initialization state (useful for testing)
   void resetInitialization() {
     _initialized = false;
+    _isInitializing = false;
   }
 }

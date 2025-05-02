@@ -1,11 +1,15 @@
 // lib/api/client.dart
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../services/auth_service.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../utils/constants.dart';
 
 class ApiClient {
-  final AuthService _authService = AuthService();
+  // Direct secure storage access for tokens to avoid circular dependencies
+  static const FlutterSecureStorage _storage = FlutterSecureStorage();
+  static const String _tokenKey = 'access_token';
+  static const String _refreshTokenKey = 'refresh_token';
+  
   final String baseUrl = AppConstants.baseUrl;
 
   /// Make a GET request to the API
@@ -18,7 +22,7 @@ class ApiClient {
       // Get auth token if required
       String? token;
       if (requiresAuth) {
-        token = await _authService.getToken();
+        token = await _getToken();
         if (token == null) {
           return {'success': false, 'message': 'Not authenticated'};
         }
@@ -29,6 +33,8 @@ class ApiClient {
         queryParameters: queryParams,
       );
 
+      print('GET API call to $uri');
+
       // Set up headers
       final headers = {
         'Content-Type': 'application/json',
@@ -37,10 +43,12 @@ class ApiClient {
 
       // Make request
       final response = await http.get(uri, headers: headers);
+      print('GET response status: ${response.statusCode}');
 
       // Handle response
       return _handleResponse(response);
     } catch (e) {
+      print('API GET error: $e');
       // Handle exceptions
       return _handleException(e);
     }
@@ -56,7 +64,7 @@ class ApiClient {
       // Get auth token if required
       String? token;
       if (requiresAuth) {
-        token = await _authService.getToken();
+        token = await _getToken();
         if (token == null) {
           return {'success': false, 'message': 'Not authenticated'};
         }
@@ -64,6 +72,7 @@ class ApiClient {
 
       // Build URI
       final uri = Uri.parse('$baseUrl/$endpoint');
+      print('POST API call to $uri');
 
       // Set up headers
       final headers = {
@@ -77,10 +86,13 @@ class ApiClient {
         headers: headers,
         body: body != null ? jsonEncode(body) : null,
       );
+      
+      print('POST response status: ${response.statusCode}');
 
       // Handle response
       return _handleResponse(response);
     } catch (e) {
+      print('API POST error: $e');
       // Handle exceptions
       return _handleException(e);
     }
@@ -96,7 +108,7 @@ class ApiClient {
       // Get auth token if required
       String? token;
       if (requiresAuth) {
-        token = await _authService.getToken();
+        token = await _getToken();
         if (token == null) {
           return {'success': false, 'message': 'Not authenticated'};
         }
@@ -104,6 +116,7 @@ class ApiClient {
 
       // Build URI
       final uri = Uri.parse('$baseUrl/$endpoint');
+      print('PUT API call to $uri');
 
       // Set up headers
       final headers = {
@@ -117,10 +130,13 @@ class ApiClient {
         headers: headers,
         body: body != null ? jsonEncode(body) : null,
       );
+      
+      print('PUT response status: ${response.statusCode}');
 
       // Handle response
       return _handleResponse(response);
     } catch (e) {
+      print('API PUT error: $e');
       // Handle exceptions
       return _handleException(e);
     }
@@ -135,7 +151,7 @@ class ApiClient {
       // Get auth token if required
       String? token;
       if (requiresAuth) {
-        token = await _authService.getToken();
+        token = await _getToken();
         if (token == null) {
           return {'success': false, 'message': 'Not authenticated'};
         }
@@ -143,6 +159,7 @@ class ApiClient {
 
       // Build URI
       final uri = Uri.parse('$baseUrl/$endpoint');
+      print('DELETE API call to $uri');
 
       // Set up headers
       final headers = {
@@ -152,10 +169,13 @@ class ApiClient {
 
       // Make request
       final response = await http.delete(uri, headers: headers);
+      
+      print('DELETE response status: ${response.statusCode}');
 
       // Handle response
       return _handleResponse(response);
     } catch (e) {
+      print('API DELETE error: $e');
       // Handle exceptions
       return _handleException(e);
     }
@@ -170,7 +190,7 @@ class ApiClient {
     // Get auth token if required
     String? token;
     if (requiresAuth) {
-      token = await _authService.getToken();
+      token = await _getToken();
       if (token == null) {
         throw Exception('Not authenticated');
       }
@@ -180,6 +200,8 @@ class ApiClient {
     final uri = Uri.parse('$baseUrl/$endpoint').replace(
       queryParameters: queryParams,
     );
+
+    print('GET RAW API call to $uri');
 
     // Set up headers
     final headers = {
@@ -193,9 +215,22 @@ class ApiClient {
   /// Handle HTTP response and parse JSON
   Map<String, dynamic> _handleResponse(http.Response response) {
     try {
+      // Check if response body is empty
+      if (response.body.isEmpty) {
+        if (response.statusCode >= 200 && response.statusCode < 300) {
+          return {'success': true, 'data': {}};
+        } else {
+          return {
+            'success': false,
+            'statusCode': response.statusCode,
+            'message': 'Empty response with status code ${response.statusCode}',
+          };
+        }
+      }
+
       // Parse JSON response
       final data = jsonDecode(response.body);
-
+      
       // Check if response is successful
       if (response.statusCode >= 200 && response.statusCode < 300) {
         return {'success': true, 'data': data};
@@ -208,11 +243,12 @@ class ApiClient {
         };
       }
     } catch (e) {
+      print('Response parsing error: $e for body: ${response.body}');
       // If JSON parsing fails
       return {
         'success': false,
         'statusCode': response.statusCode,
-        'message': 'Failed to parse response: ${response.body}',
+        'message': 'Failed to parse response: ${response.body.substring(0, response.body.length > 100 ? 100 : response.body.length)}...',
       };
     }
   }
@@ -222,13 +258,51 @@ class ApiClient {
     // Format error message based on exception type
     String errorMessage;
     if (error is http.ClientException) {
-      errorMessage = 'Network connection error';
+      errorMessage = 'Network connection error: ${error.message}';
     } else if (error is FormatException) {
-      errorMessage = 'Invalid response format';
+      errorMessage = 'Invalid response format: ${error.message}';
     } else {
       errorMessage = 'An unexpected error occurred: $error';
     }
 
+    print('API error handled: $errorMessage');
     return {'success': false, 'message': errorMessage};
+  }
+
+  /// Get token directly from storage
+  Future<String?> _getToken() async {
+    final token = await _storage.read(key: _tokenKey);
+    if (token == null) {
+      // Try to refresh the token
+      return await _refreshToken();
+    }
+    return token;
+  }
+
+  /// Refresh token implementation that doesn't rely on AuthService
+  Future<String?> _refreshToken() async {
+    final refreshToken = await _storage.read(key: _refreshTokenKey);
+    if (refreshToken == null) return null;
+    
+    try {
+      print('Attempting to refresh token directly from ApiClient');
+      
+      final response = await http.post(
+        Uri.parse('$baseUrl/auth/refresh'),
+        headers: {'Authorization': 'Bearer $refreshToken'},
+      );
+      
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final data = jsonDecode(response.body);
+        final newToken = data['access_token'];
+        await _storage.write(key: _tokenKey, value: newToken);
+        print('Token refreshed successfully');
+        return newToken;
+      }
+    } catch (e) {
+      print('Token refresh error in ApiClient: $e');
+    }
+    
+    return null;
   }
 }

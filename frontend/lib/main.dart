@@ -56,10 +56,19 @@ class MyApp extends StatelessWidget {
         // Theme provider
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
 
-        // Feature providers
-        ChangeNotifierProvider(create: (_) => ExpenseProvider()),
-        ChangeNotifierProvider(create: (_) => IncomeProvider()),
-        ChangeNotifierProvider(create: (_) => CategoryProvider()), // Added
+        // Feature providers - add these lazily after auth is initialized
+        ChangeNotifierProxyProvider<AuthProvider, ExpenseProvider>(
+          create: (_) => ExpenseProvider(),
+          update: (_, auth, previous) => previous!,
+        ),
+        ChangeNotifierProxyProvider<AuthProvider, IncomeProvider>(
+          create: (_) => IncomeProvider(),
+          update: (_, auth, previous) => previous!,
+        ),
+        ChangeNotifierProxyProvider<AuthProvider, CategoryProvider>(
+          create: (_) => CategoryProvider(),
+          update: (_, auth, previous) => previous!,
+        ),
         
         // Route observer as a value notifier provider
         Provider<FinArcRouteObserver>.value(value: routeObserver),
@@ -93,107 +102,108 @@ class AuthenticationWrapper extends StatefulWidget {
 }
 
 class _AuthenticationWrapperState extends State<AuthenticationWrapper> {
-  late Future<void> _authFuture;
+  bool _isInitializing = true;
+  String? _errorMessage;
   
   @override
   void initState() {
     super.initState();
     log('Initializing AuthenticationWrapper');
     // Get the auth provider but don't listen to it here
+    _initializeAuth();
+  }
+  
+  Future<void> _initializeAuth() async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    // Initialize the auth future only once
-    _authFuture = authProvider.initAuth();
+    try {
+      await authProvider.initAuth();
+    } catch (e) {
+      log('Auth initialization error in wrapper: $e');
+      if (mounted) {
+        setState(() {
+          _errorMessage = e.toString();
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isInitializing = false;
+        });
+      }
+    }
   }
   
   @override
   Widget build(BuildContext context) {
-    log('Building AuthenticationWrapper');
+    log('Building AuthenticationWrapper, isInitializing: $_isInitializing');
     // Listen to auth provider changes for UI updates
     final authProvider = Provider.of<AuthProvider>(context);
     
-    return FutureBuilder(
-      future: _authFuture,
-      builder: (ctx, snapshot) {
-        // Log the current state for debugging
-        log('Auth Future state: ${snapshot.connectionState}');
-        
-        // Show error if authentication initialization failed
-        if (snapshot.hasError) {
-          log('Auth initialization error: ${snapshot.error}');
-          return Scaffold(
-            body: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text(
-                    'Authentication Error',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(snapshot.error.toString()),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () {
-                      log('Retrying authentication');
-                      setState(() {
-                        _authFuture = authProvider.initAuth();
-                      });
-                    },
-                    child: const Text('Retry'),
-                  ),
-                ],
+    // Show splash screen while initializing
+    if (_isInitializing) {
+      log('Still initializing, showing splash screen');
+      return const SplashScreen();
+    }
+    
+    // Show error screen if there's an initialization error
+    if (_errorMessage != null) {
+      log('Showing error screen: $_errorMessage');
+      return Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.error_outline,
+                color: Colors.red,
+                size: 64,
               ),
-            ),
-          );
-        }
-
-        // Show splash screen while checking auth state
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          log('Auth state is loading, showing splash screen');
-          return const SplashScreen();
-        }
-        
-        // Handle any error from the auth provider
-        if (authProvider.error != null) {
-          log('Auth provider error: ${authProvider.error}');
-          return Scaffold(
-            body: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text(
-                    'Authentication Error',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(authProvider.error ?? 'Unknown error'),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () {
-                      log('Clearing error and retrying');
-                      authProvider.clearError();
-                      setState(() {
-                        _authFuture = authProvider.initAuth();
-                      });
-                    },
-                    child: const Text('Retry'),
-                  ),
-                ],
+              const SizedBox(height: 16),
+              const Text(
+                'Authentication Error',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
-            ),
-          );
-        }
-        
-        // Load initial data if authenticated
-        if (authProvider.isAuthenticated) {
-          log('User is authenticated, showing dashboard');
-          return const DashboardScreen();
-        }
-        
-        // Not authenticated, show login screen
-        log('User is not authenticated, showing login screen');
-        return const LoginScreen();
-      },
-    );
+              const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Text(
+                  _errorMessage!,
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () {
+                  log('Retrying authentication');
+                  setState(() {
+                    _isInitializing = true;
+                    _errorMessage = null;
+                  });
+                  _initializeAuth();
+                },
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    
+    // Handle any error from the auth provider
+    if (authProvider.error != null) {
+      log('Auth provider error: ${authProvider.error}');
+      // We don't show a full error screen for auth provider errors 
+      // as they might be transient and related to specific operations
+    }
+    
+    // Load initial data if authenticated
+    if (authProvider.isAuthenticated) {
+      log('User is authenticated, showing dashboard');
+      return const DashboardScreen();
+    }
+    
+    // Not authenticated, show login screen
+    log('User is not authenticated, showing login screen');
+    return const LoginScreen();
   }
 }

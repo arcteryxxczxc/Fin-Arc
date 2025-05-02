@@ -8,7 +8,7 @@ class AuthApi {
   final ApiClient _client = ApiClient();
   final String baseUrl = AppConstants.baseUrl;
 
-  /// Register a new user
+  /// Register a new user (direct HTTP call to avoid circular dependencies)
   Future<Map<String, dynamic>> register({
     required String username,
     required String email,
@@ -25,12 +25,17 @@ class AuthApi {
         'last_name': lastName ?? '',
       };
 
+      print('AuthApi: Making register API call to $baseUrl/auth/register');
+      
       final response = await http.post(
         Uri.parse('$baseUrl/auth/register'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(body),
       );
 
+      print('AuthApi: Register response status: ${response.statusCode}');
+      print('AuthApi: Register response body length: ${response.body.length}');
+      
       final data = jsonDecode(response.body);
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
@@ -39,11 +44,12 @@ class AuthApi {
         return {'success': false, 'message': data['error'] ?? 'Registration failed'};
       }
     } catch (e) {
+      print('AuthApi: Registration network error: $e');
       return {'success': false, 'message': 'Network error: $e'};
     }
   }
 
-  /// Login user
+  /// Login user (direct HTTP call to avoid circular dependencies)
   Future<Map<String, dynamic>> login({
     required String username,
     required String password,
@@ -54,12 +60,19 @@ class AuthApi {
         'password': password,
       };
 
+      print('AuthApi: Making login API call to $baseUrl/auth/login');
+      
       final response = await http.post(
         Uri.parse('$baseUrl/auth/login'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(body),
       );
 
+      print('AuthApi: Login response status: ${response.statusCode}');
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        print('AuthApi: Login error response body: ${response.body}');
+      }
+      
       final data = jsonDecode(response.body);
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
@@ -68,6 +81,7 @@ class AuthApi {
         return {'success': false, 'message': data['error'] ?? 'Login failed'};
       }
     } catch (e) {
+      print('AuthApi: Login network error: $e');
       return {'success': false, 'message': 'Network error: $e'};
     }
   }
@@ -81,6 +95,7 @@ class AuthApi {
 
       return response;
     } catch (e) {
+      print('AuthApi: Get profile error: $e');
       return {'success': false, 'message': 'Network error: $e'};
     }
   }
@@ -103,11 +118,12 @@ class AuthApi {
 
       return response;
     } catch (e) {
+      print('AuthApi: Change password error: $e');
       return {'success': false, 'message': 'Network error: $e'};
     }
   }
 
-  /// Refresh token
+  /// Refresh token (direct HTTP call to avoid circular dependencies)
   Future<Map<String, dynamic>> refreshToken(String refreshToken) async {
     try {
       final response = await http.post(
@@ -123,6 +139,7 @@ class AuthApi {
         return {'success': false, 'message': data['error'] ?? 'Failed to refresh token'};
       }
     } catch (e) {
+      print('AuthApi: Refresh token error: $e');
       return {'success': false, 'message': 'Network error: $e'};
     }
   }
@@ -136,6 +153,7 @@ class AuthApi {
 
       return response;
     } catch (e) {
+      print('AuthApi: Logout error: $e');
       return {'success': false, 'message': 'Network error: $e'};
     }
   }

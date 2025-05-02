@@ -1,183 +1,222 @@
-# Fin-Arc Backend API
+# Fin-Arc: Personal Finance Application
 
-This is the RESTful API backend for the Fin-Arc personal finance application. It's built with Flask and PostgreSQL and is designed to be consumed by a Flutter frontend.
-
-## Technology Stack
-
-- **Flask**: Lightweight web framework
-- **PostgreSQL**: Relational database for persistent storage
-- **SQLAlchemy**: ORM for database interaction
-- **Flask-JWT-Extended**: JWT authentication 
-- **Flask-Migrate**: Database migrations
-- **Flask-CORS**: Cross-Origin Resource Sharing support for Flutter
+A comprehensive personal finance application with expense tracking, budgeting, and financial reporting.
 
 ## Project Structure
 
 ```
-backend/
-├── app/
-│   ├── api/                  # API routes
-│   │   ├── __init__.py       # API blueprint registration
-│   │   ├── auth.py           # Authentication endpoints
-│   │   ├── categories.py     # Category management 
-│   │   ├── currencies.py     # Currency conversion
-│   │   ├── expenses.py       # Expense management
-│   │   ├── income.py         # Income management
-│   │   ├── notifications.py  # User notifications
-│   │   ├── reports.py        # Financial reports
-│   │   └── settings.py       # User settings
-│   ├── forms/                # Form definitions (for validation)
-│   ├── models/               # Database models
-│   ├── services/             # Business logic services
-│   ├── utils/                # Utility functions
-│   └── __init__.py           # Application factory
-├── config.py                 # Configuration
-├── run.py                    # Application entry point
-└── init_db.py                # Database initialization
+finance-app/
+├── backend/              # Flask backend API
+│   ├── app/              # Application code
+│   │   ├── api/          # API endpoints
+│   │   ├── models/       # Database models
+│   │   ├── services/     # Business logic
+│   │   └── utils/        # Utility functions
+│   ├── logs/             # Application logs
+│   ├── migrations/       # Database migrations
+│   ├── .env              # Environment variables
+│   ├── config.py         # Application configuration
+│   └── run.py            # Application entry point
+├── frontend/             # Flutter frontend
+│   ├── lib/              # Application code
+│   │   ├── api/          # API client code
+│   │   ├── models/       # Data models
+│   │   ├── providers/    # State management
+│   │   ├── screens/      # UI screens
+│   │   ├── utils/        # Utility functions
+│   │   └── widgets/      # Reusable UI components
+│   └── ... (other Flutter files)
+└── README.md             # Project documentation
 ```
 
-## API Endpoints
+## Prerequisites
 
-The API follows RESTful conventions and is structured under the `/api` prefix. All endpoints return JSON responses.
+- [Python 3.8+](https://www.python.org/downloads/)
+- [PostgreSQL 12+](https://www.postgresql.org/download/)
+- [Flutter 3.0+](https://flutter.dev/docs/get-started/install)
+- [Dart 2.17+](https://dart.dev/get-dart)
 
-### Authentication
+## Backend Setup
 
-- `POST /api/auth/register`: Register a new user
-- `POST /api/auth/login`: Login and get access token
-- `GET /api/auth/profile`: Get user profile
-- `POST /api/auth/change-password`: Change password
-- `POST /api/auth/logout`: Logout (client-side token disposal)
+### 1. Database Setup
 
-### Expenses
+1. Install PostgreSQL if you haven't already
+2. Create a new database:
+   ```bash
+   createdb fin_arc
+   ```
+   Or use pgAdmin to create a database named `fin_arc`
 
-- `GET /api/expenses`: List expenses (with filtering)
-- `GET /api/expenses/<id>`: Get single expense
-- `POST /api/expenses`: Create expense
-- `PUT /api/expenses/<id>`: Update expense
-- `DELETE /api/expenses/<id>`: Delete expense
-- `POST /api/expenses/bulk`: Bulk actions on expenses
-- `GET /api/expenses/export`: Export expenses as CSV
-- `GET /api/expenses/stats`: Get expense statistics
+### 2. Environment Configuration
 
-### Income
+1. Navigate to the backend directory:
+   ```bash
+   cd backend
+   ```
 
-- `GET /api/income`: List income entries (with filtering)
-- `GET /api/income/<id>`: Get single income entry
-- `POST /api/income`: Create income entry
-- `PUT /api/income/<id>`: Update income entry
-- `DELETE /api/income/<id>`: Delete income entry
-- `POST /api/income/bulk`: Bulk actions on income entries
-- `GET /api/income/export`: Export income entries as CSV
-- `GET /api/income/stats`: Get income statistics
+2. Create a virtual environment:
+   ```bash
+   python -m venv venv
+   ```
 
-### Categories
+3. Activate the virtual environment:
+   - Windows: `venv\Scripts\activate`
+   - Mac/Linux: `source venv/bin/activate`
 
-- `GET /api/categories`: List categories
-- `GET /api/categories/<id>`: Get single category
-- `POST /api/categories`: Create category
-- `PUT /api/categories/<id>`: Update category
-- `DELETE /api/categories/<id>`: Delete category
-- `POST /api/categories/bulk`: Bulk actions on categories
-- `PUT /api/categories/budgets`: Update category budgets
-- `GET /api/categories/<id>/expenses`: Get expenses for a category
-- `GET /api/categories/<id>/stats`: Get category statistics
-- `POST /api/categories/default`: Create default categories
+4. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-### Reports
+5. Configure the `.env` file with your database credentials:
+   ```
+   # Database Configuration
+   DB_USER=postgres
+   DB_PASSWORD=your_postgres_password
+   DB_HOST=localhost
+   DB_PORT=5432
+   DB_NAME=fin_arc
+   ```
 
-- `GET /api/reports/dashboard`: Get dashboard data
-- `GET /api/reports/monthly`: Get monthly report
-- `GET /api/reports/annual`: Get annual report
-- `GET /api/reports/cashflow`: Get cash flow report
-- `GET /api/reports/budget`: Get budget report
+### 3. Initialize the Database
 
-### Settings
+1. Run the database test script to check connectivity:
+   ```bash
+   python db_test.py
+   ```
 
-- `GET /api/settings`: Get user settings
-- `PUT /api/settings`: Update user settings
+2. Initialize the database with tables and sample data:
+   ```bash
+   python init_db.py
+   ```
 
-### Notifications
+### 4. Run the Flask Backend
 
-- `GET /api/notifications`: Get user notifications
-- `POST /api/notifications/check`: Check budget limits
-- `POST /api/notifications/<id>/read`: Mark notification as read
-- `POST /api/notifications/read-all`: Mark all notifications as read
+1. Start the Flask server:
+   ```bash
+   python run.py
+   ```
 
-### Currencies
+2. The API will be available at http://localhost:5000/api
 
-- `GET /api/currencies/convert`: Convert amount between currencies
-- `GET /api/currencies/rates`: Get exchange rates
-- `GET /api/currencies/list`: Get list of common currencies
+3. Run the diagnostic script to verify API functionality:
+   ```bash
+   python flask_diagnostic.py
+   ```
 
-## Authentication
+## Frontend Setup
 
-The API uses JWT (JSON Web Tokens) for authentication. Most endpoints require a valid access token which should be included in the `Authorization` header using the Bearer scheme:
+### 1. Configure API Connection
 
-```
-Authorization: Bearer <your_access_token>
-```
+1. Navigate to the frontend directory:
+   ```bash
+   cd frontend
+   ```
 
-Upon successful login, the client receives an access token that should be stored and used for subsequent requests.
+2. Update the API URL in `lib/utils/constants.dart`:
+   ```dart
+   // For Android emulator
+   static const String baseUrl = 'http://10.0.2.2:5000/api';
+   
+   // For web or iOS simulator
+   // static const String baseUrl = 'http://localhost:5000/api';
+   ```
 
-## Error Handling
+3. Install Flutter dependencies:
+   ```bash
+   flutter pub get
+   ```
 
-The API returns appropriate HTTP status codes and error messages:
+### 2. Test API Connectivity
 
-- `200 OK`: Request succeeded
-- `201 Created`: Resource created successfully
-- `400 Bad Request`: Invalid request data
-- `401 Unauthorized`: Missing or invalid authentication
-- `403 Forbidden`: Authenticated but not authorized
-- `404 Not Found`: Resource not found
-- `409 Conflict`: Request conflicts with current state
-- `500 Internal Server Error`: Server-side error
+1. Run the API checker script:
+   ```bash
+   dart flutter_api_checker.dart
+   ```
 
-All error responses include a JSON object with an `error` field containing a descriptive message.
+### 3. Run the Flutter App
 
-## Setup and Deployment
+1. Start the Flutter app:
+   ```bash
+   flutter run
+   ```
 
-### Prerequisites
+## Troubleshooting
 
-- Python 3.9+
-- PostgreSQL 13+
-- Docker (optional, for containerized deployment)
+### Backend Issues
 
-### Development Setup
+1. **Database Connection Error**
+   - Verify PostgreSQL is running
+   - Check your database credentials in `.env`
+   - Run `python db_test.py` to diagnose connection issues
 
-1. Clone the repository
-2. Create and activate a virtual environment
-3. Install dependencies: `pip install -r requirements.txt`
-4. Configure environment variables in `.env` file
-5. Initialize the database: `python init_db.py`
-6. Run the application: `python run.py`
+2. **API Endpoints Not Working**
+   - Check Flask server logs in the `logs` directory
+   - Run `python flask_diagnostic.py` to test API endpoints
+   - Verify CORS settings if accessing from a different domain
 
-### Environment Variables
+### Frontend Issues
 
-Create a `.env` file with the following variables:
+1. **API Connection Errors**
+   - Verify the correct API URL in `lib/utils/constants.dart`
+   - For Android emulator, use `10.0.2.2` instead of `localhost`
+   - Run `dart flutter_api_checker.dart` to test API connectivity
 
-```
-SECRET_KEY=your-secret-key-change-in-production
-JWT_SECRET_KEY=your-jwt-secret-key-change-in-production
-DATABASE_URL=postgresql://username:password@localhost:5432/fin_arc
-FLASK_APP=run.py
-FLASK_ENV=development
-DEBUG=True
-```
+2. **Authentication Issues**
+   - Check token storage and refresh mechanism
+   - Verify JWT settings in the backend config
 
-### Production Deployment
+## Development Workflows
 
-For production, set appropriate environment variables and use a WSGI server like Gunicorn:
+### Adding New Features
 
-```
-gunicorn --bind 0.0.0.0:5000 run:app
-```
+1. **Backend**
+   - Create new models in `app/models/`
+   - Add new API endpoints in `app/api/`
+   - Implement business logic in `app/services/`
 
-Or use Docker with the provided Dockerfile and docker-compose.yml.
+2. **Frontend**
+   - Create data models in `lib/models/`
+   - Add API client methods in `lib/api/`
+   - Implement screens in `lib/screens/`
+   - Create state management in `lib/providers/`
 
-## Flutter Integration
+### Testing
 
-This API backend is designed to be consumed by a Flutter frontend. All endpoints return JSON data that can be easily parsed by the Flutter application. CORS is configured to allow requests from the Flutter frontend.
+1. **Backend Tests**
+   ```bash
+   python -m unittest discover tests
+   ```
 
-## Testing
+2. **Frontend Tests**
+   ```bash
+   flutter test
+   ```
 
-All API endpoints can be tested using tools like Postman or curl. Sample requests and responses for each endpoint are documented in the API documentation.
+## Deployment
+
+### Backend Deployment
+
+1. Set up a production server with PostgreSQL
+2. Configure environment variables for production
+3. Use Gunicorn as the WSGI server:
+   ```bash
+   gunicorn -w 4 -b 0.0.0.0:5000 "app:create_app()"
+   ```
+
+### Frontend Deployment
+
+1. Build the Flutter web app:
+   ```bash
+   flutter build web
+   ```
+
+2. Deploy the `build/web` directory to your hosting provider
+
+## Contributing
+
+Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

@@ -1,0 +1,130 @@
+2025-05-02 23:05:05,112 - INFO - 
+==================================================
+2025-05-02 23:05:05,112 - INFO - ======= Fin-Arc Flask Backend Diagnostics ========
+2025-05-02 23:05:05,112 - INFO - ==================================================
+2025-05-02 23:05:05,112 - INFO - Starting diagnostics at 2025-05-02 23:05:05
+2025-05-02 23:05:05,112 - INFO - 
+==================================================
+2025-05-02 23:05:05,112 - INFO - ========== Testing Server Connectivity ===========
+2025-05-02 23:05:05,112 - INFO - ==================================================
+2025-05-02 23:05:07,155 - INFO - Server response: Status 404
+2025-05-02 23:05:07,155 - INFO - Status 404 is expected for the base endpoint, that's OK.
+2025-05-02 23:05:07,156 - INFO - 
+==================================================
+2025-05-02 23:05:07,156 - INFO - ========== Testing Authentication Flow ===========
+2025-05-02 23:05:07,156 - INFO - ==================================================
+2025-05-02 23:05:07,157 - INFO - Step 1: Registering a test user
+2025-05-02 23:05:09,355 - INFO - Register response status: 409
+2025-05-02 23:05:09,355 - INFO - Register response: {"error":"Username already exists"}
+...
+2025-05-02 23:05:09,356 - INFO - User already exists, proceeding to login
+2025-05-02 23:05:09,356 - INFO - 
+Step 2: Logging in with test user
+2025-05-02 23:05:11,629 - INFO - Login response status: 200
+2025-05-02 23:05:11,630 - INFO - Login response: {"access_token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTc0NjIwOTExMSwianRpIjoiY2Y4M2ZmOGYtMzU1Yy00ZTMyLThmNDMtNjA3ZmExYTZhYTNjIiwidHlwZSI6ImFjY2VzcyIsInN1YiI6InRlc3RfZGlhZ2...
+2025-05-02 23:05:11,630 - INFO - Login successful
+2025-05-02 23:05:11,630 - INFO - 
+Step 3: Getting user profile
+2025-05-02 23:05:13,681 - INFO - Profile response status: 200
+2025-05-02 23:05:13,682 - INFO - Profile response: {"created_at":"2025-05-02 17:02:37","email":"test_diagnostic@gmail.com","first_name":"Test","id":3,"last_login":"2025-05-02 18:05:11","last_name":"User","login_history":[{"ip_address":"127.0.0.1","suc...
+2025-05-02 23:05:13,682 - INFO - Profile retrieval successful
+2025-05-02 23:05:13,683 - INFO - 
+Step 4: Testing token refresh
+2025-05-02 23:05:15,746 - INFO - Refresh response status: 200
+2025-05-02 23:05:15,747 - INFO - Refresh response: {"access_token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTc0NjIwOTExNSwianRpIjoiOTcxZjU2ZGItNGM2NS00ZmZjLTljNzYtNzg3ZTQ5MTUyYmRhIiwidHlwZSI6ImFjY2VzcyIsInN1YiI6InRlc3RfZGlhZ2...
+2025-05-02 23:05:15,747 - INFO - Token refresh successful
+2025-05-02 23:05:17,788 - INFO - New token verification successful
+2025-05-02 23:05:17,789 - INFO - 
+Step 5: Testing logout
+2025-05-02 23:05:19,847 - INFO - Logout response status: 200
+2025-05-02 23:05:19,848 - INFO - Logout response: {"message":"Successfully logged out"}
+...
+2025-05-02 23:05:19,848 - INFO - Logout successful
+2025-05-02 23:05:19,848 - INFO - 
+Authentication flow test completed successfully!
+2025-05-02 23:05:19,849 - INFO - 
+==================================================
+2025-05-02 23:05:19,849 - INFO - ============= Testing API Endpoints ==============
+2025-05-02 23:05:19,850 - INFO - ==================================================
+2025-05-02 23:05:22,108 - INFO - 
+Testing: Get Categories - GET /categories
+2025-05-02 23:05:24,165 - INFO - Response status: 200
+2025-05-02 23:05:24,166 - INFO - Get Categories - Success!
+2025-05-02 23:05:24,167 - INFO - Sample response: {
+  "categories": []
+}...
+2025-05-02 23:05:24,167 - INFO - 
+Testing: Get Expenses - GET /expenses
+2025-05-02 23:05:26,223 - INFO - Response status: 200
+2025-05-02 23:05:26,224 - INFO - Get Expenses - Success!
+2025-05-02 23:05:26,225 - INFO - Sample response: {
+  "expenses": [],
+  "pagination": {
+    "page": 1,
+    "per_page": 10,
+    "total_items": 0,
+    "total_pages": 0
+  }
+}...
+2025-05-02 23:05:26,225 - INFO - 
+Testing: Get Income - GET /income
+2025-05-02 23:05:28,276 - INFO - Response status: 200
+2025-05-02 23:05:28,278 - INFO - Get Income - Success!
+2025-05-02 23:05:28,278 - INFO - Sample response: {
+  "income": [],
+  "pagination": {
+    "page": 1,
+    "per_page": 10,
+    "total_items": 0,
+    "total_pages": 0
+  }
+}...
+2025-05-02 23:05:28,278 - INFO - 
+Testing: Get Dashboard Data - GET /reports/dashboard
+2025-05-02 23:05:30,355 - INFO - Response status: 200
+2025-05-02 23:05:30,355 - INFO - Get Dashboard Data - Success!
+2025-05-02 23:05:30,355 - INFO - Sample response: {
+  "budget_overview": [],
+  "categories": [],
+  "recent_transactions": {
+    "expenses": [],
+    "income": []
+  },
+  "stats": {
+    "month": {
+      "balance": 0.0,
+      "expenses": 0.0,
+      "inco...
+2025-05-02 23:05:30,356 - INFO - 
+All API endpoint tests passed!
+2025-05-02 23:05:30,357 - INFO - 
+==================================================
+2025-05-02 23:05:30,357 - INFO - ============== Checking Flask Logs ===============
+2025-05-02 23:05:30,358 - INFO - ==================================================
+2025-05-02 23:05:30,358 - WARNING - No Flask log files found in standard locations!
+2025-05-02 23:05:30,358 - INFO - Tips for finding Flask logs:
+2025-05-02 23:05:30,359 - INFO - 1. Check your Flask app configuration for the log file location
+2025-05-02 23:05:30,359 - INFO - 2. Look for environment variables that might specify log paths
+2025-05-02 23:05:30,359 - INFO - 3. Check the console output where Flask is running
+2025-05-02 23:05:30,359 - INFO - 
+==================================================
+2025-05-02 23:05:30,359 - INFO - =========== Diagnostic Results Summary ===========
+2025-05-02 23:05:30,360 - INFO - ==================================================
+2025-05-02 23:05:30,360 - INFO - Server Connectivity: PASS
+2025-05-02 23:05:30,360 - INFO - Authentication Flow: PASS
+2025-05-02 23:05:30,360 - INFO - API Endpoints: PASS
+2025-05-02 23:05:30,361 - INFO - Found Log Files: NO
+2025-05-02 23:05:30,361 - INFO - 
+Core functionality tests PASSED!
+2025-05-02 23:05:43,472 - INFO - 
+==================================================
+2025-05-02 23:05:43,473 - INFO - ========== Testing Database Connection ===========
+2025-05-02 23:05:43,474 - INFO - ==================================================
+2025-05-02 23:05:43,518 - INFO - Attempting to connect to PostgreSQL database:
+2025-05-02 23:05:43,519 - INFO - Host: localhost, Port: 5432, DB: fin_arc, User: postgres
+2025-05-02 23:05:43,590 - ERROR - Database connection error: connection to server at "localhost" (::1), port 5432 failed: fe_sendauth: no password supplied
+
+2025-05-02 23:05:43,590 - ERROR - Tips for resolving database connection issues:
+2025-05-02 23:05:43,591 - ERROR - 1. Ensure the PostgreSQL service is running
+2025-05-02 23:05:43,592 - ERROR - 2. Verify the database credentials and connection details
+2025-05-02 23:05:43,593 - ERROR - 3. Check network access and firewall settings

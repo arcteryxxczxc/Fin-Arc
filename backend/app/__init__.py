@@ -9,6 +9,8 @@ from dotenv import load_dotenv
 from datetime import timedelta
 from sqlalchemy.exc import SQLAlchemyError
 import logging
+import psycopg2
+import traceback
 
 # Load environment variables from .env file
 load_dotenv()
@@ -45,6 +47,64 @@ def create_app(config=None):
     
     app.config.from_object(config)
     
+    # Configure logging
+    try:
+        from logging_config import configure_logging
+        configure_logging(app)
+    except ImportError:
+        # Basic logging configuration if logging_config.py is not available
+        logging_level = getattr(logging, app.config.get('LOG_LEVEL', 'INFO'))
+        logging.basicConfig(
+            level=logging_level,
+            format=app.config.get('LOG_FORMAT', '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        )
+        
+    # Test database connection before initializing app
+    try:
+        # Try to connect to the database to validate connection
+        conn_string = app.config['SQLALCHEMY_DATABASE_URI']
+        app.logger.info(f"Testing database connection to: {conn_string.split('@')[1]}")
+        
+        # Parse connection string to get credentials (without password)
+        if conn_string.startswith('postgresql'):
+            # Extract connection parameters
+            db_params = {}
+            params_str = conn_string.split('://')[-1]
+            
+            # Extract user and password
+            user_pass, host_port_db = params_str.split('@', 1)
+            if ':' in user_pass:
+                db_params['user'], db_params['password'] = user_pass.split(':', 1)
+            else:
+                db_params['user'] = user_pass
+                db_params['password'] = ''
+                
+            # Extract host, port, and database
+            if '/' in host_port_db:
+                host_port, db_name = host_port_db.split('/', 1)
+                db_params['dbname'] = db_name
+                
+                if ':' in host_port:
+                    db_params['host'], db_params['port'] = host_port.split(':', 1)
+                else:
+                    db_params['host'] = host_port
+            
+            # Try connection
+            app.logger.info(f"Connecting to PostgreSQL database: host={db_params.get('host')}, user={db_params.get('user')}, dbname={db_params.get('dbname')}")
+            conn = psycopg2.connect(
+                host=db_params.get('host', 'localhost'),
+                user=db_params.get('user', 'postgres'),
+                password=db_params.get('password', ''),
+                dbname=db_params.get('dbname', 'fin_arc'),
+                port=db_params.get('port', '5432')
+            )
+            conn.close()
+            app.logger.info("Database connection successful")
+    except Exception as e:
+        app.logger.error(f"Database connection error: {str(e)}")
+        app.logger.error(f"Connection string: {conn_string.split(':')[0]}://{conn_string.split(':')[1].split(':')[0]}:***@{conn_string.split('@')[1]}")
+        app.logger.error(f"Stack trace: {traceback.format_exc()}")
+    
     # Initialize extensions with app
     db.init_app(app)
     migrate.init_app(app, db)
@@ -60,6 +120,7 @@ def create_app(config=None):
         'ionic://localhost',      # Ionic for mobile
         'http://localhost',       # General localhost
         'file://'                 # File protocol for mobile apps
+        '*'
     ]
     
     # Add production URLs if in production
@@ -84,12 +145,13 @@ def create_app(config=None):
     app.config['JWT_BLACKLIST_ENABLED'] = True
     app.config['JWT_BLACKLIST_TOKEN_CHECKS'] = ['access', 'refresh']
 
-    # Configure logging
-    logging_level = getattr(logging, app.config.get('LOG_LEVEL', 'INFO'))
-    logging.basicConfig(
-        level=logging_level,
-        format=app.config.get('LOG_FORMAT', '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    )
+    # Create database tables if they don't exist
+    with app.app_context():
+        try:
+            db.create_all()
+            app.logger.info("Database tables created or confirmed to exist")
+        except Exception as e:
+            app.logger.error(f"Error creating database tables: {str(e)}")
     
     # Register API blueprint
     from app.api import api_bp
@@ -162,4 +224,7 @@ def create_app(config=None):
             'status': 401
         }), 401
 
+    # Log successful app creation
+    app.logger.info(f"App created in {app.config.get('FLASK_ENV', 'default')} mode")
+    
     return app

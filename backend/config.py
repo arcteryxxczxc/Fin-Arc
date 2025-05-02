@@ -81,7 +81,8 @@ class Config:
     
     # Logging configuration
     LOG_FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    LOG_LEVEL = 'INFO'
+    LOG_LEVEL = os.environ.get('LOG_LEVEL', 'INFO')
+    LOG_FILE = os.environ.get('LOG_FILE', 'flask_app.log')
 
 
 class DevelopmentConfig(Config):

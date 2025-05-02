@@ -53,7 +53,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
     final themeProvider = Provider.of<ThemeProvider>(context);
-    final theme = Theme.of(context);
     
     return ScreenWrapper(
       currentRoute: RouteNames.profile,

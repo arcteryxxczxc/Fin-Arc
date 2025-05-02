@@ -18,6 +18,7 @@ class ExpenseProvider with ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
   bool get hasMoreToLoad => _hasMoreToLoad;
+  bool get hasMorePages => _currentPage < _totalPages; // Added missing property
   
   // Filter state
   int? _categoryId;
@@ -83,6 +84,13 @@ class ExpenseProvider with ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
+  }
+  
+  // Load more expenses (pagination support)
+  Future<void> loadMoreExpenses() async {
+    if (_isLoading || !hasMorePages) return;
+    
+    await fetchExpenses(refresh: false);
   }
   
   // Apply filters and reload data

@@ -98,7 +98,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> with Single
       // Get zxcvbn score
       if (password.isNotEmpty) {
         final result = _zxcvbn.evaluate(password);
-        _zxcvbnScore = result.score ?? 0;
+        _zxcvbnScore = (result.score ?? 0).toInt();
         
         // Update strength text
         switch (_zxcvbnScore) {

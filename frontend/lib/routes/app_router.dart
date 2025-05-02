@@ -1,5 +1,5 @@
 // lib/routes/app_router.dart
-import 'package:flutter/material.dart' show Scaffold, MaterialPageRoute, AppBar, Text, Icon, SizedBox, Column, Center, ElevatedButton;
+import 'package:flutter/material.dart';
 
 // Screens
 import '../screens/splash_screen.dart';
@@ -8,18 +8,6 @@ import '../screens/auth/register_screen.dart';
 import '../screens/auth/change_password_screen.dart';
 import '../screens/dashboard/dashboard_screen.dart';
 import '../screens/profile_screen.dart';
-import '../screens/expenses/expense_list_screen.dart';
-import '../screens/expenses/expense_detail_screen.dart';
-import '../screens/expenses/add_expense_screen.dart';
-import '../screens/income/income_list_screen.dart';
-import '../screens/income/income_detail_screen.dart';
-import '../screens/income/add_income_screen.dart';
-import '../screens/income/edit_income_screen.dart';
-import '../screens/reports/reports_screen.dart';
-import '../screens/reports/monthly_report_screen.dart';
-import '../screens/reports/annual_report_screen.dart';
-import '../screens/reports/budget_report_screen.dart';
-import '../screens/reports/cashflow_report_screen.dart';
 
 // Routes
 import 'route_names.dart';
@@ -67,6 +55,8 @@ class AppRouter {
           builder: (_) => const ProfileScreen(),
         );
 
+      // We'll add these back when the screens are available
+      /*
       case RouteNames.reports:
         return MaterialPageRoute(
           settings: settings,
@@ -145,35 +135,32 @@ class AppRouter {
             incomeId: args['incomeId'],
           ),
         );
-
-      // Add more routes as needed for categories, etc.
+      */
 
       default:
         // If the route doesn't exist, show an error page
         return MaterialPageRoute(
           settings: settings,
-          builder: (_) => Material(
-            child: Scaffold(
-              appBar: AppBar(title: const Text('Not Found')),
-              body: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.error_outline,
-                      size: 64,
-                      color: Colors.red,
+          builder: (_) => Scaffold(
+            appBar: AppBar(title: const Text('Not Found')),
+            body: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.error_outline,
+                    size: 64,
+                    color: Colors.red,
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Route not found',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
                     ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Route not found',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),

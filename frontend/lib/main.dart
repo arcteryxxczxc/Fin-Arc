@@ -8,6 +8,7 @@ import 'providers/auth_provider.dart';
 import 'providers/theme_provider.dart';
 import 'providers/expense_provider.dart';
 import 'providers/income_provider.dart';
+import 'providers/category_provider.dart';
 
 // Screens
 import 'screens/splash_screen.dart';
@@ -49,6 +50,7 @@ class MyApp extends StatelessWidget {
         // Feature providers
         ChangeNotifierProvider(create: (_) => ExpenseProvider()),
         ChangeNotifierProvider(create: (_) => IncomeProvider()),
+        ChangeNotifierProvider(create: (_) => CategoryProvider()), // Added
         
         // Route observer as a value notifier provider
         Provider<FinArcRouteObserver>.value(value: routeObserver),

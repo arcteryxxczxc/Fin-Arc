@@ -1,6 +1,7 @@
 // lib/widgets/navigation/bottom_navigation.dart
 import 'package:flutter/material.dart';
 import '../../routes/route_names.dart';
+import '../../utils/color_utils.dart'; 
 
 class FinArcBottomNavigation extends StatelessWidget {
   final String currentRoute;
@@ -23,7 +24,7 @@ class FinArcBottomNavigation extends StatelessWidget {
       decoration: BoxDecoration(
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: ColorUtils.withOpacity(Colors.black, 0.1),
             blurRadius: 10,
             offset: const Offset(0, -5),
           ),
@@ -73,6 +74,6 @@ class FinArcBottomNavigation extends StatelessWidget {
               currentRoute.startsWith(RouteNames.settings)) {
       return 4;
     }
-    return 0; // Default to dashboard
+    return 0; 
   }
 }

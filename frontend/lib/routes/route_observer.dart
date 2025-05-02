@@ -1,5 +1,6 @@
 // lib/routes/route_observer.dart
 import 'package:flutter/material.dart';
+import 'dart:async';
 
 class FinArcRouteObserver extends RouteObserver<PageRoute<dynamic>> {
   final ValueNotifier<String> currentRoute = ValueNotifier<String>('/');

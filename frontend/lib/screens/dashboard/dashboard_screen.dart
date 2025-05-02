@@ -9,6 +9,8 @@ import '../../widgets/common/loading_indicator.dart';
 import '../../widgets/common/error_display.dart';
 import '../../widgets/layout/screen_wrapper.dart';
 import '../../routes/route_names.dart';
+import '../../utils/color_utils.dart';
+
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -486,7 +488,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     horizontalInterval: maxY / 5,
                     getDrawingHorizontalLine: (value) {
                       return FlLine(
-                        color: themeData.dividerColor.withOpacity(0.2),
+                        color: ColorUtils.withOpacity(theme.dividerColor, 0.2),
                         strokeWidth: 1,
                       );
                     },
@@ -683,7 +685,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       child: LinearProgressIndicator(
                         value: percentage > 0 ? (percentage / 100 > 1 ? 1 : percentage / 100) : 0,
                         minHeight: 8,
-                        backgroundColor: themeData.dividerColor.withOpacity(0.2),
+                        backgroundColor: ColorUtils.withOpacity(themeData.dividerColor, 0.2),
                         valueColor: AlwaysStoppedAnimation<Color>(progressColor),
                       ),
                     ),

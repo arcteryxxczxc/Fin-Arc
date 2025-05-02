@@ -1,8 +1,10 @@
+// lib/widgets/common/drawer.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/theme_provider.dart';
 import '../../routes/route_names.dart';
+import '../../utils/color_utils.dart';
 
 class AppDrawer extends StatelessWidget {
   final String currentRoute;
@@ -51,6 +53,9 @@ class AppDrawer extends StatelessWidget {
                   route: RouteNames.dashboard,
                   isSelected: currentRoute == RouteNames.dashboard,
                 ),
+                
+                // Comment out screens that don't exist yet
+                /*
                 _buildDrawerItem(
                   context: context,
                   icon: Icons.arrow_downward,
@@ -79,6 +84,8 @@ class AppDrawer extends StatelessWidget {
                   route: RouteNames.reports,
                   isSelected: currentRoute.startsWith('/reports'),
                 ),
+                */
+                
                 const Divider(),
                 // Settings & Profile
                 _buildDrawerItem(
@@ -88,6 +95,9 @@ class AppDrawer extends StatelessWidget {
                   route: RouteNames.profile,
                   isSelected: currentRoute == RouteNames.profile,
                 ),
+                
+                // Comment out settings screen for now
+                /*
                 _buildDrawerItem(
                   context: context,
                   icon: Icons.settings,
@@ -95,6 +105,7 @@ class AppDrawer extends StatelessWidget {
                   route: RouteNames.settings,
                   isSelected: currentRoute == RouteNames.settings,
                 ),
+                */
                 
                 // Theme switcher
                 ListTile(
@@ -166,7 +177,7 @@ class AppDrawer extends StatelessWidget {
           color: isSelected ? theme.colorScheme.primary : null,
         ),
       ),
-      tileColor: isSelected ? theme.colorScheme.primary.withOpacity(0.1) : null,
+      tileColor: isSelected ? ColorUtils.withOpacity(theme.colorScheme.primary, 0.1) : null,
       onTap: () {
         Navigator.of(context).pop(); // Close drawer
         
@@ -210,10 +221,13 @@ class AppDrawer extends StatelessWidget {
               
               await authProvider.logout();
               
-              // Navigate to login screen
-              Navigator.of(context).pushReplacementNamed(RouteNames.login);
+              // Check if widget is still mounted before using context
+              if (context.mounted) {
+                // Navigate to login screen
+                Navigator.of(context).pushReplacementNamed(RouteNames.login);
+              }
             },
-            child: const Text('Logout'),
+            child: const Text('Logout'),        
           ),
         ],
       ),

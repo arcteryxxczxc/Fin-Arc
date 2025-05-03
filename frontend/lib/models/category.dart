@@ -27,7 +27,6 @@ class Category {
     this.budgetStatus,
   });
   
-  // Create Category from JSON
   factory Category.fromJson(Map<String, dynamic> json) {
     return Category(
       id: json['id'],
@@ -35,7 +34,7 @@ class Category {
       description: json['description'],
       colorCode: json['color'] ?? json['color_code'] ?? '#757575',
       icon: json['icon'],
-      budgetLimit: json['budget']?.toDouble(),
+      budgetLimit: json['budget']?.toDouble() ?? json['budget_limit']?.toDouble(),
       budgetStartDay: json['budget_start_day'] ?? 1,
       isIncome: json['is_income'] ?? false,
       isActive: json['is_active'] ?? true,
@@ -44,7 +43,7 @@ class Category {
       budgetStatus: json['budget_status'],
     );
   }
-  
+ 
   // Convert Category to JSON
   Map<String, dynamic> toJson() {
     return {

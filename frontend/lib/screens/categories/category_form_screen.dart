@@ -1,3 +1,4 @@
+// lib/screens/categories/category_form_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/category_provider.dart';
@@ -14,7 +15,7 @@ class CategoryFormScreen extends StatefulWidget {
   });
 
   @override
-  _CategoryFormScreenState createState() => _CategoryFormScreenState();
+  State<CategoryFormScreen> createState() => _CategoryFormScreenState();
 }
 
 class _CategoryFormScreenState extends State<CategoryFormScreen> {

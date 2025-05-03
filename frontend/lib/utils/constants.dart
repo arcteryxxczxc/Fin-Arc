@@ -70,10 +70,10 @@ class AppConstants {
   
     // If endpoint starts with '/', remove it before adding '/api/'
     if (endpoint.startsWith('/')) {
-      return '/api${endpoint}';
+      return '/api$endpoint';
     }
     
     // Otherwise, add '/api/' prefix
-    return '/api/${endpoint}';
+    return '/api/$endpoint';
   }
 }

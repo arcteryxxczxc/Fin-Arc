@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
-import '../services/report_service.dart';
-import '../widgets/common/loading_indicator.dart';
-import '../widgets/common/error_display.dart';
-import '../widgets/common/drawer.dart';
-import '../routes/route_names.dart';
-import '../utils/error_handler.dart';
+import '/services/report_service.dart';
+import '/widgets/common/loading_indicator.dart';
+import '/widgets/common/error_display.dart';
+import '/widgets/common/drawer.dart';
+import '/routes/route_names.dart';
+import '/utils/error_handler.dart';
 
 class AnnualReportScreen extends StatefulWidget {
   const AnnualReportScreen({super.key});
@@ -17,36 +17,36 @@ class AnnualReportScreen extends StatefulWidget {
 
 class _AnnualReportScreenState extends State<AnnualReportScreen> {
   final ReportService _reportService = ReportService();
-  
+
   bool _isLoading = false;
   String? _error;
   Map<String, dynamic>? _reportData;
-  
+
   // Selected year
   late int _selectedYear;
-  
+
   @override
   void initState() {
     super.initState();
     _selectedYear = DateTime.now().year;
     _fetchAnnualReport();
   }
-  
+
   Future<void> _fetchAnnualReport() async {
     if (!mounted) return;
-    
+
     setState(() {
       _isLoading = true;
       _error = null;
     });
-    
+
     try {
       final result = await _reportService.getAnnualReport(
         year: _selectedYear,
       );
-      
+
       if (!mounted) return;
-      
+
       if (result['success']) {
         setState(() {
           _reportData = result['data'];
@@ -60,14 +60,14 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
       }
     } catch (e) {
       if (!mounted) return;
-      
+
       setState(() {
         _error = 'Failed to load annual report: $e';
         _isLoading = false;
       });
     }
   }
-  
+
   // Navigate to previous year
   void _previousYear() {
     setState(() {
@@ -75,25 +75,25 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
     });
     _fetchAnnualReport();
   }
-  
+
   // Navigate to next year
   void _nextYear() {
     // Don't allow going beyond current year
     if (_selectedYear >= DateTime.now().year) {
       return;
     }
-    
+
     setState(() {
       _selectedYear++;
     });
     _fetchAnnualReport();
   }
-  
+
   // Allow user to pick a year from a dialog
   void _showYearPicker(BuildContext context) {
     final now = DateTime.now();
     const firstYear = 2020; // First available year
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -106,12 +106,16 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
             itemBuilder: (context, index) {
               final year = firstYear + index;
               final isSelected = year == _selectedYear;
-              
+
               return ListTile(
                 title: Text('$year'),
-                tileColor: isSelected ? Theme.of(context).primaryColor.withOpacity(0.1) : null,
+                tileColor: isSelected
+                    ? Theme.of(context).primaryColor.withOpacity(0.1)
+                    : null,
                 textColor: isSelected ? Theme.of(context).primaryColor : null,
-                trailing: isSelected ? Icon(Icons.check, color: Theme.of(context).primaryColor) : null,
+                trailing: isSelected
+                    ? Icon(Icons.check, color: Theme.of(context).primaryColor)
+                    : null,
                 onTap: () {
                   Navigator.of(context).pop();
                   if (year != _selectedYear) {
@@ -134,12 +138,12 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
       ),
     );
   }
-  
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final currencyFormatter = NumberFormat.currency(symbol: '\$');
-    
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Annual Report'),
@@ -152,56 +156,56 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
         ],
       ),
       drawer: AppDrawer(currentRoute: RouteNames.annualReport),
-      body: _isLoading 
-        ? LoadingIndicator(message: 'Loading annual report...')
-        : _error != null
-          ? ErrorDisplay(
-              error: _error!,
-              onRetry: _fetchAnnualReport,
-            )
-          : _reportData == null
-            ? const Center(child: Text('No report data available'))
-            : RefreshIndicator(
-                onRefresh: _fetchAnnualReport,
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Year selector
-                      _buildYearSelector(theme),
-                      const SizedBox(height: 24),
-                      
-                      // Annual summary
-                      _buildAnnualSummary(theme, currencyFormatter),
-                      const SizedBox(height: 24),
-                      
-                      // Monthly trends
-                      _buildMonthlyTrendsChart(theme),
-                      const SizedBox(height: 24),
-                      
-                      // Quarterly data
-                      _buildQuarterlyData(theme, currencyFormatter),
-                      const SizedBox(height: 24),
-                      
-                      // Expense categories
-                      _buildExpenseCategories(theme, currencyFormatter),
-                      const SizedBox(height: 24),
-                      
-                      // Income sources
-                      _buildIncomeSources(theme, currencyFormatter),
-                    ],
-                  ),
-                ),
-              ),
+      body: _isLoading
+          ? LoadingIndicator(message: 'Loading annual report...')
+          : _error != null
+              ? ErrorDisplay(
+                  error: _error!,
+                  onRetry: _fetchAnnualReport,
+                )
+              : _reportData == null
+                  ? const Center(child: Text('No report data available'))
+                  : RefreshIndicator(
+                      onRefresh: _fetchAnnualReport,
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Year selector
+                            _buildYearSelector(theme),
+                            const SizedBox(height: 24),
+
+                            // Annual summary
+                            _buildAnnualSummary(theme, currencyFormatter),
+                            const SizedBox(height: 24),
+
+                            // Monthly trends
+                            _buildMonthlyTrendsChart(theme),
+                            const SizedBox(height: 24),
+
+                            // Quarterly data
+                            _buildQuarterlyData(theme, currencyFormatter),
+                            const SizedBox(height: 24),
+
+                            // Expense categories
+                            _buildExpenseCategories(theme, currencyFormatter),
+                            const SizedBox(height: 24),
+
+                            // Income sources
+                            _buildIncomeSources(theme, currencyFormatter),
+                          ],
+                        ),
+                      ),
+                    ),
     );
   }
-  
+
   Widget _buildYearSelector(ThemeData theme) {
     // Check if we can go to next year (not beyond current year)
     final now = DateTime.now();
     final canGoNext = _selectedYear < now.year;
-    
+
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -234,16 +238,16 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
       ),
     );
   }
-  
+
   Widget _buildAnnualSummary(ThemeData theme, NumberFormat currencyFormatter) {
     final totals = _reportData!['totals'] as Map<String, dynamic>;
     final income = (totals['income'] as num).toDouble();
     final expenses = (totals['expenses'] as num).toDouble();
     final balance = (totals['balance'] as num).toDouble();
-    
+
     // Calculate savings rate
     final savingsRate = income > 0 ? (balance / income) * 100 : 0.0;
-    
+
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -259,7 +263,7 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            
+
             // Income, Expenses, Balance
             Row(
               children: [
@@ -294,9 +298,9 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
                 ),
               ],
             ),
-            
+
             const SizedBox(height: 24),
-            
+
             // Savings rate
             Container(
               padding: const EdgeInsets.all(16),
@@ -346,7 +350,7 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
       ),
     );
   }
-  
+
   Widget _buildSummaryItem({
     required String title,
     required double amount,
@@ -388,10 +392,10 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
       ],
     );
   }
-  
+
   Widget _buildMonthlyTrendsChart(ThemeData theme) {
     final monthlyData = _reportData!['monthly_data'] as List<dynamic>? ?? [];
-    
+
     if (monthlyData.isEmpty) {
       return Card(
         elevation: 2,
@@ -419,22 +423,22 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
         ),
       );
     }
-    
+
     // Extract data for the chart
     final List<BarChartGroupData> barGroups = [];
     final List<String> months = [];
-    
+
     // Find max value for chart scaling
     double maxY = 0;
-    
+
     for (int i = 0; i < monthlyData.length; i++) {
       final monthData = monthlyData[i];
       final monthName = monthData['month_name'] as String;
       final income = (monthData['income'] as num).toDouble();
       final expenses = (monthData['expenses'] as num).toDouble();
-      
+
       months.add(monthName.substring(0, 3)); // Abbreviate month name
-      
+
       barGroups.add(
         BarChartGroupData(
           x: i,
@@ -443,27 +447,30 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
               toY: income,
               color: Colors.green,
               width: 12,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(4)),
             ),
             BarChartRodData(
               toY: expenses,
               color: Colors.red,
               width: 12,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(4)),
             ),
           ],
           barsSpace: 4,
         ),
       );
-      
+
       // Update max value
-      maxY = [maxY, income, expenses].reduce((curr, next) => curr > next ? curr : next);
+      maxY = [maxY, income, expenses]
+          .reduce((curr, next) => curr > next ? curr : next);
     }
-    
+
     // Round up max value for nice chart scaling
     maxY = ((maxY / 1000).ceil() * 1000).toDouble();
     if (maxY < 1000) maxY = 1000;
-    
+
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -479,7 +486,7 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
               ),
             ),
             const SizedBox(height: 24),
-            
+
             // Chart
             SizedBox(
               height: 240,
@@ -555,9 +562,9 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
                 ),
               ),
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // Legend
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -578,7 +585,7 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
       ),
     );
   }
-  
+
   Widget _buildLegendItem({required String label, required Color color}) {
     return Row(
       children: [
@@ -601,10 +608,11 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
       ],
     );
   }
-  
+
   Widget _buildQuarterlyData(ThemeData theme, NumberFormat currencyFormatter) {
-    final quarterlyData = _reportData!['quarterly_data'] as List<dynamic>? ?? [];
-    
+    final quarterlyData =
+        _reportData!['quarterly_data'] as List<dynamic>? ?? [];
+
     if (quarterlyData.isEmpty) {
       return Card(
         elevation: 2,
@@ -632,7 +640,7 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
         ),
       );
     }
-    
+
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -648,7 +656,7 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            
+
             // Quarterly data table
             Table(
               columnWidths: const {
@@ -700,14 +708,14 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
                     ),
                   ],
                 ),
-                
+
                 // Table data rows
                 ...quarterlyData.map((quarter) {
                   final quarterName = quarter['quarter_name'] as String;
                   final income = (quarter['income'] as num).toDouble();
                   final expenses = (quarter['expenses'] as num).toDouble();
                   final balance = (quarter['balance'] as num).toDouble();
-                  
+
                   return TableRow(
                     decoration: BoxDecoration(
                       border: Border(
@@ -760,10 +768,11 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
       ),
     );
   }
-  
-  Widget _buildExpenseCategories(ThemeData theme, NumberFormat currencyFormatter) {
+
+  Widget _buildExpenseCategories(
+      ThemeData theme, NumberFormat currencyFormatter) {
     final categories = _reportData!['categories'] as List<dynamic>? ?? [];
-    
+
     if (categories.isEmpty) {
       return Card(
         elevation: 2,
@@ -791,22 +800,22 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
         ),
       );
     }
-    
+
     // Prepare data for pie chart
     List<PieChartSectionData> sections = [];
-    
+
     for (final category in categories) {
       final name = category['name'] as String;
       final color = category['color'] as String;
       final total = (category['total'] as num).toDouble();
       final percentage = (category['percentage'] as num).toDouble();
-      
+
       // Skip categories with no spending
       if (total <= 0) continue;
-      
+
       // Parse color from hex string
       final colorValue = Color(int.parse(color.replaceFirst('#', '0xFF')));
-      
+
       sections.add(
         PieChartSectionData(
           color: colorValue,
@@ -821,7 +830,7 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
         ),
       );
     }
-    
+
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -837,7 +846,6 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            
             if (sections.isEmpty) ...[
               const Center(
                 child: Padding(
@@ -857,9 +865,9 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
                   ),
                 ),
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               // Category list
               ListView.builder(
                 shrinkWrap: true,
@@ -871,13 +879,14 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
                   final color = category['color'] as String;
                   final total = (category['total'] as num).toDouble();
                   final percentage = (category['percentage'] as num).toDouble();
-                  
+
                   // Skip categories with no spending
                   if (total <= 0) return const SizedBox.shrink();
-                  
+
                   // Parse color from hex string
-                  final colorValue = Color(int.parse(color.replaceFirst('#', '0xFF')));
-                  
+                  final colorValue =
+                      Color(int.parse(color.replaceFirst('#', '0xFF')));
+
                   return ListTile(
                     contentPadding: const EdgeInsets.symmetric(vertical: 4),
                     leading: Container(
@@ -902,10 +911,10 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
       ),
     );
   }
-  
+
   Widget _buildIncomeSources(ThemeData theme, NumberFormat currencyFormatter) {
     final sources = _reportData!['income_sources'] as List<dynamic>? ?? [];
-    
+
     if (sources.isEmpty) {
       return Card(
         elevation: 2,
@@ -933,34 +942,34 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
         ),
       );
     }
-    
+
     // Prepare data for bar chart
     final List<BarChartGroupData> barGroups = [];
     final List<String> sourceNames = [];
     final List<Color> colors = [];
-    
+
     double maxAmount = 0;
-    
+
     for (int i = 0; i < sources.length; i++) {
       final source = sources[i];
       final name = source['name'] as String;
       final color = source['color'] as String;
       final total = (source['total'] as num).toDouble();
-      
+
       // Skip sources with no income
       if (total <= 0) continue;
-      
+
       // Update max amount
       if (total > maxAmount) {
         maxAmount = total;
       }
-      
+
       // Parse color from hex string
       final colorValue = Color(int.parse(color.replaceFirst('#', '0xFF')));
-      
+
       sourceNames.add(name);
       colors.add(colorValue);
-      
+
       barGroups.add(
         BarChartGroupData(
           x: i,
@@ -969,17 +978,18 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
               toY: total,
               color: colorValue,
               width: 20,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(6)),
             ),
           ],
         ),
       );
     }
-    
+
     // Round up max value for nice chart scaling
     maxAmount = ((maxAmount / 1000).ceil() * 1000).toDouble();
     if (maxAmount < 1000) maxAmount = 1000;
-    
+
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -995,7 +1005,6 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            
             if (barGroups.isEmpty) ...[
               const Center(
                 child: Padding(
@@ -1078,9 +1087,9 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
                   ),
                 ),
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               // Income sources list
               ListView.builder(
                 shrinkWrap: true,
@@ -1092,13 +1101,14 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
                   final color = source['color'] as String;
                   final total = (source['total'] as num).toDouble();
                   final percentage = (source['percentage'] as num).toDouble();
-                  
+
                   // Skip sources with no income
                   if (total <= 0) return const SizedBox.shrink();
-                  
+
                   // Parse color from hex string
-                  final colorValue = Color(int.parse(color.replaceFirst('#', '0xFF')));
-                  
+                  final colorValue =
+                      Color(int.parse(color.replaceFirst('#', '0xFF')));
+
                   return ListTile(
                     contentPadding: const EdgeInsets.symmetric(vertical: 4),
                     leading: Container(
@@ -1122,3 +1132,5 @@ class _AnnualReportScreenState extends State<AnnualReportScreen> {
         ),
       ),
     );
+  }
+}

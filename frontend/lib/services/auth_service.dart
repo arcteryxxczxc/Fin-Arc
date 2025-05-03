@@ -2,7 +2,6 @@
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../models/user.dart';
-import '../utils/constants.dart';
 import '../api/endpoints/auth_api.dart';
 
 class AuthService {
@@ -106,13 +105,13 @@ class AuthService {
     }
     
     // Verify user data is a map
-    if (!(data['user'] is Map)) {
+    if (data['user'] is! Map) {
       print('Invalid auth response: user is not a map');
       return false;
     }
     
     // Verify token values are strings
-    if (!(data['access_token'] is String) || !(data['refresh_token'] is String)) {
+    if (data['access_token'] is! String || data['refresh_token'] is! String) {
       print('Invalid auth response: tokens are not strings');
       return false;
     }
@@ -126,11 +125,9 @@ class AuthService {
     
     try {
       // Only call the API if we have a token
-      if (token != null) {
-        print('Making logout API call');
-        await _authApi.logout();
-      }
-    } catch (e) {
+      print('Making logout API call');
+      await _authApi.logout();
+        } catch (e) {
       // Even if server logout fails, continue to clear local storage
       print('Logout error: $e');
     } finally {

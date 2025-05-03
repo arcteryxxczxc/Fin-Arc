@@ -7,7 +7,10 @@ import '../../models/category.dart';
 import '../../models/expense.dart';
 import '../../widgets/common/loading_indicator.dart';
 import '../../widgets/common/error_display.dart';
+import '../../widgets/layout/screen_wrapper.dart';
+import '../../routes/route_names.dart';
 import '../expenses/expense_detail_screen.dart';
+import 'category_form_screen.dart';
 
 class CategoryDetailScreen extends StatefulWidget {
   final int categoryId;
@@ -47,12 +50,22 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
       // Get category details
       final category = await categoryProvider.getCategoryDetails(widget.categoryId);
       
+      if (category == null) {
+        setState(() {
+          _error = 'Category not found';
+          _isLoading = false;
+        });
+        return;
+      }
+      
       // Get category expenses
-      await expenseProvider.fetchExpenses(
-        refresh: true,
+      final startDateStr = DateFormat('yyyy-MM-dd').format(_startDate);
+      final endDateStr = DateFormat('yyyy-MM-dd').format(_endDate);
+      
+      await expenseProvider.applyFilters(
         categoryId: widget.categoryId,
-        startDate: DateFormat('yyyy-MM-dd').format(_startDate),
-        endDate: DateFormat('yyyy-MM-dd').format(_endDate),
+        startDate: startDateStr,
+        endDate: endDateStr
       );
       
       if (mounted) {
@@ -91,11 +104,14 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
       
       // Refresh expenses with new date range
       final expenseProvider = Provider.of<ExpenseProvider>(context, listen: false);
-      await expenseProvider.fetchExpenses(
-        refresh: true,
+      
+      final startDateStr = DateFormat('yyyy-MM-dd').format(_startDate);
+      final endDateStr = DateFormat('yyyy-MM-dd').format(_endDate);
+      
+      await expenseProvider.applyFilters(
         categoryId: widget.categoryId,
-        startDate: DateFormat('yyyy-MM-dd').format(_startDate),
-        endDate: DateFormat('yyyy-MM-dd').format(_endDate),
+        startDate: startDateStr,
+        endDate: endDateStr
       );
       
       setState(() {
@@ -109,68 +125,69 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
     final theme = Theme.of(context);
     final currencyFormatter = NumberFormat.currency(symbol: '\$');
     
-    if (_isLoading) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('Category Details')),
-        body: const LoadingIndicator(message: 'Loading category details...'),
-      );
-    }
-    
-    if (_error != null || _category == null) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('Category Details')),
-        body: ErrorDisplay(
-          error: _error ?? 'Failed to load category',
-          onRetry: _loadCategoryDetails,
-        ),
-      );
-    }
-    
-    // Parse color from hex string
-    final categoryColor = Color(int.parse(_category!.colorCode.substring(1, 7), radix: 16) + 0xFF000000);
-    
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(_category!.name),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.edit),
-            onPressed: () {
-              // Navigate to edit category screen
-              // This will be implemented in another PR
-            },
-            tooltip: 'Edit category',
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Category overview card
-            _buildCategoryOverview(theme, currencyFormatter, categoryColor),
-            const SizedBox(height: 24),
-            
-            // Budget progress if applicable
-            if (_category!.budgetLimit != null && _category!.budgetLimit! > 0)
-              _buildBudgetProgress(theme, currencyFormatter, categoryColor),
-            
-            const SizedBox(height: 24),
-            
-            // Date range selection
-            _buildDateRangeSelector(theme),
-            const SizedBox(height: 16),
-            
-            // Expense list
-            _buildExpenseList(theme, currencyFormatter),
-          ],
-        ),
+    return ScreenWrapper(
+      currentRoute: RouteNames.categoryDetail,
+      child: Scaffold(
+        appBar: AppBar(title: Text(_category?.name ?? 'Category Details')),
+        body: _isLoading 
+          ? const LoadingIndicator(message: 'Loading category details...')
+          : _error != null
+            ? ErrorDisplay(
+                error: _error!,
+                onRetry: _loadCategoryDetails,
+              )
+            : _category == null
+              ? const Center(child: Text('Category not found'))
+              : RefreshIndicator(
+                  onRefresh: _loadCategoryDetails,
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Category overview card
+                        _buildCategoryOverview(theme, currencyFormatter),
+                        const SizedBox(height: 24),
+                        
+                        // Budget progress if applicable
+                        if (_category!.budgetLimit != null && _category!.budgetLimit! > 0)
+                          _buildBudgetProgress(theme, currencyFormatter),
+                        
+                        const SizedBox(height: 24),
+                        
+                        // Date range selection
+                        _buildDateRangeSelector(theme),
+                        const SizedBox(height: 16),
+                        
+                        // Expense list
+                        _buildExpenseList(theme, currencyFormatter),
+                      ],
+                    ),
+                  ),
+                ),
+        floatingActionButton: _category != null
+          ? FloatingActionButton(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => CategoryFormScreen(category: _category),
+                  ),
+                ).then((_) => _loadCategoryDetails());
+              },
+              tooltip: 'Edit category',
+              child: const Icon(Icons.edit),
+            )
+          : null,
       ),
     );
   }
   
-  Widget _buildCategoryOverview(ThemeData theme, NumberFormat currencyFormatter, Color categoryColor) {
+  Widget _buildCategoryOverview(ThemeData theme, NumberFormat currencyFormatter) {
+    if (_category == null) return const SizedBox.shrink();
+    
+    // Parse color from hex string
+    final categoryColor = Color(int.parse(_category!.colorCode.substring(1, 7), radix: 16) + 0xFF000000);
+    
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -189,7 +206,9 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
-                    _category!.icon != null ? IconData(int.parse(_category!.icon!), fontFamily: 'MaterialIcons') : Icons.category,
+                    _category!.icon != null 
+                      ? IconData(int.parse(_category!.icon!), fontFamily: 'MaterialIcons') 
+                      : Icons.category,
                     color: Colors.white,
                   ),
                 ),
@@ -323,7 +342,9 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
     }
   }
   
-  Widget _buildBudgetProgress(ThemeData theme, NumberFormat currencyFormatter, Color categoryColor) {
+  Widget _buildBudgetProgress(ThemeData theme, NumberFormat currencyFormatter) {
+    if (_category == null) return const SizedBox.shrink();
+    
     // Skip if no budget
     if (_category!.budgetLimit == null || _category!.budgetLimit! <= 0) {
       return const SizedBox.shrink();
@@ -539,7 +560,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                       MaterialPageRoute(
                         builder: (context) => ExpenseDetailScreen(expenseId: expense.id),
                       ),
-                    );
+                    ).then((_) => _loadCategoryDetails());
                   },
                 );
               },

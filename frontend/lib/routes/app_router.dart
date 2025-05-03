@@ -9,6 +9,18 @@ import '../screens/auth/change_password_screen.dart';
 import '../screens/dashboard/dashboard_screen.dart';
 import '../screens/profile_screen.dart';
 import '../screens/debug/api_test_screen.dart';
+import '../screens/expenses/expense_list_screen.dart';
+import '../screens/expenses/expense_detail_screen.dart';
+import '../screens/expenses/add_expense_screen.dart';
+import '../screens/income/income_list_screen.dart';
+import '../screens/income/income_detail_screen.dart';
+import '../screens/income/add_income_screen.dart';
+import '../screens/income/edit_income_screen.dart';
+import '../screens/reports/reports_screen.dart';
+import '../screens/reports/monthly_report_screen.dart';
+import '../screens/reports/annual_report_screen.dart';
+import '../screens/reports/budget_report_screen.dart';
+import '../screens/reports/cashflow_report_screen.dart';
 
 // Routes
 import 'route_names.dart';
@@ -99,11 +111,10 @@ class AppRouter {
         );
 
       case RouteNames.expenseDetail:
+        final int expenseId = args['expenseId'] ?? 0;
         return MaterialPageRoute(
           settings: settings,
-          builder: (_) => ExpenseDetailScreen(
-            expenseId: args['expenseId'],
-          ),
+          builder: (_) => ExpenseDetailScreen(expenseId: expenseId),
         );
 
       case RouteNames.addExpense:
@@ -120,11 +131,10 @@ class AppRouter {
         );
 
       case RouteNames.incomeDetail:
+        final int incomeId = args['incomeId'] ?? 0;
         return MaterialPageRoute(
           settings: settings,
-          builder: (_) => IncomeDetailScreen(
-            incomeId: args['incomeId'],
-          ),
+          builder: (_) => IncomeDetailScreen(incomeId: incomeId),
         );
 
       case RouteNames.addIncome:
@@ -134,11 +144,10 @@ class AppRouter {
         );
 
       case RouteNames.editIncome:
+        final int incomeId = args['incomeId'] ?? 0;
         return MaterialPageRoute(
           settings: settings,
-          builder: (_) => EditIncomeScreen(
-            incomeId: args['incomeId'],
-          ),
+          builder: (_) => EditIncomeScreen(incomeId: incomeId),
         );
 
       default:

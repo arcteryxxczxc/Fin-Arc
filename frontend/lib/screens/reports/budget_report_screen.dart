@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import '../services/report_service.dart';
-import '../widgets/common/loading_indicator.dart';
-import '../widgets/common/error_display.dart';
-import '../widgets/common/drawer.dart';
-import '../routes/route_names.dart';
-import '../utils/error_handler.dart';
+import '../../services/report_service.dart';
+import '../../widgets/common/loading_indicator.dart';
+import '../../widgets/common/error_display.dart';
+import '../../widgets/layout/screen_wrapper.dart';
+import '../../routes/route_names.dart';
 
 class BudgetReportScreen extends StatefulWidget {
   const BudgetReportScreen({super.key});
@@ -80,8 +78,8 @@ class _BudgetReportScreenState extends State<BudgetReportScreen> {
   // Navigate to next month
   void _nextMonth() {
     // Don't allow going to future months
-    if (_selectedDate.year == DateTime.now().year && 
-        _selectedDate.month == DateTime.now().month) {
+    final now = DateTime.now();
+    if (_selectedDate.year >= now.year && _selectedDate.month >= now.month) {
       return;
     }
     
@@ -215,52 +213,54 @@ class _BudgetReportScreenState extends State<BudgetReportScreen> {
     final theme = Theme.of(context);
     final currencyFormatter = NumberFormat.currency(symbol: '\$');
     
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Budget Report'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.calendar_today),
-            onPressed: () => _showMonthPicker(context),
-            tooltip: 'Choose Month',
-          ),
-        ],
-      ),
-      drawer: AppDrawer(currentRoute: RouteNames.budgetReport),
-      body: _isLoading 
-        ? LoadingIndicator(message: 'Loading budget report...')
-        : _error != null
-          ? ErrorDisplay(
-              error: _error!,
-              onRetry: _fetchBudgetReport,
-            )
-          : _budgetData == null
-            ? const Center(child: Text('No budget data available'))
-            : RefreshIndicator(
-                onRefresh: _fetchBudgetReport,
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Month selector
-                      _buildMonthSelector(theme),
-                      const SizedBox(height: 24),
-                      
-                      // Budget summary
-                      _buildBudgetSummary(theme, currencyFormatter),
-                      const SizedBox(height: 24),
-                      
-                      // Categories with budget
-                      _buildBudgetCategoriesList(theme, currencyFormatter),
-                      const SizedBox(height: 24),
-                      
-                      // Categories without budget
-                      _buildNonBudgetCategoriesList(theme, currencyFormatter),
-                    ],
+    return ScreenWrapper(
+      currentRoute: RouteNames.budgetReport,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Budget Report'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.calendar_today),
+              onPressed: () => _showMonthPicker(context),
+              tooltip: 'Choose Month',
+            ),
+          ],
+        ),
+        body: _isLoading 
+          ? const LoadingIndicator(message: 'Loading budget report...')
+          : _error != null
+            ? ErrorDisplay(
+                error: _error!,
+                onRetry: _fetchBudgetReport,
+              )
+            : _budgetData == null
+              ? const Center(child: Text('No budget data available'))
+              : RefreshIndicator(
+                  onRefresh: _fetchBudgetReport,
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Month selector
+                        _buildMonthSelector(theme),
+                        const SizedBox(height: 24),
+                        
+                        // Budget summary
+                        _buildBudgetSummary(theme, currencyFormatter),
+                        const SizedBox(height: 24),
+                        
+                        // Categories with budget
+                        _buildBudgetCategoriesList(theme, currencyFormatter),
+                        const SizedBox(height: 24),
+                        
+                        // Categories without budget
+                        _buildNonBudgetCategoriesList(theme, currencyFormatter),
+                      ],
+                    ),
                   ),
                 ),
-              ),
+      ),
     );
   }
   

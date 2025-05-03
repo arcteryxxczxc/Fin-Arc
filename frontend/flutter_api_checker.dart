@@ -28,7 +28,7 @@ class ApiConnectionChecker {
   
   Future<void> _testServerConnectivity() async {
     try {
-      final response = await http.get(Uri.parse('$baseUrl'));
+      final response = await http.get(Uri.parse(baseUrl));
       
       print('Basic connectivity: ${response.statusCode}');
       if (response.statusCode == 404) {

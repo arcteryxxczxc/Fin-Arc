@@ -8,6 +8,8 @@ import '../../providers/category_provider.dart';
 import '../../models/expense.dart';
 import '../../widgets/common/loading_indicator.dart';
 import '../../widgets/common/error_display.dart';
+import '../../widgets/layout/screen_wrapper.dart';
+import '../../routes/route_names.dart';
 
 class ExpenseListScreen extends StatefulWidget {
   const ExpenseListScreen({super.key});
@@ -68,6 +70,7 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
         (c) => c.name == _selectedCategory,
         orElse: () => null,
       );
+ 
       categoryId = category.id;
         }
     
@@ -80,16 +83,13 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
       endDateStr = DateFormat('yyyy-MM-dd').format(_endDate!);
     }
     
-    await expenseProvider.fetchExpenses(
-      refresh: true,
+    // Apply filters
+    await expenseProvider.applyFilters(
       categoryId: categoryId,
       startDate: startDateStr,
       endDate: endDateStr,
-      search: _searchQuery,
+      searchQuery: _searchQuery
     );
-    
-    // Apply sorting
-    _sortExpenses();
   }
   
   Future<void> _loadMoreExpenses() async {
@@ -421,51 +421,53 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
     final theme = Theme.of(context);
     final expenseProvider = Provider.of<ExpenseProvider>(context);
     final expenses = expenseProvider.expenses;
-    final currencyFormatter = NumberFormat.currency(symbol: '\$');
     
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Expenses'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: _showSearchBar,
-            tooltip: 'Search expenses',
-          ),
-          IconButton(
-            icon: const Icon(Icons.filter_list),
-            onPressed: _showFilterDialog,
-            tooltip: 'Filter expenses',
-          ),
-          IconButton(
-            icon: const Icon(Icons.sort),
-            onPressed: _showSortDialog,
-            tooltip: 'Sort expenses',
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          // Active filters display
-          if (_selectedCategory != null || _startDate != null || _endDate != null || _searchQuery != null) 
-            _buildActiveFilters(),
-          
-          // Expenses list
-          Expanded(
-            child: _buildExpensesList(theme, expenseProvider, expenses, currencyFormatter),
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => const AddExpenseScreen(),
+    return ScreenWrapper(
+      currentRoute: RouteNames.expenseList,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Expenses'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.search),
+              onPressed: _showSearchBar,
+              tooltip: 'Search expenses',
             ),
-          ).then((_) => _loadExpenses());
-        },
-        tooltip: 'Add expense',
-        child: const Icon(Icons.add),
+            IconButton(
+              icon: const Icon(Icons.filter_list),
+              onPressed: _showFilterDialog,
+              tooltip: 'Filter expenses',
+            ),
+            IconButton(
+              icon: const Icon(Icons.sort),
+              onPressed: _showSortDialog,
+              tooltip: 'Sort expenses',
+            ),
+          ],
+        ),
+        body: Column(
+          children: [
+            // Active filters display
+            if (_selectedCategory != null || _startDate != null || _endDate != null || _searchQuery != null) 
+              _buildActiveFilters(),
+            
+            // Expenses list
+            Expanded(
+              child: _buildExpensesList(theme, expenseProvider, expenses),
+            ),
+          ],
+        ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => const AddExpenseScreen(),
+              ),
+            ).then((_) => _loadExpenses());
+          },
+          tooltip: 'Add expense',
+          child: const Icon(Icons.add),
+        ),
       ),
     );
   }
@@ -580,7 +582,6 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
     ThemeData theme, 
     ExpenseProvider expenseProvider, 
     List<Expense> expenses,
-    NumberFormat currencyFormatter,
   ) {
     if (expenseProvider.isLoading && expenses.isEmpty) {
       return const LoadingIndicator(message: 'Loading expenses...');

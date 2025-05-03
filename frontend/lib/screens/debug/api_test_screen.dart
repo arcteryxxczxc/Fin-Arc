@@ -4,7 +4,7 @@ import '../../utils/connectivity_test.dart';
 import '../../utils/constants.dart';
 
 class ApiTestScreen extends StatefulWidget {
-  const ApiTestScreen({Key? key}) : super(key: key);
+  const ApiTestScreen({super.key});
 
   @override
   _ApiTestScreenState createState() => _ApiTestScreenState();

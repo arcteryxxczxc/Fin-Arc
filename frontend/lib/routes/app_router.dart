@@ -62,8 +62,6 @@ class AppRouter {
           builder: (_) => const ApiTestScreen(),
         );
 
-      // We'll add these back when the screens are available
-      /*
       case RouteNames.reports:
         return MaterialPageRoute(
           settings: settings,
@@ -142,7 +140,6 @@ class AppRouter {
             incomeId: args['incomeId'],
           ),
         );
-      */
 
       default:
         // If the route doesn't exist, show an error page

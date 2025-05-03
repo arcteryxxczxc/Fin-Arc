@@ -61,4 +61,19 @@ class AppConstants {
   
   // Pagination defaults
   static const int defaultPageSize = 10;
+
+  static String apiUrl(String endpoint) {
+    // If endpoint already starts with '/api', don't add it again
+    if (endpoint.startsWith('/api/')) {
+      return endpoint;
+    }
+  
+    // If endpoint starts with '/', remove it before adding '/api/'
+    if (endpoint.startsWith('/')) {
+      return '/api${endpoint}';
+    }
+    
+    // Otherwise, add '/api/' prefix
+    return '/api/${endpoint}';
+  }
 }

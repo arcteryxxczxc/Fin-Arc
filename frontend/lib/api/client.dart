@@ -29,7 +29,7 @@ class ApiClient {
       }
 
       // Build URI with query parameters
-      final uri = Uri.parse('$baseUrl/$endpoint').replace(
+      final uri = Uri.parse('$baseUrl${AppConstants.apiUrl(endpoint)}').replace(
         queryParameters: queryParams,
       );
 
@@ -72,7 +72,7 @@ class ApiClient {
       }
 
       // Build URI
-      final uri = Uri.parse('$baseUrl/$endpoint');
+      final uri = Uri.parse('$baseUrl${AppConstants.apiUrl(endpoint)}');
       print('POST API call to $uri');
       if (body != null) {
         print('POST body: ${jsonEncode(body)}');
@@ -121,7 +121,7 @@ class ApiClient {
       }
 
       // Build URI
-      final uri = Uri.parse('$baseUrl/$endpoint');
+      final uri = Uri.parse('$baseUrl${AppConstants.apiUrl(endpoint)}');
       print('PUT API call to $uri');
 
       // Set up headers with proper CORS handling
@@ -165,7 +165,7 @@ class ApiClient {
       }
 
       // Build URI
-      final uri = Uri.parse('$baseUrl/$endpoint');
+      final uri = Uri.parse('$baseUrl${AppConstants.apiUrl(endpoint)}');
       print('DELETE API call to $uri');
 
       // Set up headers with proper CORS handling
@@ -205,7 +205,7 @@ class ApiClient {
     }
 
     // Build URI with query parameters
-    final uri = Uri.parse('$baseUrl/$endpoint').replace(
+    final uri = Uri.parse('$baseUrl${AppConstants.apiUrl(endpoint)}').replace(
       queryParameters: queryParams,
     );
 

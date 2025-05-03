@@ -11,13 +11,16 @@ class AppConstants {
       try {
         final currentUrl = Uri.base.toString();
         if (currentUrl.contains('localhost') || currentUrl.contains('127.0.0.1')) {
+          // For development on localhost
           return 'http://localhost:8111/api';
         } else {
+          // For production deployed site
           final uri = Uri.parse(currentUrl);
-          return '${uri.scheme}://${uri.host}/api';
+          return '${uri.scheme}://${uri.host}${uri.port > 0 ? ':${uri.port}' : ''}/api';
         }
       } catch (e) {
         print('Error determining API URL: $e');
+        // Default fallback API URL for web
         return 'http://localhost:8111/api';
       }
     } else {
@@ -62,18 +65,15 @@ class AppConstants {
   // Pagination defaults
   static const int defaultPageSize = 10;
 
+  // This function is now replaced with the direct URL construction in the API client
+  // We're keeping it for backward compatibility but NOT USING it anymore
   static String apiUrl(String endpoint) {
-    // If endpoint already starts with '/api', don't add it again
-    if (endpoint.startsWith('/api/')) {
-      return endpoint;
-    }
-  
-    // If endpoint starts with '/', remove it before adding '/api/'
+    // Remove leading slash if present
     if (endpoint.startsWith('/')) {
-      return '/api$endpoint';
+      endpoint = endpoint.substring(1);
     }
     
-    // Otherwise, add '/api/' prefix
-    return '/api/$endpoint';
+    // Return just the endpoint (no additional path manipulation)
+    return endpoint;
   }
 }

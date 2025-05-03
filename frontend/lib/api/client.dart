@@ -10,7 +10,7 @@ class ApiClient {
   static const String _tokenKey = 'access_token';
   static const String _refreshTokenKey = 'refresh_token';
   
-  final String baseUrl = AppConstants.baseUrl;
+  String get baseUrl => AppConstants.baseUrl;
 
   /// Make a GET request to the API
   Future<Map<String, dynamic>> get({
@@ -28,14 +28,14 @@ class ApiClient {
         }
       }
 
-      // Build URI with query parameters
-      final uri = Uri.parse('$baseUrl${AppConstants.apiUrl(endpoint)}').replace(
+      // Build URI with query parameters - FIXED URL CONSTRUCTION
+      final uri = Uri.parse('$baseUrl/$endpoint').replace(
         queryParameters: queryParams,
       );
 
-      print('GET API call to $uri');
+      _logApiCall('GET', uri.toString());
 
-      // Set up headers with proper CORS handling
+      // Set up headers (removed CORS headers - they belong on the server)
       final headers = {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
@@ -45,6 +45,7 @@ class ApiClient {
       // Make request
       final response = await http.get(uri, headers: headers);
       print('GET response status: ${response.statusCode}');
+      print('GET response body: ${response.body.isNotEmpty ? response.body.substring(0, response.body.length > 100 ? 100 : response.body.length) : "empty"}');
 
       // Handle response
       return _handleResponse(response);
@@ -54,7 +55,7 @@ class ApiClient {
       return _handleException(e);
     }
   }
-
+  
   /// Make a POST request to the API
   Future<Map<String, dynamic>> post({
     required String endpoint,
@@ -71,14 +72,11 @@ class ApiClient {
         }
       }
 
-      // Build URI
-      final uri = Uri.parse('$baseUrl${AppConstants.apiUrl(endpoint)}');
-      print('POST API call to $uri');
-      if (body != null) {
-        print('POST body: ${jsonEncode(body)}');
-      }
+      // Build URI - FIXED URL CONSTRUCTION
+      final uri = Uri.parse('$baseUrl/$endpoint');
+      _logApiCall('POST', uri.toString(), body);
 
-      // Set up headers with proper CORS handling
+      // Set up headers (removed CORS headers)
       final headers = {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
@@ -93,7 +91,7 @@ class ApiClient {
       );
       
       print('POST response status: ${response.statusCode}');
-      print('POST response body: ${response.body}');
+      print('POST response body: ${response.body.isNotEmpty ? response.body.substring(0, response.body.length > 100 ? 100 : response.body.length) : "empty"}');
 
       // Handle response
       return _handleResponse(response);
@@ -120,11 +118,11 @@ class ApiClient {
         }
       }
 
-      // Build URI
-      final uri = Uri.parse('$baseUrl${AppConstants.apiUrl(endpoint)}');
-      print('PUT API call to $uri');
+      // Build URI - FIXED URL CONSTRUCTION
+      final uri = Uri.parse('$baseUrl/$endpoint');
+      _logApiCall('PUT', uri.toString(), body);
 
-      // Set up headers with proper CORS handling
+      // Set up headers (removed CORS headers)
       final headers = {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
@@ -139,6 +137,7 @@ class ApiClient {
       );
       
       print('PUT response status: ${response.statusCode}');
+      print('PUT response body: ${response.body.isNotEmpty ? response.body.substring(0, response.body.length > 100 ? 100 : response.body.length) : "empty"}');
 
       // Handle response
       return _handleResponse(response);
@@ -164,11 +163,11 @@ class ApiClient {
         }
       }
 
-      // Build URI
-      final uri = Uri.parse('$baseUrl${AppConstants.apiUrl(endpoint)}');
-      print('DELETE API call to $uri');
+      // Build URI - FIXED URL CONSTRUCTION
+      final uri = Uri.parse('$baseUrl/$endpoint');
+      _logApiCall('DELETE', uri.toString());
 
-      // Set up headers with proper CORS handling
+      // Set up headers (removed CORS headers)
       final headers = {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
@@ -179,6 +178,7 @@ class ApiClient {
       final response = await http.delete(uri, headers: headers);
       
       print('DELETE response status: ${response.statusCode}');
+      print('DELETE response body: ${response.body.isNotEmpty ? response.body.substring(0, response.body.length > 100 ? 100 : response.body.length) : "empty"}');
 
       // Handle response
       return _handleResponse(response);
@@ -204,14 +204,14 @@ class ApiClient {
       }
     }
 
-    // Build URI with query parameters
-    final uri = Uri.parse('$baseUrl${AppConstants.apiUrl(endpoint)}').replace(
+    // Build URI with query parameters - FIXED URL CONSTRUCTION
+    final uri = Uri.parse('$baseUrl/$endpoint').replace(
       queryParameters: queryParams,
     );
 
-    print('GET RAW API call to $uri');
+    _logApiCall('GET RAW', uri.toString());
 
-    // Set up headers with proper CORS handling
+    // Set up headers (removed CORS headers)
     final headers = {
       'Accept': '*/*',
       if (requiresAuth && token != null) 'Authorization': 'Bearer $token',
@@ -221,9 +221,34 @@ class ApiClient {
     return await http.get(uri, headers: headers);
   }
 
+  /// Log API call details for debugging
+  void _logApiCall(String method, String url, [dynamic body]) {
+    print('------ API CALL ------');
+    print('Method: $method');
+    print('URL: $url');
+    if (body != null) {
+      try {
+        print('Body: ${jsonEncode(body)}');
+      } catch (e) {
+        print('Body: [Could not encode body]');
+      }
+    }
+    print('----------------------');
+  }
+
   /// Handle HTTP response and parse JSON
   Map<String, dynamic> _handleResponse(http.Response response) {
     try {
+      // Handle specific status codes
+      if (response.statusCode == 405) {
+        print('405 Method Not Allowed Error - Endpoint might not exist or HTTP method not supported');
+        return {
+          'success': false,
+          'statusCode': 405,
+          'message': 'Method not allowed. The API endpoint does not support this request type.',
+        };
+      }
+
       // Check if response body is empty
       if (response.body.isEmpty) {
         if (response.statusCode >= 200 && response.statusCode < 300) {
@@ -324,8 +349,12 @@ class ApiClient {
     try {
       print('Attempting to refresh token directly from ApiClient');
       
+      // Fixed URL for refresh endpoint
+      final uri = Uri.parse('$baseUrl/auth/refresh');
+      _logApiCall('POST', uri.toString());
+      
       final response = await http.post(
-        Uri.parse('$baseUrl/auth/refresh'),
+        uri,
         headers: {
           'Authorization': 'Bearer $refreshToken',
           'Accept': 'application/json',

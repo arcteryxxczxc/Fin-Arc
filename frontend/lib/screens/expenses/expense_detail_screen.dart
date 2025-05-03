@@ -51,7 +51,13 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
           if (categories.isNotEmpty) {
             category = categories.firstWhere(
               (c) => c.id == expense.categoryId,
-              orElse: () => null,
+              orElse: () => Category(
+                id: -1, 
+                name: 'Uncategorized', 
+                colorCode: '#757575', 
+                isIncome: false, 
+                isActive: true
+              ),
             );
           }
           

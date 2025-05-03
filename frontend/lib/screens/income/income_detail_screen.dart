@@ -54,7 +54,13 @@ class _IncomeDetailScreenState extends State<IncomeDetailScreen> {
           if (categoryProvider.categories.isNotEmpty) {
             category = categoryProvider.categories.firstWhere(
               (cat) => cat.id == income.categoryId,
-              orElse: () => null,
+              orElse: () => Category(
+                id: -1, 
+                name: 'Uncategorized', 
+                colorCode: '#757575', 
+                isIncome: true, 
+                isActive: true
+              ),
             );
           }
           

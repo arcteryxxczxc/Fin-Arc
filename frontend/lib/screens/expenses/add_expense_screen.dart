@@ -117,7 +117,13 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
           if (categoryProvider.categories.isNotEmpty) {
             _selectedCategory = categoryProvider.categories.firstWhere(
               (c) => c.id == expense.categoryId,
-              orElse: () => null,
+              orElse: () => Category(
+                id: -1, 
+                name: 'Uncategorized', 
+                colorCode: '#757575', 
+                isIncome: false, 
+                isActive: true
+              ),
             );
           }
         }

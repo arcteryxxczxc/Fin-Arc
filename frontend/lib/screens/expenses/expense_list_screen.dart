@@ -1,3 +1,4 @@
+// lib/screens/expenses/expense_list_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
@@ -6,6 +7,7 @@ import 'add_expense_screen.dart';
 import '../../providers/expense_provider.dart';
 import '../../providers/category_provider.dart';
 import '../../models/expense.dart';
+import '../../models/category.dart';
 import '../../widgets/common/loading_indicator.dart';
 import '../../widgets/common/error_display.dart';
 import '../../widgets/layout/screen_wrapper.dart';
@@ -68,7 +70,13 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
       final categories = Provider.of<CategoryProvider>(context, listen: false).categories;
       final category = categories.firstWhere(
         (c) => c.name == _selectedCategory,
-        orElse: () => null,
+        orElse: () => Category(
+          id: -1, 
+          name: 'Uncategorized', 
+          colorCode: '#757575', 
+          isIncome: false, 
+          isActive: true
+        ),
       );
  
       categoryId = category.id;

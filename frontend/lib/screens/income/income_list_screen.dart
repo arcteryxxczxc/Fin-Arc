@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../providers/income_provider.dart';
 import '../../providers/category_provider.dart';
 import '../../models/income.dart';
+import '../../models/category.dart';
 import '../../widgets/common/loading_indicator.dart';
 import '../../widgets/common/error_display.dart';
 import '../../widgets/common/drawer.dart';
@@ -68,10 +69,16 @@ class _IncomeListScreenState extends State<IncomeListScreen> {
       final categories = Provider.of<CategoryProvider>(context, listen: false).categories;
       final category = categories.firstWhere(
         (c) => c.name == _selectedCategory,
-        orElse: () => null,
+        orElse: () => Category(
+          id: -1, 
+          name: 'Uncategorized', 
+          colorCode: '#757575', 
+          isIncome: true, 
+          isActive: true
+        ),
       );
       categoryId = category.id;
-        }
+    }
     
     // Format dates
     String? startDateStr, endDateStr;

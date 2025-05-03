@@ -61,7 +61,13 @@ class _EditIncomeScreenState extends State<EditIncomeScreen> {
         setState(() {
           _selectedCategory = categoryProvider.categories.firstWhere(
             (cat) => cat.id == _income!.categoryId,
-            orElse: () => null,
+            orElse: () => Category(
+              id: -1, 
+              name: 'Uncategorized', 
+              colorCode: '#757575', 
+              isIncome: true, 
+              isActive: true
+            ),
           );
         });
       }

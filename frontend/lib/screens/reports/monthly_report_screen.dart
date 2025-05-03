@@ -518,7 +518,7 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
                         getTitlesWidget: (value, meta) {
                           if (value == 0) return const Text('');
                           return Text(
-                            '\${value.toInt()}',
+                            '\$${value.toInt()}',
                             style: TextStyle(
                               color: theme.textTheme.bodySmall?.color,
                               fontSize: 10,
@@ -627,4 +627,392 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
       ),
     );
   }
-}     
+
+  // Add missing methods
+  Widget _buildLegendItem({required String label, required Color color}) {
+    return Row(
+      children: [
+        Container(
+          width: 12,
+          height: 12,
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+          ),
+        ),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.grey[700],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildExpenseCategories(ThemeData theme, NumberFormat currencyFormatter) {
+    final categories = _reportData?['expense_categories'] as List<dynamic>? ?? [];
+    
+    if (categories.isEmpty) {
+      return Card(
+        elevation: 2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Expense Categories',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(24.0),
+                  child: Text('No expense data available for this month'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    
+    // Prepare data for pie chart
+    List<PieChartSectionData> sections = [];
+    
+    for (final category in categories) {
+      final name = category['name'] as String;
+      final color = category['color'] as String;
+      final total = (category['total'] as num).toDouble();
+      final percentage = (category['percentage'] as num).toDouble();
+      
+      // Skip categories with no spending
+      if (total <= 0) continue;
+      
+      // Parse color from hex string
+      final colorValue = Color(int.parse(color.replaceFirst('#', '0xFF')));
+      
+      sections.add(
+        PieChartSectionData(
+          color: colorValue,
+          value: total,
+          title: '${percentage.toInt()}%',
+          radius: 80,
+          titleStyle: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+          ),
+        ),
+      );
+    }
+    
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Expense Categories',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
+            if (sections.isEmpty) ...[
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Text('No spending data available'),
+                ),
+              ),
+            ] else ...[
+              // Pie chart
+              SizedBox(
+                height: 200,
+                child: PieChart(
+                  PieChartData(
+                    sections: sections,
+                    centerSpaceRadius: 40,
+                    sectionsSpace: 2,
+                  ),
+                ),
+              ),
+              
+              const SizedBox(height: 16),
+              
+              // Category list
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: categories.length,
+                itemBuilder: (context, index) {
+                  final category = categories[index];
+                  final name = category['name'] as String;
+                  final color = category['color'] as String;
+                  final total = (category['total'] as num).toDouble();
+                  final percentage = (category['percentage'] as num).toDouble();
+                  
+                  // Skip categories with no spending
+                  if (total <= 0) return const SizedBox.shrink();
+                  
+                  // Parse color from hex string
+                  final colorValue =
+                      Color(int.parse(color.replaceFirst('#', '0xFF')));
+                  
+                  return ListTile(
+                    contentPadding: const EdgeInsets.symmetric(vertical: 4),
+                    leading: Container(
+                      width: 16,
+                      height: 16,
+                      decoration: BoxDecoration(
+                        color: colorValue,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    title: Text(name),
+                    trailing: Text(
+                      '${currencyFormatter.format(total)} (${percentage.toInt()}%)',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildIncomeSources(ThemeData theme, NumberFormat currencyFormatter) {
+    final sources = _reportData?['income_sources'] as List<dynamic>? ?? [];
+    
+    if (sources.isEmpty) {
+      return Card(
+        elevation: 2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Income Sources',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(24.0),
+                  child: Text('No income data available for this month'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    
+    // Prepare data for bar chart
+    final List<BarChartGroupData> barGroups = [];
+    final List<String> sourceNames = [];
+    final List<Color> colors = [];
+    
+    double maxAmount = 0;
+    
+    for (int i = 0; i < sources.length; i++) {
+      final source = sources[i];
+      final name = source['name'] as String;
+      final color = source['color'] as String;
+      final total = (source['total'] as num).toDouble();
+      
+      // Skip sources with no income
+      if (total <= 0) continue;
+      
+      // Update max amount
+      if (total > maxAmount) {
+        maxAmount = total;
+      }
+      
+      // Parse color from hex string
+      final colorValue = Color(int.parse(color.replaceFirst('#', '0xFF')));
+      
+      sourceNames.add(name);
+      colors.add(colorValue);
+      
+      barGroups.add(
+        BarChartGroupData(
+          x: i,
+          barRods: [
+            BarChartRodData(
+              toY: total,
+              color: colorValue,
+              width: 20,
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(6)),
+            ),
+          ],
+        ),
+      );
+    }
+    
+    // Round up max value for nice chart scaling
+    maxAmount = ((maxAmount / 1000).ceil() * 1000).toDouble();
+    if (maxAmount < 1000) maxAmount = 1000;
+    
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Income Sources',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
+            if (barGroups.isEmpty) ...[
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Text('No income data available'),
+                ),
+              ),
+            ] else ...[
+              // Bar chart
+              SizedBox(
+                height: 200,
+                child: BarChart(
+                  BarChartData(
+                    alignment: BarChartAlignment.center,
+                    maxY: maxAmount,
+                    minY: 0,
+                    gridData: FlGridData(
+                      show: true,
+                      horizontalInterval: maxAmount / 5,
+                      getDrawingHorizontalLine: (value) {
+                        return FlLine(
+                          color: theme.dividerColor.withOpacity(0.2),
+                          strokeWidth: 1,
+                        );
+                      },
+                      drawVerticalLine: false,
+                    ),
+                    titlesData: FlTitlesData(
+                      show: true,
+                      bottomTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          reservedSize: 30,
+                          getTitlesWidget: (value, meta) {
+                            final index = value.toInt();
+                            if (index >= 0 && index < sourceNames.length) {
+                              return Padding(
+                                padding: const EdgeInsets.only(top: 8),
+                                child: Text(
+                                  sourceNames[index],
+                                  style: TextStyle(
+                                    color: theme.textTheme.bodySmall?.color,
+                                    fontSize: 10,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              );
+                            }
+                            return const Text('');
+                          },
+                        ),
+                      ),
+                      leftTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          reservedSize: 40,
+                          getTitlesWidget: (value, meta) {
+                            if (value == 0) return const Text('');
+                            return Text(
+                              '\$${(value / 1000).toInt()}K',
+                              style: TextStyle(
+                                color: theme.textTheme.bodySmall?.color,
+                                fontSize: 10,
+                              ),
+                            );
+                          },
+                          interval: maxAmount / 5,
+                        ),
+                      ),
+                      topTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                      rightTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                    ),
+                    borderData: FlBorderData(show: false),
+                    barGroups: barGroups,
+                  ),
+                ),
+              ),
+              
+              const SizedBox(height: 16),
+              
+              // Income sources list
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: sources.length,
+                itemBuilder: (context, index) {
+                  final source = sources[index];
+                  final name = source['name'] as String;
+                  final color = source['color'] as String;
+                  final total = (source['total'] as num).toDouble();
+                  final percentage = (source['percentage'] as num).toDouble();
+                  
+                  // Skip sources with no income
+                  if (total <= 0) return const SizedBox.shrink();
+                  
+                  // Parse color from hex string
+                  final colorValue =
+                      Color(int.parse(color.replaceFirst('#', '0xFF')));
+                  
+                  return ListTile(
+                    contentPadding: const EdgeInsets.symmetric(vertical: 4),
+                    leading: Container(
+                      width: 16,
+                      height: 16,
+                      decoration: BoxDecoration(
+                        color: colorValue,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    title: Text(name),
+                    trailing: Text(
+                      '${currencyFormatter.format(total)} (${percentage.toInt()}%)',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}

@@ -1,7 +1,6 @@
 // lib/services/auth_service.dart
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:http/http.dart' as http;
 import '../models/user.dart';
 import '../utils/constants.dart';
 import '../api/endpoints/auth_api.dart';
@@ -39,6 +38,15 @@ class AuthService {
       
       if (result['success']) {
         final data = result['data'];
+        
+        // Validate response data
+        if (!_validateAuthResponse(data)) {
+          return {
+            'success': false, 
+            'message': 'Invalid authentication response from server'
+          };
+        }
+        
         // Save token and user data to secure storage
         await _saveAuthData(data['access_token'], data['refresh_token'], data['user']);
         return {'success': true, 'data': data};
@@ -66,6 +74,15 @@ class AuthService {
       
       if (result['success']) {
         final data = result['data'];
+        
+        // Validate response data
+        if (!_validateAuthResponse(data)) {
+          return {
+            'success': false, 
+            'message': 'Invalid authentication response from server'
+          };
+        }
+        
         // Save token and user data to secure storage
         await _saveAuthData(data['access_token'], data['refresh_token'], data['user']);
         return {'success': true, 'data': data};
@@ -76,6 +93,31 @@ class AuthService {
       print('Login service error: $e');
       return {'success': false, 'message': 'Service error: $e'};
     }
+  }
+  
+  // Validate authentication response
+  bool _validateAuthResponse(Map<String, dynamic> data) {
+    // Check required fields
+    if (!data.containsKey('access_token') || 
+        !data.containsKey('refresh_token') || 
+        !data.containsKey('user')) {
+      print('Invalid auth response: missing required fields');
+      return false;
+    }
+    
+    // Verify user data is a map
+    if (!(data['user'] is Map)) {
+      print('Invalid auth response: user is not a map');
+      return false;
+    }
+    
+    // Verify token values are strings
+    if (!(data['access_token'] is String) || !(data['refresh_token'] is String)) {
+      print('Invalid auth response: tokens are not strings');
+      return false;
+    }
+    
+    return true;
   }
   
   // Logout user
@@ -105,7 +147,13 @@ class AuthService {
     final userData = await _storage.read(key: _userKey);
     if (userData != null) {
       try {
-        return User.fromJson(jsonDecode(userData));
+        final userMap = jsonDecode(userData);
+        if (userMap is Map<String, dynamic>) {
+          return User.fromJson(userMap);
+        } else {
+          print('User data is not a valid map: $userMap');
+          return null;
+        }
       } catch (e) {
         print('Error parsing user data: $e');
         return null;
@@ -127,7 +175,10 @@ class AuthService {
   // Try to refresh the access token
   Future<String?> _refreshToken() async {
     final refreshToken = await _storage.read(key: _refreshTokenKey);
-    if (refreshToken == null) return null;
+    if (refreshToken == null) {
+      print('No refresh token available');
+      return null;
+    }
     
     try {
       print('Attempting to refresh token');
@@ -138,10 +189,33 @@ class AuthService {
       
       if (result['success']) {
         final data = result['data'];
+        if (!data.containsKey('access_token')) {
+          print('Refresh token response missing access_token');
+          return null;
+        }
+        
         final newToken = data['access_token'];
         await _storage.write(key: _tokenKey, value: newToken);
+        
+        // Update refresh token if provided
+        if (data.containsKey('refresh_token')) {
+          await _storage.write(key: _refreshTokenKey, value: data['refresh_token']);
+        }
+        
+        // Update user data if provided
+        if (data.containsKey('user')) {
+          await _storage.write(key: _userKey, value: jsonEncode(data['user']));
+        }
+        
         print('Token refreshed successfully');
         return newToken;
+      } else {
+        print('Token refresh failed: ${result['message']}');
+        // Clear tokens if refresh explicitly failed (not for network errors)
+        if (result.containsKey('statusCode')) {
+          await _storage.delete(key: _tokenKey);
+          await _storage.delete(key: _refreshTokenKey);
+        }
       }
     } catch (e) {
       print('Token refresh error: $e');
@@ -164,7 +238,15 @@ class AuthService {
       final result = await _authApi.getUserProfile();
       print('Auth check result: ${result['success']}');
       
-      return result['success'] == true;
+      if (result['success']) {
+        // Update stored user data if profile call succeeds
+        if (result.containsKey('data') && result['data'] != null) {
+          await _storage.write(key: _userKey, value: jsonEncode(result['data']));
+        }
+        return true;
+      }
+      
+      return false;
     } catch (e) {
       print('Authentication check error: $e');
       return false;
@@ -188,8 +270,12 @@ class AuthService {
       
       if (result['success']) {
         // Update stored user data
-        await _storage.write(key: _userKey, value: jsonEncode(result['data']));
-        return {'success': true, 'data': result['data']};
+        if (result.containsKey('data') && result['data'] != null) {
+          await _storage.write(key: _userKey, value: jsonEncode(result['data']));
+          return {'success': true, 'data': result['data']};
+        } else {
+          return {'success': false, 'message': 'Invalid profile data received'};
+        }
       } else {
         return {'success': false, 'message': result['message'] ?? 'Failed to get profile'};
       }

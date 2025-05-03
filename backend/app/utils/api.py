@@ -3,58 +3,23 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-def api_error(message, code=400, errors=None, log_error=True):
-    """
-    Standardized API error response
-    
-    Args:
-        message: Error message string
-        code: HTTP status code
-        errors: Optional dict of field-specific errors
-        log_error: Whether to log the error
-        
-    Returns:
-        Flask response with JSON error
-    """
-    if log_error:
-        logger.error(f"API Error ({code}): {message}")
-    
-    response = {"error": message}
-    if errors:
-        response["errors"] = errors
-    
-    response_obj = jsonify(response), code
-    # Add CORS headers to error responses
-    response_obj[0].headers.add('Access-Control-Allow-Origin', '*')  # This will be overridden by CORS middleware
-    return response_obj
-
 def api_success(data=None, message=None, code=200):
-    """
-    Standardized API success response
-    
-    Args:
-        data: Response data (optional)
-        message: Success message (optional)
-        code: HTTP status code
-        
-    Returns:
-        Flask response with JSON data
-    """
+    """Return successful API response"""
     response = {}
-    
+    if data is not None:
+        if isinstance(data, dict):
+            response.update(data)
+        else:
+            response["data"] = data
     if message:
         response["message"] = message
-        
-    if data is not None:
-        if isinstance(data, dict) and not isinstance(data, list):
-            # Merge data dictionary with response
-            for key, value in data.items():
-                response[key] = value
-        else:
-            # Use data as is
-            response["data"] = data
-    
-    response_obj = jsonify(response), code
-    # Add CORS headers to success responses
-    response_obj[0].headers.add('Access-Control-Allow-Origin', '*')  # This will be overridden by CORS middleware
-    return response_obj
+    return jsonify(response), code
+
+def api_error(message, code=400, errors=None):
+    """Return error API response"""
+    response = {"error": message if isinstance(message, str) else "Error occurred"}
+    if isinstance(message, dict):
+        response.update(message)
+    if errors:
+        response["errors"] = errors
+    return jsonify(response), code

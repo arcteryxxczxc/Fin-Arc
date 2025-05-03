@@ -1,3 +1,4 @@
+// lib/services/expense_service.dart
 import '../api/endpoints/expense_api.dart';
 
 class ExpenseService {
@@ -30,7 +31,18 @@ class ExpenseService {
 
       return result;
     } catch (e) {
-      return {'success': false, 'message': 'Service error: $e'};
+      print('ExpenseService error in getExpenses: $e');
+      String errorMessage = 'Service error';
+      
+      if (e.toString().contains('SocketException')) {
+        errorMessage = 'Network connection error. Please check your internet connection.';
+      } else if (e.toString().contains('timeout')) {
+        errorMessage = 'Request timed out. The server is taking too long to respond.';
+      } else {
+        errorMessage = 'Service error: $e';
+      }
+      
+      return {'success': false, 'message': errorMessage};
     }
   }
 
@@ -40,7 +52,18 @@ class ExpenseService {
       final result = await _expenseApi.getExpenseDetails(expenseId);
       return result;
     } catch (e) {
-      return {'success': false, 'message': 'Service error: $e'};
+      print('ExpenseService error in getExpenseDetails: $e');
+      String errorMessage = 'Service error';
+      
+      if (e.toString().contains('SocketException')) {
+        errorMessage = 'Network connection error. Please check your internet connection.';
+      } else if (e.toString().contains('timeout')) {
+        errorMessage = 'Request timed out. The server is taking too long to respond.';
+      } else {
+        errorMessage = 'Service error: $e';
+      }
+      
+      return {'success': false, 'message': errorMessage};
     }
   }
 
@@ -73,7 +96,18 @@ class ExpenseService {
 
       return result;
     } catch (e) {
-      return {'success': false, 'message': 'Service error: $e'};
+      print('ExpenseService error in addExpense: $e');
+      String errorMessage = 'Service error';
+      
+      if (e.toString().contains('SocketException')) {
+        errorMessage = 'Network connection error. Please check your internet connection.';
+      } else if (e.toString().contains('timeout')) {
+        errorMessage = 'Request timed out. The server is taking too long to respond.';
+      } else {
+        errorMessage = 'Service error: $e';
+      }
+      
+      return {'success': false, 'message': errorMessage};
     }
   }
 
@@ -108,7 +142,18 @@ class ExpenseService {
 
       return result;
     } catch (e) {
-      return {'success': false, 'message': 'Service error: $e'};
+      print('ExpenseService error in updateExpense: $e');
+      String errorMessage = 'Service error';
+      
+      if (e.toString().contains('SocketException')) {
+        errorMessage = 'Network connection error. Please check your internet connection.';
+      } else if (e.toString().contains('timeout')) {
+        errorMessage = 'Request timed out. The server is taking too long to respond.';
+      } else {
+        errorMessage = 'Service error: $e';
+      }
+      
+      return {'success': false, 'message': errorMessage};
     }
   }
 
@@ -118,7 +163,18 @@ class ExpenseService {
       final result = await _expenseApi.deleteExpense(expenseId);
       return result;
     } catch (e) {
-      return {'success': false, 'message': 'Service error: $e'};
+      print('ExpenseService error in deleteExpense: $e');
+      String errorMessage = 'Service error';
+      
+      if (e.toString().contains('SocketException')) {
+        errorMessage = 'Network connection error. Please check your internet connection.';
+      } else if (e.toString().contains('timeout')) {
+        errorMessage = 'Request timed out. The server is taking too long to respond.';
+      } else {
+        errorMessage = 'Service error: $e';
+      }
+      
+      return {'success': false, 'message': errorMessage};
     }
   }
 
@@ -137,7 +193,18 @@ class ExpenseService {
 
       return result;
     } catch (e) {
-      return {'success': false, 'message': 'Service error: $e'};
+      print('ExpenseService error in bulkActionExpenses: $e');
+      String errorMessage = 'Service error';
+      
+      if (e.toString().contains('SocketException')) {
+        errorMessage = 'Network connection error. Please check your internet connection.';
+      } else if (e.toString().contains('timeout')) {
+        errorMessage = 'Request timed out. The server is taking too long to respond.';
+      } else {
+        errorMessage = 'Service error: $e';
+      }
+      
+      return {'success': false, 'message': errorMessage};
     }
   }
 
@@ -156,7 +223,18 @@ class ExpenseService {
 
       return result;
     } catch (e) {
-      return {'success': false, 'message': 'Service error: $e'};
+      print('ExpenseService error in getExpenseStats: $e');
+      String errorMessage = 'Service error';
+      
+      if (e.toString().contains('SocketException')) {
+        errorMessage = 'Network connection error. Please check your internet connection.';
+      } else if (e.toString().contains('timeout')) {
+        errorMessage = 'Request timed out. The server is taking too long to respond.';
+      } else {
+        errorMessage = 'Service error: $e';
+      }
+      
+      return {'success': false, 'message': errorMessage};
     }
   }
 
@@ -185,7 +263,18 @@ class ExpenseService {
 
       return result;
     } catch (e) {
-      return {'success': false, 'message': 'Service error: $e'};
+      print('ExpenseService error in exportExpenses: $e');
+      String errorMessage = 'Service error';
+      
+      if (e.toString().contains('SocketException')) {
+        errorMessage = 'Network connection error. Please check your internet connection.';
+      } else if (e.toString().contains('timeout')) {
+        errorMessage = 'Request timed out. The server is taking too long to respond.';
+      } else {
+        errorMessage = 'Service error: $e';
+      }
+      
+      return {'success': false, 'message': errorMessage};
     }
   }
 }

@@ -39,14 +39,36 @@ class Expense {
     required this.updatedAt,
   });
 
-  // Create Expense from JSON
+  // Create Expense from JSON with safe type conversion
   factory Expense.fromJson(Map<String, dynamic> json) {
+    // Helper function to safely parse double values
+    double parseDouble(dynamic value) {
+      if (value == null) return 0.0;
+      if (value is double) return value;
+      if (value is int) return value.toDouble();
+      if (value is String) {
+        try {
+          return double.parse(value);
+        } catch (_) {
+          return 0.0;
+        }
+      }
+      return 0.0;
+    }
+    
+    // Default date to today if missing
+    String parseDate(dynamic value) {
+      if (value == null) return DateTime.now().toIso8601String().split('T')[0];
+      if (value is String) return value;
+      return DateTime.now().toIso8601String().split('T')[0];
+    }
+
     return Expense(
-      id: json['id'],
-      amount: json['amount'].toDouble(),
-      formattedAmount: json['formatted_amount'] ?? json['amount'].toString(),
+      id: json['id'] ?? 0,
+      amount: parseDouble(json['amount']),
+      formattedAmount: json['formatted_amount'] ?? parseDouble(json['amount']).toString(),
       description: json['description'],
-      date: json['date'],
+      date: parseDate(json['date']),
       time: json['time'],
       categoryId: json['category_id'],
       categoryName: json['category_name'],

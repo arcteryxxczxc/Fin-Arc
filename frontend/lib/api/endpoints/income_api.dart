@@ -23,7 +23,7 @@ class IncomeApi {
   }) async {
     try {
       // Build query parameters
-      final queryParams = {
+      final queryParams = <String, String>{
         'page': page.toString(),
         'per_page': perPage.toString(),
       };

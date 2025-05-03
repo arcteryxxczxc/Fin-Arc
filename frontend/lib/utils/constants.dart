@@ -1,27 +1,34 @@
 // lib/utils/constants.dart
-import 'dart:html' as html;
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'dart:io' show Platform;
 
 /// Application constants
 class AppConstants {
-  // API Base URL - Динамически определяется на основе текущего URL
+  // API Base URL - Dynamically determined based on platform
   static String get baseUrl {
-    // Получаем текущий URL (работает только в web)
-    final currentUrl = html.window.location.href;
-    final serverPort = '8111'; // Порт вашего Flask-сервера
-    
-    try {
-      if (currentUrl.contains('localhost') || currentUrl.contains('127.0.0.1')) {
-        // В режиме разработки используем указанный порт Flask-сервера
-        return 'http://localhost:$serverPort/api';
-      } else {
-        // В продакшене используем тот же домен (на одном сервере)
-        final uri = Uri.parse(currentUrl);
-        return '${uri.scheme}://${uri.host}/api';
+    if (kIsWeb) {
+      // Web platform logic
+      try {
+        final currentUrl = Uri.base.toString();
+        if (currentUrl.contains('localhost') || currentUrl.contains('127.0.0.1')) {
+          return 'http://localhost:8111/api';
+        } else {
+          final uri = Uri.parse(currentUrl);
+          return '${uri.scheme}://${uri.host}/api';
+        }
+      } catch (e) {
+        print('Error determining API URL: $e');
+        return 'http://localhost:8111/api';
       }
-    } catch (e) {
-      print('Error determining API URL: $e');
-      // Запасной вариант
-      return 'http://localhost:$serverPort/api';
+    } else {
+      // Mobile platforms
+      if (Platform.isAndroid) {
+        return androidBaseUrl;
+      } else if (Platform.isIOS) {
+        return iosBaseUrl;
+      }
+      // Fallback for other platforms
+      return 'http://localhost:8111/api';
     }
   }
   
@@ -42,6 +49,7 @@ class AppConstants {
   static const String appName = 'Fin-Arc';
   static const String appVersion = '1.0.0';
   static const String themeKey = 'app_theme';
+  static const String languageKey = 'app_language';
   
   // Date formats
   static const String dateFormat = 'yyyy-MM-dd';

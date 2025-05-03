@@ -1,5 +1,5 @@
 import os
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_jwt_extended import JWTManager
@@ -101,27 +101,6 @@ def create_app(config=None):
     jwt.init_app(app)
     bcrypt.init_app(app)
     
-    # УЛУЧШЕННАЯ НАСТРОЙКА CORS
-    # Создаем регулярное выражение для соответствия любому порту localhost
-    localhost_pattern = re.compile(r'https?://(localhost|127\.0\.0\.1)(:\d+)?$')
-    
-    # Определение функции для валидации динамических origins
-    def validate_origin(origin):
-        """Проверяет, разрешен ли данный origin"""
-        # В режиме разработки разрешаем любые localhost origins
-        if app.config.get('FLASK_ENV') == 'development':
-            if localhost_pattern.match(origin):
-                app.logger.debug(f"CORS: Allowing localhost origin: {origin}")
-                return True
-        
-        # Проверяем статические разрешенные origins из конфигурации
-        allowed_origins = origins + production_origins
-        if origin in allowed_origins:
-            return True
-        
-        app.logger.warning(f"CORS: Rejecting origin: {origin}")
-        return False
-
     # Configure CORS for Flutter Web/Mobile client
     origins = [
         'http://localhost:8080',  # Flutter web default dev port
@@ -150,12 +129,14 @@ def create_app(config=None):
             if url and url.strip():
                 production_origins.append(url.strip())
     
-    # Настройка CORS с динамической валидацией origins
+    # Simplified CORS configuration
     CORS(app, 
-     origins=origins + production_origins,
-     supports_credentials=True,
-     allow_headers=["Content-Type", "Authorization", "X-Requested-With", "Accept"],
-     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"])
+         resources={r"/*": {"origins": "*"}},
+         supports_credentials=True,
+         allow_headers=["Content-Type", "Authorization", "Access-Control-Allow-Credentials", 
+                        "X-Requested-With", "Accept"],
+         methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+         expose_headers=["Content-Disposition", "Authorization"])
 
     # Configure JWT settings
     app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)
@@ -172,18 +153,40 @@ def create_app(config=None):
         except Exception as e:
             app.logger.error(f"Error creating database tables: {str(e)}")
     
-    # Initialize custom middleware
-    #try:
-    #    from app.middleware import CORSMiddleware
-    #    cors_middleware = CORSMiddleware()
-    #    cors_middleware.init_app(app)
-    #    app.logger.info("CORS middleware initialized")
- #   except ImportError:
-  #      app.logger.warning("CORS middleware not available")
-    
     # Register API blueprint
     from app.api import api_bp
     app.register_blueprint(api_bp)
+
+    # Global handler for OPTIONS requests
+    @app.route('/<path:path>', methods=['OPTIONS'])
+    def handle_options(path):
+        return '', 200
+
+    # Add after_request function to adjust headers
+    @app.after_request
+    def after_request(response):
+        app.logger.debug(f"Response headers: {dict(response.headers)}")
+        
+        # Ensure Content-Type is correct for JSON responses
+        if hasattr(response, 'json') and response.json is not None and response.headers.get('Content-Type') == 'text/html; charset=utf-8':
+            response.headers['Content-Type'] = 'application/json; charset=utf-8'
+        
+        # Remove duplicated CORS headers if they exist
+        headers = dict(response.headers)
+        for header in ['Access-Control-Allow-Origin', 'Access-Control-Allow-Headers', 'Access-Control-Allow-Methods']:
+            if header in headers and headers[header].count(',') > 5:  # Sign of duplication
+                values = headers[header].split(',')
+                unique_values = list(set([v.strip() for v in values]))
+                response.headers[header] = ', '.join(unique_values)
+        
+        return response
+
+    # Add before_request function for debugging
+    @app.before_request
+    def log_request_info():
+        if app.config.get('DEBUG', False):
+            app.logger.debug('Headers: %s', dict(request.headers))
+            app.logger.debug('Body: %s', request.get_data())
 
     # Error handlers returning JSON responses
     @app.errorhandler(400)
@@ -251,22 +254,6 @@ def create_app(config=None):
             'error': 'Token has been revoked',
             'status': 401
         }), 401
-
-    @app.after_request
-    def after_request(response):
-        app.logger.debug(f"Response headers: {dict(response.headers)}")
-        
-        if hasattr(response, 'json') and response.json is not None and response.headers.get('Content-Type') == 'text/html; charset=utf-8':
-             response.headers['Content-Type'] = 'application/json; charset=utf-8'
-    
-        headers = dict(response.headers)
-        for header in ['Access-Control-Allow-Origin', 'Access-Control-Allow-Headers', 'Access-Control-Allow-Methods']:
-            if header in headers and headers[header].count(',') > 5:
-                values = headers[header].split(',')
-                unique_values = list(set([v.strip() for v in values]))
-                response.headers[header] = ', '.join(unique_values)
-    
-        return response
 
     # Log successful app creation
     app.logger.info(f"App created in {app.config.get('FLASK_ENV', 'default')} mode")

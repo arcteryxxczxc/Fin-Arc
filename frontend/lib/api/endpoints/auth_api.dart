@@ -8,7 +8,65 @@ class AuthApi {
   final ApiClient _client = ApiClient();
   final String baseUrl = AppConstants.baseUrl;
 
-  /// Register a new user (direct HTTP call to avoid circular dependencies)
+  /// Common method for auth requests to avoid code duplication
+  Future<Map<String, dynamic>> _makeAuthRequest(String endpoint, Map<String, dynamic> body) async {
+    try {
+      print('AuthApi: Making API call to $baseUrl/auth/$endpoint');
+      
+      final response = await http.post(
+        Uri.parse('$baseUrl/auth/$endpoint'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: jsonEncode(body),
+      );
+
+      print('AuthApi: $endpoint response status: ${response.statusCode}');
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        print('AuthApi: $endpoint error response body: ${response.body}');
+      } else {
+        print('AuthApi: $endpoint successful response');
+      }
+      
+      // Parse response
+      Map<String, dynamic> data;
+      try {
+        data = jsonDecode(response.body);
+      } catch (e) {
+        print('AuthApi: JSON parse error: $e');
+        return {
+          'success': false,
+          'message': 'Failed to parse response: ${response.body.substring(0, response.body.length > 100 ? 100 : response.body.length)}...'
+        };
+      }
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return {'success': true, 'data': data};
+      } else {
+        return {
+          'success': false,
+          'statusCode': response.statusCode,
+          'message': data['msg'] ?? data['error'] ?? '$endpoint failed',
+        };
+      }
+    } catch (e) {
+      print('AuthApi: $endpoint network error: $e');
+      
+      String errorMessage = 'Network error';
+      if (e.toString().contains('SocketException')) {
+        errorMessage = 'Cannot connect to server. Please check your internet connection.';
+      } else if (e.toString().contains('TimeoutException')) {
+        errorMessage = 'Connection timed out. Server might be down or unreachable.';
+      } else {
+        errorMessage = 'Network error: $e';
+      }
+      
+      return {'success': false, 'message': errorMessage};
+    }
+  }
+
+  /// Register a new user
   Future<Map<String, dynamic>> register({
     required String username,
     required String email,
@@ -16,116 +74,28 @@ class AuthApi {
     String? firstName,
     String? lastName,
   }) async {
-    try {
-      final body = {
-        'username': username,
-        'email': email,
-        'password': password,
-        'first_name': firstName ?? '',
-        'last_name': lastName ?? '',
-      };
-
-      print('AuthApi: Making register API call to $baseUrl/auth/register');
-      
-      // Direct HTTP call with proper CORS handling
-      final response = await http.post(
-        Uri.parse('$baseUrl/auth/register'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: jsonEncode(body),
-      );
-
-      print('AuthApi: Register response status: ${response.statusCode}');
-      if (response.statusCode < 200 || response.statusCode >= 300) {
-        print('AuthApi: Register error response body: ${response.body}');
-      } else {
-        print('AuthApi: Register successful response');
-      }
-      
-      // Parse response
-      Map<String, dynamic> data;
-      try {
-        data = jsonDecode(response.body);
-      } catch (e) {
-        print('AuthApi: JSON parse error: $e');
-        return {
-          'success': false,
-          'message': 'Failed to parse response: ${response.body.substring(0, response.body.length > 100 ? 100 : response.body.length)}...'
-        };
-      }
-
-      if (response.statusCode >= 200 && response.statusCode < 300) {
-        return {'success': true, 'data': data};
-      } else {
-        return {
-          'success': false,
-          'statusCode': response.statusCode,
-          'message': data['msg'] ?? data['error'] ?? 'Registration failed',
-        };
-      }
-    } catch (e) {
-      print('AuthApi: Registration network error: $e');
-      return {'success': false, 'message': 'Network error: $e'};
-    }
+    final body = {
+      'username': username,
+      'email': email,
+      'password': password,
+      'first_name': firstName ?? '',
+      'last_name': lastName ?? '',
+    };
+    
+    return _makeAuthRequest('register', body);
   }
 
-  /// Login user (direct HTTP call to avoid circular dependencies)
+  /// Login user
   Future<Map<String, dynamic>> login({
     required String username,
     required String password,
   }) async {
-    try {
-      final body = {
-        'username': username,
-        'password': password,
-      };
-
-      print('AuthApi: Making login API call to $baseUrl/auth/login');
-      
-      // Direct HTTP call with proper CORS handling
-      final response = await http.post(
-        Uri.parse('$baseUrl/auth/login'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: jsonEncode(body),
-      );
-
-      print('AuthApi: Login response status: ${response.statusCode}');
-      if (response.statusCode < 200 || response.statusCode >= 300) {
-        print('AuthApi: Login error response body: ${response.body}');
-      } else {
-        print('AuthApi: Login successful response');
-      }
-      
-      // Parse response
-      Map<String, dynamic> data;
-      try {
-        data = jsonDecode(response.body);
-      } catch (e) {
-        print('AuthApi: JSON parse error: $e');
-        return {
-          'success': false,
-          'message': 'Failed to parse response: ${response.body.substring(0, response.body.length > 100 ? 100 : response.body.length)}...'
-        };
-      }
-
-      if (response.statusCode >= 200 && response.statusCode < 300) {
-        return {'success': true, 'data': data};
-      } else {
-        return {
-          'success': false,
-          'statusCode': response.statusCode,
-          'message': data['msg'] ?? data['error'] ?? 'Login failed',
-        };
-      }
-    } catch (e) {
-      print('AuthApi: Login network error: $e');
-      return {'success': false, 'message': 'Network error: $e'};
-    }
+    final body = {
+      'username': username,
+      'password': password,
+    };
+    
+    return _makeAuthRequest('login', body);
   }
 
   /// Get user profile
@@ -165,7 +135,7 @@ class AuthApi {
     }
   }
 
-  /// Refresh token (direct HTTP call to avoid circular dependencies)
+  /// Refresh token 
   Future<Map<String, dynamic>> refreshToken(String refreshToken) async {
     try {
       final response = await http.post(
@@ -173,6 +143,7 @@ class AuthApi {
         headers: {
           'Authorization': 'Bearer $refreshToken',
           'Accept': 'application/json',
+          'Content-Type': 'application/json',
         },
       );
 
@@ -181,14 +152,22 @@ class AuthApi {
       try {
         data = jsonDecode(response.body);
       } catch (e) {
-        print('AuthApi: JSON parse error: $e');
+        print('AuthApi: Refresh token JSON parse error: $e');
         return {
           'success': false,
-          'message': 'Failed to parse response'
+          'message': 'Failed to parse refresh token response',
+          'error': e.toString()
         };
       }
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
+        if (!data.containsKey('access_token')) {
+          return {
+            'success': false,
+            'message': 'Invalid refresh token response: missing access_token'
+          };
+        }
+        
         return {'success': true, 'data': data};
       } else {
         return {

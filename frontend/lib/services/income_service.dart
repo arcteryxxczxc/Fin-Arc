@@ -1,3 +1,4 @@
+// lib/services/income_service.dart
 import '../api/endpoints/income_api.dart';
 
 class IncomeService {
@@ -32,7 +33,18 @@ class IncomeService {
 
       return result;
     } catch (e) {
-      return {'success': false, 'message': 'Service error: $e'};
+      print('IncomeService error in getIncomes: $e');
+      String errorMessage = 'Service error';
+      
+      if (e.toString().contains('SocketException')) {
+        errorMessage = 'Network connection error. Please check your internet connection.';
+      } else if (e.toString().contains('timeout')) {
+        errorMessage = 'Request timed out. The server is taking too long to respond.';
+      } else {
+        errorMessage = 'Service error: $e';
+      }
+      
+      return {'success': false, 'message': errorMessage};
     }
   }
 
@@ -42,7 +54,18 @@ class IncomeService {
       final result = await _incomeApi.getIncomeDetails(incomeId);
       return result;
     } catch (e) {
-      return {'success': false, 'message': 'Service error: $e'};
+      print('IncomeService error in getIncomeDetails: $e');
+      String errorMessage = 'Service error';
+      
+      if (e.toString().contains('SocketException')) {
+        errorMessage = 'Network connection error. Please check your internet connection.';
+      } else if (e.toString().contains('timeout')) {
+        errorMessage = 'Request timed out. The server is taking too long to respond.';
+      } else {
+        errorMessage = 'Service error: $e';
+      }
+      
+      return {'success': false, 'message': errorMessage};
     }
   }
 
@@ -75,7 +98,18 @@ class IncomeService {
 
       return result;
     } catch (e) {
-      return {'success': false, 'message': 'Service error: $e'};
+      print('IncomeService error in addIncome: $e');
+      String errorMessage = 'Service error';
+      
+      if (e.toString().contains('SocketException')) {
+        errorMessage = 'Network connection error. Please check your internet connection.';
+      } else if (e.toString().contains('timeout')) {
+        errorMessage = 'Request timed out. The server is taking too long to respond.';
+      } else {
+        errorMessage = 'Service error: $e';
+      }
+      
+      return {'success': false, 'message': errorMessage};
     }
   }
 
@@ -110,7 +144,18 @@ class IncomeService {
 
       return result;
     } catch (e) {
-      return {'success': false, 'message': 'Service error: $e'};
+      print('IncomeService error in updateIncome: $e');
+      String errorMessage = 'Service error';
+      
+      if (e.toString().contains('SocketException')) {
+        errorMessage = 'Network connection error. Please check your internet connection.';
+      } else if (e.toString().contains('timeout')) {
+        errorMessage = 'Request timed out. The server is taking too long to respond.';
+      } else {
+        errorMessage = 'Service error: $e';
+      }
+      
+      return {'success': false, 'message': errorMessage};
     }
   }
 
@@ -120,7 +165,18 @@ class IncomeService {
       final result = await _incomeApi.deleteIncome(incomeId);
       return result;
     } catch (e) {
-      return {'success': false, 'message': 'Service error: $e'};
+      print('IncomeService error in deleteIncome: $e');
+      String errorMessage = 'Service error';
+      
+      if (e.toString().contains('SocketException')) {
+        errorMessage = 'Network connection error. Please check your internet connection.';
+      } else if (e.toString().contains('timeout')) {
+        errorMessage = 'Request timed out. The server is taking too long to respond.';
+      } else {
+        errorMessage = 'Service error: $e';
+      }
+      
+      return {'success': false, 'message': errorMessage};
     }
   }
 
@@ -137,7 +193,18 @@ class IncomeService {
 
       return result;
     } catch (e) {
-      return {'success': false, 'message': 'Service error: $e'};
+      print('IncomeService error in getIncomeStats: $e');
+      String errorMessage = 'Service error';
+      
+      if (e.toString().contains('SocketException')) {
+        errorMessage = 'Network connection error. Please check your internet connection.';
+      } else if (e.toString().contains('timeout')) {
+        errorMessage = 'Request timed out. The server is taking too long to respond.';
+      } else {
+        errorMessage = 'Service error: $e';
+      }
+      
+      return {'success': false, 'message': errorMessage};
     }
   }
 
@@ -156,7 +223,18 @@ class IncomeService {
 
       return result;
     } catch (e) {
-      return {'success': false, 'message': 'Service error: $e'};
+      print('IncomeService error in bulkActionIncomes: $e');
+      String errorMessage = 'Service error';
+      
+      if (e.toString().contains('SocketException')) {
+        errorMessage = 'Network connection error. Please check your internet connection.';
+      } else if (e.toString().contains('timeout')) {
+        errorMessage = 'Request timed out. The server is taking too long to respond.';
+      } else {
+        errorMessage = 'Service error: $e';
+      }
+      
+      return {'success': false, 'message': errorMessage};
     }
   }
 
@@ -187,7 +265,18 @@ class IncomeService {
 
       return result;
     } catch (e) {
-      return {'success': false, 'message': 'Service error: $e'};
+      print('IncomeService error in exportIncome: $e');
+      String errorMessage = 'Service error';
+      
+      if (e.toString().contains('SocketException')) {
+        errorMessage = 'Network connection error. Please check your internet connection.';
+      } else if (e.toString().contains('timeout')) {
+        errorMessage = 'Request timed out. The server is taking too long to respond.';
+      } else {
+        errorMessage = 'Service error: $e';
+      }
+      
+      return {'success': false, 'message': errorMessage};
     }
   }
 }

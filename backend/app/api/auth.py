@@ -12,10 +12,13 @@ import logging
 # Set up logging
 logger = logging.getLogger(__name__)
 
-@api_bp.route('/auth/register', methods=['POST'])
+@api_bp.route('/auth/register', methods=['POST', 'OPTIONS'])
 @validate_json(USER_SCHEMA)
 def register():
     """API endpoint for user registration"""
+    if request.method == 'OPTIONS':
+        return api_success({'message': 'CORS preflight accepted'})
+    
     try:
         data = request.get_json()
         

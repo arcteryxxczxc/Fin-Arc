@@ -22,7 +22,7 @@ class ExpenseApi {
   }) async {
     try {
       // Build query parameters
-      final queryParams = {
+      final queryParams = <String, String>{
         'page': page.toString(),
         'per_page': perPage.toString(),
       };
@@ -33,7 +33,7 @@ class ExpenseApi {
       if (minAmount != null) queryParams['min_amount'] = minAmount.toString();
       if (maxAmount != null) queryParams['max_amount'] = maxAmount.toString();
       if (paymentMethod != null) queryParams['payment_method'] = paymentMethod;
-      if (search != null) queryParams['search'] = search;
+      if (search != null && search.isNotEmpty) queryParams['search'] = search;
 
       final response = await _client.get(
         endpoint: 'expenses',
@@ -42,6 +42,7 @@ class ExpenseApi {
 
       return response;
     } catch (e) {
+      print('API error in getExpenses: $e');
       return {'success': false, 'message': 'Network error: $e'};
     }
   }

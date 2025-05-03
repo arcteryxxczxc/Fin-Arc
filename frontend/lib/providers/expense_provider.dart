@@ -11,6 +11,7 @@ class ExpenseProvider with ChangeNotifier {
   String? _error;
   int _currentPage = 1;
   int _totalPages = 1;
+  int _totalItems = 0;
   bool _hasMoreToLoad = true;
   
   // Getters
@@ -18,7 +19,7 @@ class ExpenseProvider with ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
   bool get hasMoreToLoad => _hasMoreToLoad;
-  bool get hasMorePages => _currentPage < _totalPages; // Added missing property
+  bool get hasMorePages => _currentPage < _totalPages;
   
   // Filter state
   int? _categoryId;
@@ -56,31 +57,51 @@ class ExpenseProvider with ChangeNotifier {
       );
       
       if (result['success']) {
-        final data = result['data'];
-        final List<dynamic> expenseData = data['expenses'];
-        final pagination = data['pagination'];
-        
-        // Convert to Expense objects
-        final newExpenses = expenseData.map((item) => Expense.fromJson(item)).toList();
-        
-        if (refresh) {
-          _expenses = newExpenses;
+        if (!result.containsKey('data') || result['data'] == null) {
+          _error = 'Invalid response format';
         } else {
-          _expenses.addAll(newExpenses);
+          final data = result['data'];
+          
+          // Parse expenses with validation
+          List<Expense> fetchedExpenses = [];
+          if (data.containsKey('expenses') && data['expenses'] is List) {
+            for (final item in data['expenses']) {
+              try {
+                fetchedExpenses.add(Expense.fromJson(item));
+              } catch (e) {
+                print('Error parsing expense: $e');
+                // Continue with other items
+              }
+            }
+          } else {
+            _error = 'Invalid expense data format';
+          }
+          
+          // Update data
+          if (refresh) {
+            _expenses = fetchedExpenses;
+          } else {
+            _expenses.addAll(fetchedExpenses);
+          }
+          
+          // Update pagination data
+          if (data.containsKey('pagination') && data['pagination'] is Map) {
+            _totalPages = data['pagination']['total_pages'] ?? 1;
+            _totalItems = data['pagination']['total_items'] ?? 0;
+            _hasMoreToLoad = _currentPage < _totalPages;
+            _currentPage++;
+          } else {
+            _totalPages = 1;
+            _totalItems = fetchedExpenses.length;
+            _hasMoreToLoad = false;
+          }
         }
-        
-        _totalPages = pagination['total_pages'];
-        _hasMoreToLoad = _currentPage < _totalPages;
-        _currentPage++;
-        _isLoading = false;
-        notifyListeners();
       } else {
-        _error = result['message'];
-        _isLoading = false;
-        notifyListeners();
+        _error = result['message'] ?? 'Unknown error occurred';
       }
     } catch (e) {
       _error = 'Error fetching expenses: $e';
+    } finally {
       _isLoading = false;
       notifyListeners();
     }
@@ -128,7 +149,7 @@ class ExpenseProvider with ChangeNotifier {
   }
   
   // Get a single expense
-  Future<Expense?> getExpenseDetails(int expenseId) async {
+  Future<Map<String, dynamic>> getExpenseDetails(int expenseId) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
@@ -139,19 +160,26 @@ class ExpenseProvider with ChangeNotifier {
       _isLoading = false;
       
       if (result['success']) {
+        if (!result.containsKey('data') || !result['data'].containsKey('expense')) {
+          _error = 'Invalid response format';
+          notifyListeners();
+          return {'success': false, 'message': 'Invalid response format'};
+        }
+        
         final expenseData = result['data']['expense'];
+        final expense = Expense.fromJson(expenseData);
         notifyListeners();
-        return Expense.fromJson(expenseData);
+        return {'success': true, 'expense': expense};
       } else {
-        _error = result['message'];
+        _error = result['message'] ?? 'Failed to fetch expense details';
         notifyListeners();
-        return null;
+        return {'success': false, 'message': _error};
       }
     } catch (e) {
       _error = 'Error fetching expense details: $e';
       _isLoading = false;
       notifyListeners();
-      return null;
+      return {'success': false, 'message': _error};
     }
   }
   
@@ -193,7 +221,7 @@ class ExpenseProvider with ChangeNotifier {
         await fetchExpenses(refresh: true);
         return true;
       } else {
-        _error = result['message'];
+        _error = result['message'] ?? 'Failed to add expense';
         notifyListeners();
         return false;
       }
@@ -242,14 +270,21 @@ class ExpenseProvider with ChangeNotifier {
       
       if (result['success']) {
         // Update the expense in the local list
-        final index = _expenses.indexWhere((e) => e.id == expenseId);
-        if (index != -1) {
-          _expenses[index] = Expense.fromJson(result['data']['expense']);
+        if (result.containsKey('data') && result['data'].containsKey('expense')) {
+          final updatedExpense = Expense.fromJson(result['data']['expense']);
+          final index = _expenses.indexWhere((e) => e.id == expenseId);
+          if (index != -1) {
+            _expenses[index] = updatedExpense;
+          }
+        } else {
+          // Refresh from the server if we don't have the updated expense
+          await fetchExpenses(refresh: true);
         }
+        
         notifyListeners();
         return true;
       } else {
-        _error = result['message'];
+        _error = result['message'] ?? 'Failed to update expense';
         notifyListeners();
         return false;
       }
@@ -278,7 +313,7 @@ class ExpenseProvider with ChangeNotifier {
         notifyListeners();
         return true;
       } else {
-        _error = result['message'];
+        _error = result['message'] ?? 'Failed to delete expense';
         notifyListeners();
         return false;
       }

@@ -244,20 +244,30 @@ class ApiClient {
       if (response.statusCode >= 200 && response.statusCode < 300) {
         return {'success': true, 'data': data};
       } else {
-        // Handle API error
+        // Handle API error - check various possible error fields
+        final errorMessage = data['msg'] ?? data['error'] ?? data['message'] ?? 'An error occurred';
         return {
           'success': false,
           'statusCode': response.statusCode,
-          'message': data['msg'] ?? data['error'] ?? 'An error occurred',
+          'message': errorMessage,
+          'details': data,  // Include full response details for better debugging
         };
       }
     } catch (e) {
       print('Response parsing error: $e for body: ${response.body}');
       // If JSON parsing fails
+      String previewBody = '';
+      try {
+        previewBody = response.body.substring(0, response.body.length > 100 ? 100 : response.body.length);
+      } catch (_) {
+        previewBody = 'Could not preview response body';
+      }
+      
       return {
         'success': false,
         'statusCode': response.statusCode,
-        'message': 'Failed to parse response: ${response.body.substring(0, response.body.length > 100 ? 100 : response.body.length)}...',
+        'message': 'Failed to parse response: $previewBody...',
+        'parse_error': e.toString(),
       };
     }
   }
@@ -266,16 +276,31 @@ class ApiClient {
   Map<String, dynamic> _handleException(dynamic error) {
     // Format error message based on exception type
     String errorMessage;
+    String errorType = 'unknown';
+    
     if (error is http.ClientException) {
       errorMessage = 'Network connection error: ${error.message}';
+      errorType = 'network';
     } else if (error is FormatException) {
       errorMessage = 'Invalid response format: ${error.message}';
+      errorType = 'format';
+    } else if (error.toString().contains('SocketException')) {
+      errorMessage = 'Network connection error. Please check your internet connection.';
+      errorType = 'socket';
+    } else if (error.toString().contains('TimeoutException')) {
+      errorMessage = 'Request timed out. The server is taking too long to respond.';
+      errorType = 'timeout';
     } else {
       errorMessage = 'An unexpected error occurred: $error';
+      errorType = 'unexpected';
     }
 
     print('API error handled: $errorMessage');
-    return {'success': false, 'message': errorMessage};
+    return {
+      'success': false, 
+      'message': errorMessage,
+      'error_type': errorType,
+    };
   }
 
   /// Get token directly from storage
@@ -291,7 +316,10 @@ class ApiClient {
   /// Refresh token implementation that doesn't rely on AuthService
   Future<String?> _refreshToken() async {
     final refreshToken = await _storage.read(key: _refreshTokenKey);
-    if (refreshToken == null) return null;
+    if (refreshToken == null) {
+      print('No refresh token available');
+      return null;
+    }
     
     try {
       print('Attempting to refresh token directly from ApiClient');
@@ -301,15 +329,32 @@ class ApiClient {
         headers: {
           'Authorization': 'Bearer $refreshToken',
           'Accept': 'application/json',
+          'Content-Type': 'application/json',
         },
       );
       
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final data = jsonDecode(response.body);
+        if (!data.containsKey('access_token')) {
+          print('Refresh token response missing access_token');
+          return null;
+        }
+        
         final newToken = data['access_token'];
         await _storage.write(key: _tokenKey, value: newToken);
+        
+        // Also update refresh token if provided
+        if (data.containsKey('refresh_token')) {
+          await _storage.write(key: _refreshTokenKey, value: data['refresh_token']);
+        }
+        
         print('Token refreshed successfully');
         return newToken;
+      } else {
+        print('Token refresh failed with status: ${response.statusCode}');
+        // Clear tokens on failed refresh
+        await _storage.delete(key: _tokenKey);
+        await _storage.delete(key: _refreshTokenKey);
       }
     } catch (e) {
       print('Token refresh error in ApiClient: $e');

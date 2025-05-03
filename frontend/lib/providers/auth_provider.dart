@@ -21,8 +21,10 @@ class AuthProvider with ChangeNotifier {
   
   // Initialize auth state on app start
   Future<void> initAuth() async {
-    // Skip if already initialized or currently initializing to prevent infinite loops
+    // Skip if already initialized and not loading
     if (_initialized && !_isLoading) return;
+    
+    // Don't run multiple initializations in parallel
     if (_isInitializing) return;
     
     _isInitializing = true; // Set flag to prevent concurrent initialization
@@ -83,7 +85,17 @@ class AuthProvider with ChangeNotifier {
       print('Registration result: ${result['success']}');
       
       if (result['success']) {
+        // Get the current user after successful registration
         _user = await _authService.getCurrentUser();
+        
+        if (_user == null) {
+          print('User registration successful but could not get user data');
+          _error = 'Registration successful but could not get user data';
+          _isLoading = false;
+          notifyListeners();
+          return false;
+        }
+        
         print('User successfully registered and logged in: ${_user?.username}');
         _isLoading = false;
         notifyListeners();
@@ -123,7 +135,17 @@ class AuthProvider with ChangeNotifier {
       print('Login result: ${result['success']}');
       
       if (result['success']) {
+        // Get the current user after successful login
         _user = await _authService.getCurrentUser();
+        
+        if (_user == null) {
+          print('Login successful but could not get user data');
+          _error = 'Login successful but could not get user data';
+          _isLoading = false;
+          notifyListeners();
+          return false;
+        }
+        
         print('User successfully logged in: ${_user?.username}');
         _isLoading = false;
         notifyListeners();
@@ -213,9 +235,14 @@ class AuthProvider with ChangeNotifier {
       final result = await _authService.getUserProfile();
       
       if (result['success']) {
-        _user = User.fromJson(result['data']);
-        _error = null;
-        print('User profile refreshed successfully: ${_user?.username}');
+        if (result.containsKey('data') && result['data'] != null) {
+          _user = User.fromJson(result['data']);
+          _error = null;
+          print('User profile refreshed successfully: ${_user?.username}');
+        } else {
+          _error = 'Invalid user profile data';
+          print('Invalid user profile data received');
+        }
       } else {
         _error = result['message'] ?? 'Failed to refresh profile';
         print('Failed to refresh profile: $_error');

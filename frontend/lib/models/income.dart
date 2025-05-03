@@ -37,24 +37,63 @@ class Income {
     this.updatedAt,
   });
 
-  // Create Income from JSON
+  // Create Income from JSON with safe type conversion
   factory Income.fromJson(Map<String, dynamic> json) {
+    // Helper function to safely parse double values
+    double parseDouble(dynamic value) {
+      if (value == null) return 0.0;
+      if (value is double) return value;
+      if (value is int) return value.toDouble();
+      if (value is String) {
+        try {
+          return double.parse(value);
+        } catch (_) {
+          return 0.0;
+        }
+      }
+      return 0.0;
+    }
+    
+    // Default date to today if missing
+    String parseDate(dynamic value) {
+      if (value == null) return DateTime.now().toIso8601String().split('T')[0];
+      if (value is String) return value;
+      return DateTime.now().toIso8601String().split('T')[0];
+    }
+    
+    // Parse integer values
+    int? parseInt(dynamic value) {
+      if (value == null) return null;
+      if (value is int) return value;
+      if (value is double) return value.toInt();
+      if (value is String) {
+        try {
+          return int.parse(value);
+        } catch (_) {
+          return null;
+        }
+      }
+      return null;
+    }
+
     return Income(
-      id: json['id'],
-      amount: json['amount'].toDouble(),
-      formattedAmount: json['formatted_amount'] ?? json['amount'].toString(),
-      source: json['source'],
+      id: json['id'] ?? 0,
+      amount: parseDouble(json['amount']),
+      formattedAmount: json['formatted_amount'] ?? parseDouble(json['amount']).toString(),
+      source: json['source'] ?? 'Unknown Source',
       description: json['description'],
-      date: json['date'],
-      categoryId: json['category_id'],
+      date: parseDate(json['date']),
+      categoryId: parseInt(json['category_id']),
       categoryName: json['category_name'],
       categoryColor: json['category_color'],
       isRecurring: json['is_recurring'] ?? false,
       recurringType: json['recurring_type'],
-      recurringDay: json['recurring_day'],
+      recurringDay: parseInt(json['recurring_day']),
       isTaxable: json['is_taxable'] ?? false,
-      taxRate: json['tax_rate']?.toDouble(),
-      afterTaxAmount: json['after_tax_amount']?.toDouble() ?? json['amount'].toDouble(),
+      taxRate: parseDouble(json['tax_rate']),
+      afterTaxAmount: parseDouble(json['after_tax_amount']) != 0.0 
+          ? parseDouble(json['after_tax_amount']) 
+          : parseDouble(json['amount']),
       createdAt: json['created_at'],
       updatedAt: json['updated_at'],
     );

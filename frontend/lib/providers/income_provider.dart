@@ -50,9 +50,14 @@ class IncomeProvider with ChangeNotifier {
     
     return _incomes
         .where((income) {
-          final incomeDate = DateTime.parse(income.date);
-          return incomeDate.isAfter(firstDayOfMonth.subtract(const Duration(days: 1))) && 
-                 incomeDate.isBefore(lastDayOfMonth.add(const Duration(days: 1)));
+          try {
+            final incomeDate = DateTime.parse(income.date);
+            return incomeDate.isAfter(firstDayOfMonth.subtract(const Duration(days: 1))) && 
+                   incomeDate.isBefore(lastDayOfMonth.add(const Duration(days: 1)));
+          } catch (e) {
+            print('Error parsing date for income ${income.id}: ${income.date}');
+            return false;
+          }
         })
         .fold(0, (sum, income) => sum + income.amount);
   }
@@ -66,9 +71,14 @@ class IncomeProvider with ChangeNotifier {
     
     return _incomes
         .where((income) {
-          final incomeDate = DateTime.parse(income.date);
-          return incomeDate.isAfter(firstDayOfYear.subtract(const Duration(days: 1))) && 
-                 incomeDate.isBefore(lastDayOfYear.add(const Duration(days: 1)));
+          try {
+            final incomeDate = DateTime.parse(income.date);
+            return incomeDate.isAfter(firstDayOfYear.subtract(const Duration(days: 1))) && 
+                   incomeDate.isBefore(lastDayOfYear.add(const Duration(days: 1)));
+          } catch (e) {
+            print('Error parsing date for income ${income.id}: ${income.date}');
+            return false;
+          }
         })
         .fold(0, (sum, income) => sum + income.amount);
   }
@@ -120,32 +130,51 @@ class IncomeProvider with ChangeNotifier {
       );
       
       if (result['success']) {
-        final data = result['data'];
-        
-        // Parse incomes
-        List<Income> fetchedIncomes = [];
-        for (final item in data['incomes']) {
-          fetchedIncomes.add(Income.fromJson(item));
-        }
-        
-        // Update pagination data
-        if (refresh) {
-          _incomes = fetchedIncomes;
+        if (!result.containsKey('data') || result['data'] == null) {
+          _error = 'Invalid response format';
         } else {
-          _incomes.addAll(fetchedIncomes);
+          final data = result['data'];
+          
+          // Parse incomes with validation
+          List<Income> fetchedIncomes = [];
+          if (data.containsKey('incomes') && data['incomes'] is List) {
+            for (final item in data['incomes']) {
+              try {
+                fetchedIncomes.add(Income.fromJson(item));
+              } catch (e) {
+                print('Error parsing income: $e');
+                // Continue with other items
+              }
+            }
+          } else {
+            _error = 'Invalid income data format';
+          }
+          
+          // Update data
+          if (refresh) {
+            _incomes = fetchedIncomes;
+          } else {
+            _incomes.addAll(fetchedIncomes);
+          }
+          
+          // Update pagination data
+          if (data.containsKey('pagination') && data['pagination'] is Map) {
+            _totalPages = data['pagination']['total_pages'] ?? 1;
+            _totalItems = data['pagination']['total_items'] ?? 0;
+            _hasMorePages = _currentPage < _totalPages;
+          } else {
+            _totalPages = 1;
+            _totalItems = fetchedIncomes.length;
+            _hasMorePages = false;
+          }
+          
+          // If we're on the first page and just refreshed, update recurring incomes list
+          if (refresh && _currentPage == 1) {
+            _recurringIncomes = _incomes.where((income) => income.isRecurring).toList();
+          }
         }
-        
-        _totalPages = data['pagination']['total_pages'];
-        _totalItems = data['pagination']['total_items'];
-        _hasMorePages = _currentPage < _totalPages;
-        
-        // If we're on the first page and just refreshed, update recurring incomes list
-        if (refresh && _currentPage == 1) {
-          _recurringIncomes = _incomes.where((income) => income.isRecurring).toList();
-        }
-        
       } else {
-        _error = result['message'];
+        _error = result['message'] ?? 'Unknown error';
       }
     } catch (e) {
       _error = e.toString();
@@ -199,10 +228,9 @@ class IncomeProvider with ChangeNotifier {
       if (result['success']) {
         // Refresh incomes to include the new one
         await fetchIncomes(refresh: true);
-        notifyListeners();
         return true;
       } else {
-        _error = result['message'];
+        _error = result['message'] ?? 'Failed to add income';
         notifyListeners();
         return false;
       }
@@ -226,10 +254,16 @@ class IncomeProvider with ChangeNotifier {
       _isLoading = false;
       
       if (result['success']) {
+        if (!result.containsKey('data') || !result['data'].containsKey('income')) {
+          _error = 'Invalid response format';
+          notifyListeners();
+          return {'success': false, 'message': _error};
+        }
+        
         notifyListeners();
         return result;
       } else {
-        _error = result['message'];
+        _error = result['message'] ?? 'Failed to get income details';
         notifyListeners();
         return {'success': false, 'message': _error};
       }
@@ -277,12 +311,35 @@ class IncomeProvider with ChangeNotifier {
       _isLoading = false;
       
       if (result['success']) {
-        // Refresh incomes to update the list
-        await fetchIncomes(refresh: true);
+        // Update the income in the local list if available in the response
+        if (result.containsKey('data') && result['data'].containsKey('income')) {
+          final updatedIncome = Income.fromJson(result['data']['income']);
+          final index = _incomes.indexWhere((income) => income.id == incomeId);
+          if (index != -1) {
+            _incomes[index] = updatedIncome;
+          }
+          
+          // Also update in recurring incomes list if applicable
+          if (updatedIncome.isRecurring) {
+            final recurringIndex = _recurringIncomes.indexWhere((income) => income.id == incomeId);
+            if (recurringIndex != -1) {
+              _recurringIncomes[recurringIndex] = updatedIncome;
+            } else {
+              _recurringIncomes.add(updatedIncome);
+            }
+          } else {
+            // Remove from recurring if no longer recurring
+            _recurringIncomes.removeWhere((income) => income.id == incomeId);
+          }
+        } else {
+          // Refresh from server if updated income not in response
+          await fetchIncomes(refresh: true);
+        }
+        
         notifyListeners();
         return true;
       } else {
-        _error = result['message'];
+        _error = result['message'] ?? 'Failed to update income';
         notifyListeners();
         return false;
       }
@@ -312,7 +369,7 @@ class IncomeProvider with ChangeNotifier {
         notifyListeners();
         return true;
       } else {
-        _error = result['message'];
+        _error = result['message'] ?? 'Failed to delete income';
         notifyListeners();
         return false;
       }
@@ -340,9 +397,13 @@ class IncomeProvider with ChangeNotifier {
       );
       
       if (result['success']) {
-        _incomeStats = result['data'];
+        if (result.containsKey('data')) {
+          _incomeStats = result['data'];
+        } else {
+          _error = 'Invalid stats response format';
+        }
       } else {
-        _error = result['message'];
+        _error = result['message'] ?? 'Failed to fetch income statistics';
       }
     } catch (e) {
       _error = e.toString();
@@ -397,19 +458,21 @@ class IncomeProvider with ChangeNotifier {
     if (_incomes.isEmpty) return [];
     
     // Group incomes by category
-    final Map<String?, double> categoryTotals = {};
+    final Map<String, double> categoryTotals = {};
     
     for (final income in _incomes) {
       final categoryName = income.categoryName ?? 'Uncategorized';
       categoryTotals[categoryName] = (categoryTotals[categoryName] ?? 0) + income.amount;
     }
     
+    final totalAmount = _incomes.fold(0.0, (sum, income) => sum + income.amount);
+    
     // Convert to list of maps
     return categoryTotals.entries
         .map((entry) => {
               'category': entry.key,
               'amount': entry.value,
-              'percentage': entry.value / _incomes.fold(0, (sum, income) => sum + income.amount) * 100,
+              'percentage': totalAmount > 0 ? (entry.value / totalAmount * 100) : 0,
             })
         .toList();
   }
@@ -440,8 +503,13 @@ class IncomeProvider with ChangeNotifier {
       // Calculate income for this month
       final monthIncome = _incomes
           .where((income) {
-            final incomeDate = DateTime.parse(income.date);
-            return incomeDate.year == date.year && incomeDate.month == date.month;
+            try {
+              final incomeDate = DateTime.parse(income.date);
+              return incomeDate.year == date.year && incomeDate.month == date.month;
+            } catch (e) {
+              print('Error parsing date for income ${income.id}: ${income.date}');
+              return false;
+            }
           })
           .fold(0.0, (sum, income) => sum + income.amount);
       
@@ -471,18 +539,28 @@ class IncomeProvider with ChangeNotifier {
     // Calculate income for current month
     final currentMonthIncome = _incomes
         .where((income) {
-          final incomeDate = DateTime.parse(income.date);
-          return incomeDate.isAfter(currentMonthStart.subtract(const Duration(days: 1))) && 
-                 incomeDate.isBefore(currentMonthEnd.add(const Duration(days: 1)));
+          try {
+            final incomeDate = DateTime.parse(income.date);
+            return incomeDate.isAfter(currentMonthStart.subtract(const Duration(days: 1))) && 
+                   incomeDate.isBefore(currentMonthEnd.add(const Duration(days: 1)));
+          } catch (e) {
+            print('Error parsing date for income ${income.id}: ${income.date}');
+            return false;
+          }
         })
         .fold(0.0, (sum, income) => sum + income.amount);
     
     // Calculate income for previous month
     final prevMonthIncome = _incomes
         .where((income) {
-          final incomeDate = DateTime.parse(income.date);
-          return incomeDate.isAfter(prevMonthStart.subtract(const Duration(days: 1))) && 
-                 incomeDate.isBefore(prevMonthEnd.add(const Duration(days: 1)));
+          try {
+            final incomeDate = DateTime.parse(income.date);
+            return incomeDate.isAfter(prevMonthStart.subtract(const Duration(days: 1))) && 
+                   incomeDate.isBefore(prevMonthEnd.add(const Duration(days: 1)));
+          } catch (e) {
+            print('Error parsing date for income ${income.id}: ${income.date}');
+            return false;
+          }
         })
         .fold(0.0, (sum, income) => sum + income.amount);
     

@@ -23,18 +23,22 @@ class User {
     this.stats,
   });
 
-  // Create User from JSON
+  // Create User from JSON with safe type conversion
   factory User.fromJson(Map<String, dynamic> json) {
     // Handle stats if available
     UserStats? stats;
-    if (json['stats'] != null) {
-      stats = UserStats.fromJson(json['stats']);
+    if (json['stats'] != null && json['stats'] is Map<String, dynamic>) {
+      try {
+        stats = UserStats.fromJson(json['stats'] as Map<String, dynamic>);
+      } catch (e) {
+        print('Error parsing user stats: $e');
+      }
     }
     
     return User(
-      id: json['id'],
-      username: json['username'],
-      email: json['email'],
+      id: json['id'] ?? 0,
+      username: json['username'] ?? '',
+      email: json['email'] ?? '',
       firstName: json['first_name'],
       lastName: json['last_name'],
       createdAt: json['created_at'],
@@ -83,8 +87,10 @@ class User {
       return firstName![0].toUpperCase();
     } else if (lastName != null && lastName!.isNotEmpty) {
       return lastName![0].toUpperCase();
-    } else {
+    } else if (username.isNotEmpty) {
       return username[0].toUpperCase();
+    } else {
+      return 'U'; // Default initial if all else fails
     }
   }
   
@@ -130,13 +136,27 @@ class UserStats {
     this.savingsRate,
   });
   
-  // Create UserStats from JSON
+  // Create UserStats from JSON with safe type conversion
   factory UserStats.fromJson(Map<String, dynamic> json) {
+    double? parseDouble(dynamic value) {
+      if (value == null) return null;
+      if (value is double) return value;
+      if (value is int) return value.toDouble();
+      if (value is String) {
+        try {
+          return double.parse(value);
+        } catch (_) {
+          return null;
+        }
+      }
+      return null;
+    }
+    
     return UserStats(
-      totalExpensesCurrentMonth: json['total_expenses_current_month']?.toDouble(),
-      totalIncomeCurrentMonth: json['total_income_current_month']?.toDouble(),
-      currentMonthBalance: json['current_month_balance']?.toDouble(),
-      savingsRate: json['savings_rate']?.toDouble(),
+      totalExpensesCurrentMonth: parseDouble(json['total_expenses_current_month']),
+      totalIncomeCurrentMonth: parseDouble(json['total_income_current_month']),
+      currentMonthBalance: parseDouble(json['current_month_balance']),
+      savingsRate: parseDouble(json['savings_rate']),
     );
   }
   

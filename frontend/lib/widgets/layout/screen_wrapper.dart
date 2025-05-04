@@ -42,6 +42,9 @@ class ScreenWrapper extends StatelessWidget {
         route = RouteNames.incomeList;
         break;
       case 3:
+        // Add categories tab here if you want to replace one of the existing tabs
+        // For example: route = RouteNames.categoryList;
+        // Or keep your current reports tab
         route = RouteNames.reports;
         break;
       case 4:

@@ -137,8 +137,8 @@ class IncomeProvider with ChangeNotifier {
           
           // Parse incomes with validation
           List<Income> fetchedIncomes = [];
-          if (data.containsKey('incomes') && data['incomes'] is List) {
-            for (final item in data['incomes']) {
+          if (data.containsKey('income') && data['income'] is List) {
+            for (final item in data['income']) {
               try {
                 fetchedIncomes.add(Income.fromJson(item));
               } catch (e) {
@@ -146,8 +146,20 @@ class IncomeProvider with ChangeNotifier {
                 // Continue with other items
               }
             }
+          } else if (data.containsKey('incomes') && data['incomes'] is List) {
+              // Try original 'incomes' key as fallback
+              for (final item in data['incomes']) {
+                try {
+                  fetchedIncomes.add(Income.fromJson(item));
+                } catch (e) {
+                  print('Error parsing income: $e');
+                  print('Problematic income data: $item');
+                  // Continue with other items
+                }
+            } 
           } else {
-            _error = 'Invalid income data format';
+            print('API response data structure: $data');
+            _error = 'Invalid income data format: expected "income" or "incomes" list';
           }
           
           // Update data

@@ -22,6 +22,12 @@ import '../screens/reports/annual_report_screen.dart';
 import '../screens/reports/budget_report_screen.dart';
 import '../screens/reports/cashflow_report_screen.dart';
 
+// Category screens
+import '../screens/categories/updated_category_list_screen.dart';
+import '../screens/categories/category_detail_screen.dart';
+import '../screens/categories/category_form_screen.dart';
+import '../screens/categories/category_budget_screen.dart';
+
 // Routes
 import 'route_names.dart';
 
@@ -148,6 +154,42 @@ class AppRouter {
         return MaterialPageRoute(
           settings: settings,
           builder: (_) => EditIncomeScreen(incomeId: incomeId),
+        );
+
+      // Category Routes - NEW
+      case RouteNames.categoryList:
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => const UpdatedCategoryListScreen(),
+        );
+
+      case RouteNames.categoryDetail:
+        final int categoryId = args['categoryId'] ?? 0;
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => CategoryDetailScreen(categoryId: categoryId),
+        );
+
+      case RouteNames.addCategory:
+        final bool isExpense = args['isExpense'] ?? true;
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => CategoryFormScreen(isExpense: isExpense),
+        );
+
+      case RouteNames.editCategory:
+        final int categoryId = args['categoryId'] ?? 0;
+        final category = args['category'];
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => CategoryFormScreen(category: category),
+        );
+
+      // Category budget management - NEW
+      case '/categories/budget':
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => const CategoryBudgetScreen(),
         );
 
       default:

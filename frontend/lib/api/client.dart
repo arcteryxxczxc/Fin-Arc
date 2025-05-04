@@ -236,35 +236,40 @@ class ApiClient {
     Map<String, String>? queryParams,
     bool requiresAuth = true,
   }) async {
-    // Get auth token if required
-    String? token;
-    if (requiresAuth) {
-      token = await _getToken();
-      if (token == null) {
-        throw Exception('Not authenticated');
+    try {
+      // Get auth token if required
+      String? token;
+      if (requiresAuth) {
+        token = await _getToken();
+        if (token == null) {
+          throw Exception('Not authenticated');
+        }
       }
+
+      // Build URI with query parameters
+      final uri = Uri.parse('$baseUrl/$endpoint').replace(
+        queryParameters: queryParams,
+      );
+
+      print('Making raw GET request to: ${uri.toString()}');
+
+      // Set up headers
+      final headers = {
+        'Accept': '*/*',
+        if (requiresAuth && token != null) 'Authorization': 'Bearer $token',
+      };
+
+      // Make request and return raw response
+      return await http.get(uri, headers: headers).timeout(
+        const Duration(seconds: 60), // Longer timeout for file downloads
+        onTimeout: () {
+          return http.Response('Request timed out', 408);
+        }
+      );
+    } catch (e) {
+      print('Raw API GET error: $e');
+      rethrow;
     }
-
-    // Build URI with query parameters
-    final uri = Uri.parse('$baseUrl/$endpoint').replace(
-      queryParameters: queryParams,
-    );
-
-    print('Making raw GET request to: ${uri.toString()}');
-
-    // Set up headers
-    final headers = {
-      'Accept': '*/*',
-      if (requiresAuth && token != null) 'Authorization': 'Bearer $token',
-    };
-
-    // Make request and return raw response
-    return await http.get(uri, headers: headers).timeout(
-      const Duration(seconds: 60), // Longer timeout for file downloads
-      onTimeout: () {
-        return http.Response('Request timed out', 408);
-      }
-    );
   }
 
   /// Handle HTTP response and parse JSON
@@ -294,7 +299,18 @@ class ApiClient {
       }
 
       // Parse JSON response
-      final data = jsonDecode(response.body);
+      dynamic data;
+      try {
+        data = jsonDecode(response.body);
+      } catch (e) {
+        print('JSON Decode Error: $e');
+        return {
+          'success': false,
+          'statusCode': response.statusCode,
+          'message': 'Invalid JSON response: $e',
+          'body': response.body.substring(0, response.body.length > 100 ? 100 : response.body.length),
+        };
+      }
       
       // If data is null, return empty object
       if (data == null) {
@@ -314,10 +330,23 @@ class ApiClient {
       
       // Check if response is successful
       if (response.statusCode >= 200 && response.statusCode < 300) {
+        // If data is a map that contains a data property, return that
+        if (data is Map && data.containsKey('data')) {
+          return {'success': true, 'data': data['data']};
+        }
         return {'success': true, 'data': data};
       } else {
         // Handle API error - check various possible error fields
-        final errorMessage = data['msg'] ?? data['error'] ?? data['message'] ?? 'An error occurred';
+        String errorMessage;
+        if (data is Map) {
+          errorMessage = data['msg'] ?? 
+                        data['error'] ?? 
+                        data['message'] ?? 
+                        'An error occurred';
+        } else {
+          errorMessage = 'Unexpected response format';
+        }
+        
         return {
           'success': false,
           'statusCode': response.statusCode,
@@ -326,7 +355,7 @@ class ApiClient {
         };
       }
     } catch (e) {
-      print('Response parsing error: $e for body: ${response.body}');
+      print('Response handling error: $e for body: ${response.body}');
       // If JSON parsing fails
       String previewBody = '';
       try {

@@ -23,8 +23,13 @@ class CategoryApi {
         queryParams: queryParams,
       );
 
+      // Add debugging output for response format
+      print('Categories API response: ${response.toString().substring(0, 
+            response.toString().length > 200 ? 200 : response.toString().length)}...');
+
       return response;
     } catch (e) {
+      print('Category API error: $e');
       return {'success': false, 'message': 'Network error: $e'};
     }
   }

@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:provider/provider.dart';
 import '../../services/report_service.dart';
-import '../../providers/report_provider.dart'; // We'll create this
+import '../../providers/report_provider.dart';
 import '../../widgets/common/loading_indicator.dart';
 import '../../widgets/common/error_display.dart';
 import '../../widgets/layout/screen_wrapper.dart';
@@ -55,6 +55,11 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
           _reportData = result['data'];
           _isLoading = false;
         });
+        
+        // Debug the data structure
+        print('Monthly report data: ${result['data'].toString().substring(0, 
+              result['data'].toString().length > 200 ? 200 : result['data'].toString().length)}...');
+              
       } else {
         setState(() {
           _error = result['message'];
@@ -332,10 +337,40 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
       );
     }
 
-    final totals = _reportData!['totals'] as Map<String, dynamic>;
-    final income = (totals['income'] as num).toDouble();
-    final expenses = (totals['expenses'] as num).toDouble();
-    final balance = (totals['balance'] as num).toDouble();
+    // Try to get totals with proper error handling
+    Map<String, dynamic> totals;
+    try {
+      totals = _reportData!['totals'] as Map<String, dynamic>;
+    } catch (e) {
+      print('Error parsing totals: $e');
+      return Card(
+        elevation: 2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Monthly Summary',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Center(
+                child: Text('Invalid summary data format'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // Get values with null safety
+    final income = totals.containsKey('income') ? (totals['income'] as num).toDouble() : 0.0;
+    final expenses = totals.containsKey('expenses') ? (totals['expenses'] as num).toDouble() : 0.0;
+    final balance = totals.containsKey('balance') ? (totals['balance'] as num).toDouble() : income - expenses;
     
     return Card(
       elevation: 2,
@@ -435,7 +470,18 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
   }
   
   Widget _buildDailyTrendsChart(ThemeData theme) {
-    final dailyData = _reportData?['daily_data'] as List<dynamic>? ?? [];
+    // Safely access daily_data with error handling
+    List<dynamic> dailyData = [];
+    try {
+      if (_reportData!.containsKey('daily_data')) {
+        final data = _reportData!['daily_data'];
+        if (data is List) {
+          dailyData = data;
+        }
+      }
+    } catch (e) {
+      print('Error accessing daily data: $e');
+    }
     
     if (dailyData.isEmpty) {
       return Card(
@@ -475,12 +521,38 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
     double maxY = 0;
     
     for (int i = 0; i < dailyData.length; i++) {
-      final dayData = dailyData[i];
-      final date = DateTime.parse(dayData['date'] as String);
+      final dayData = dailyData[i] as Map<String, dynamic>;
+      // Safely extract date with error handling
+      String dateStr = '';
+      try {
+        dateStr = dayData['date'] as String? ?? '';
+      } catch (e) {
+        print('Error getting date: $e');
+        continue;
+      }
+      
+      DateTime date;
+      try {
+        date = DateTime.parse(dateStr);
+      } catch (e) {
+        print('Error parsing date $dateStr: $e');
+        continue;
+      }
+      
       final day = date.day.toString();
-      final income = (dayData['income'] as num).toDouble();
-      final expenses = (dayData['expenses'] as num).toDouble();
-      final balance = (dayData['balance'] as num).toDouble();
+      
+      // Safely extract amounts with error handling
+      double income = 0.0;
+      double expenses = 0.0;
+      double balance = 0.0;
+      
+      try {
+        income = dayData.containsKey('income') ? (dayData['income'] as num).toDouble() : 0.0;
+        expenses = dayData.containsKey('expenses') ? (dayData['expenses'] as num).toDouble() : 0.0;
+        balance = dayData.containsKey('balance') ? (dayData['balance'] as num).toDouble() : income - expenses;
+      } catch (e) {
+        print('Error extracting values for day $day: $e');
+      }
       
       days.add(day);
       incomeSpots.add(FlSpot(i.toDouble(), income));
@@ -645,8 +717,7 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
       ),
     );
   }
-
-  // Add missing methods
+  
   Widget _buildLegendItem({required String label, required Color color}) {
     return Row(
       children: [
@@ -669,9 +740,24 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
       ],
     );
   }
-
+  
   Widget _buildExpenseCategories(ThemeData theme, NumberFormat currencyFormatter) {
-    final categories = _reportData?['expense_categories'] as List<dynamic>? ?? [];
+    // Safely access expense categories with error handling
+    List<dynamic> categories = [];
+    try {
+      if (_reportData!.containsKey('expense_categories')) {
+        final data = _reportData!['expense_categories'];
+        if (data is List) {
+          categories = data;
+        } else {
+          print('expense_categories is not a list: ${data.runtimeType}');
+        }
+      } else {
+        print('No expense_categories key found');
+      }
+    } catch (e) {
+      print('Error accessing expense categories: $e');
+    }
     
     if (categories.isEmpty) {
       return Card(
@@ -704,17 +790,47 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
     // Prepare data for pie chart
     List<PieChartSectionData> sections = [];
     
-    for (final category in categories) {
-      final name = category['name'] as String;
-      final color = category['color'] as String? ?? category['color_code'] as String? ?? '#FF0000';
-      final total = (category['total'] as num).toDouble();
-      final percentage = (category['percentage'] as num).toDouble();
+    for (final categoryData in categories) {
+      // Skip if not a Map
+      if (categoryData is! Map) {
+        print('Category data is not a Map: ${categoryData.runtimeType}');
+        continue;
+      }
+      
+      // Convert to Map<String, dynamic> for easier access
+      final category = categoryData as Map<String, dynamic>;
+      
+      // Safely extract values
+      String name = '';
+      String colorStr = '#FF0000'; // Default red
+      double total = 0.0;
+      double percentage = 0.0;
+      
+      try {
+        name = category['name'] as String? ?? 'Unknown';
+        colorStr = category['color'] as String? ?? 
+                  category['color_code'] as String? ?? 
+                  '#FF0000';
+        total = category.containsKey('total') ? 
+               (category['total'] as num).toDouble() : 0.0;
+        percentage = category.containsKey('percentage') ? 
+                   (category['percentage'] as num).toDouble() : 0.0;
+      } catch (e) {
+        print('Error extracting category data: $e');
+        continue;
+      }
       
       // Skip categories with no spending
       if (total <= 0) continue;
       
-      // Parse color from hex string
-      final colorValue = Color(int.parse(color.replaceFirst('#', '0xFF')));
+      // Parse color from hex string with error handling
+      Color colorValue;
+      try {
+        colorValue = Color(int.parse(colorStr.replaceFirst('#', '0xFF')));
+      } catch (e) {
+        print('Error parsing color $colorStr: $e');
+        colorValue = Colors.grey; // Default fallback
+      }
       
       sections.add(
         PieChartSectionData(
@@ -774,17 +890,44 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: categories.length,
                 itemBuilder: (context, index) {
-                  final category = categories[index];
-                  final name = category['name'] as String;
-                  final color = category['color'] as String? ?? category['color_code'] as String? ?? '#FF0000';
-                  final total = (category['total'] as num).toDouble();
-                  final percentage = (category['percentage'] as num).toDouble();
+                  // Skip if not a Map
+                  if (categories[index] is! Map) {
+                    return const SizedBox.shrink();
+                  }
+                  
+                  final category = categories[index] as Map<String, dynamic>;
+                  
+                  // Safely extract values
+                  String name = '';
+                  String colorStr = '#FF0000'; // Default red
+                  double total = 0.0;
+                  double percentage = 0.0;
+                  
+                  try {
+                    name = category['name'] as String? ?? 'Unknown';
+                    colorStr = category['color'] as String? ?? 
+                              category['color_code'] as String? ?? 
+                              '#FF0000';
+                    total = category.containsKey('total') ? 
+                           (category['total'] as num).toDouble() : 0.0;
+                    percentage = category.containsKey('percentage') ? 
+                               (category['percentage'] as num).toDouble() : 0.0;
+                  } catch (e) {
+                    print('Error extracting category data in list: $e');
+                    return const SizedBox.shrink();
+                  }
                   
                   // Skip categories with no spending
                   if (total <= 0) return const SizedBox.shrink();
                   
-                  // Parse color from hex string
-                  final colorValue = Color(int.parse(color.replaceFirst('#', '0xFF')));
+                  // Parse color from hex string with error handling
+                  Color colorValue;
+                  try {
+                    colorValue = Color(int.parse(colorStr.replaceFirst('#', '0xFF')));
+                  } catch (e) {
+                    print('Error parsing color $colorStr: $e');
+                    colorValue = Colors.grey; // Default fallback
+                  }
                   
                   return ListTile(
                     contentPadding: const EdgeInsets.symmetric(vertical: 4),
@@ -812,7 +955,22 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
   }
 
   Widget _buildIncomeSources(ThemeData theme, NumberFormat currencyFormatter) {
-    final sources = _reportData?['income_sources'] as List<dynamic>? ?? [];
+    // Safely access income sources with error handling
+    List<dynamic> sources = [];
+    try {
+      if (_reportData!.containsKey('income_sources')) {
+        final data = _reportData!['income_sources'];
+        if (data is List) {
+          sources = data;
+        } else {
+          print('income_sources is not a list: ${data.runtimeType}');
+        }
+      } else {
+        print('No income_sources key found');
+      }
+    } catch (e) {
+      print('Error accessing income sources: $e');
+    }
     
     if (sources.isEmpty) {
       return Card(
@@ -850,10 +1008,30 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
     double maxAmount = 0;
     
     for (int i = 0; i < sources.length; i++) {
-      final source = sources[i];
-      final name = source['name'] as String;
-      final color = source['color'] as String? ?? source['color_code'] as String? ?? '#00FF00';
-      final total = (source['total'] as num).toDouble();
+      // Skip if not a Map
+      if (sources[i] is! Map) {
+        print('Income source is not a Map: ${sources[i].runtimeType}');
+        continue;
+      }
+      
+      final source = sources[i] as Map<String, dynamic>;
+      
+      // Safely extract values
+      String name = '';
+      String colorStr = '#00FF00'; // Default green
+      double total = 0.0;
+      
+      try {
+        name = source['name'] as String? ?? 'Unknown';
+        colorStr = source['color'] as String? ?? 
+                  source['color_code'] as String? ?? 
+                  '#00FF00';
+        total = source.containsKey('total') ? 
+               (source['total'] as num).toDouble() : 0.0;
+      } catch (e) {
+        print('Error extracting income source data: $e');
+        continue;
+      }
       
       // Skip sources with no income
       if (total <= 0) continue;
@@ -863,8 +1041,14 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
         maxAmount = total;
       }
       
-      // Parse color from hex string
-      final colorValue = Color(int.parse(color.replaceFirst('#', '0xFF')));
+      // Parse color from hex string with error handling
+      Color colorValue;
+      try {
+        colorValue = Color(int.parse(colorStr.replaceFirst('#', '0xFF')));
+      } catch (e) {
+        print('Error parsing income source color $colorStr: $e');
+        colorValue = Colors.green; // Default fallback
+      }
       
       sourceNames.add(name);
       colors.add(colorValue);
@@ -994,17 +1178,44 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: sources.length,
                 itemBuilder: (context, index) {
-                  final source = sources[index];
-                  final name = source['name'] as String;
-                  final color = source['color'] as String? ?? source['color_code'] as String? ?? '#00FF00';
-                  final total = (source['total'] as num).toDouble();
-                  final percentage = (source['percentage'] as num).toDouble();
+                  // Skip if not a Map
+                  if (sources[index] is! Map) {
+                    return const SizedBox.shrink();
+                  }
+                  
+                  final source = sources[index] as Map<String, dynamic>;
+                  
+                  // Safely extract values
+                  String name = '';
+                  String colorStr = '#00FF00'; // Default green
+                  double total = 0.0;
+                  double percentage = 0.0;
+                  
+                  try {
+                    name = source['name'] as String? ?? 'Unknown';
+                    colorStr = source['color'] as String? ?? 
+                              source['color_code'] as String? ?? 
+                              '#00FF00';
+                    total = source.containsKey('total') ? 
+                           (source['total'] as num).toDouble() : 0.0;
+                    percentage = source.containsKey('percentage') ? 
+                               (source['percentage'] as num).toDouble() : 0.0;
+                  } catch (e) {
+                    print('Error extracting income source data in list: $e');
+                    return const SizedBox.shrink();
+                  }
                   
                   // Skip sources with no income
                   if (total <= 0) return const SizedBox.shrink();
                   
-                  // Parse color from hex string
-                  final colorValue = Color(int.parse(color.replaceFirst('#', '0xFF')));
+                  // Parse color from hex string with error handling
+                  Color colorValue;
+                  try {
+                    colorValue = Color(int.parse(colorStr.replaceFirst('#', '0xFF')));
+                  } catch (e) {
+                    print('Error parsing income source color $colorStr in list: $e');
+                    colorValue = Colors.green; // Default fallback
+                  }
                   
                   return ListTile(
                     contentPadding: const EdgeInsets.symmetric(vertical: 4),

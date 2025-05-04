@@ -35,6 +35,10 @@ class ReportApi {
         queryParams: queryParams,
       );
 
+      // Log the response for debugging
+      print('Monthly report API response: ${response.toString().substring(0, 
+            response.toString().length > 200 ? 200 : response.toString().length)}...');
+
       return response;
     } catch (e) {
       print('API error getting monthly report: $e');
@@ -118,39 +122,76 @@ class ReportApi {
       if (startDate != null) queryParams['start_date'] = startDate;
       if (endDate != null) queryParams['end_date'] = endDate;
 
-      final response = await _client.getRaw(
-        endpoint: 'reports/export',
-        queryParams: queryParams,
-      );
+      print('Exporting report with params: $queryParams');
 
-      if (response.statusCode >= 200 && response.statusCode < 300) {
-        return {
-          'success': true,
-          'data': response.bodyBytes,
-          'content-type': response.headers['content-type'] ?? 'application/json',
-          'filename': _getFilenameFromHeader(response) ?? 'report.json',
-        };
-      } else {
-        Map<String, dynamic> data;
-        try {
-          data = jsonDecode(response.body);
-        } catch (_) {
-          data = {'msg': 'Failed to export report'};
+      try {
+        final response = await _client.getRaw(
+          endpoint: 'reports/export',
+          queryParams: queryParams,
+        );
+
+        if (response.statusCode >= 200 && response.statusCode < 300) {
+          // Get filename from header or use default
+          final filename = _getFilenameFromHeader(response) ?? 'report_$reportType.csv';
+          
+          // Return success with binary data
+          return {
+            'success': true,
+            'data': response.bodyBytes,
+            'content-type': response.headers['content-type'] ?? 'application/octet-stream',
+            'filename': filename,
+          };
+        } else {
+          // Try to parse error message from JSON response
+          Map<String, dynamic> errorData;
+          try {
+            errorData = jsonDecode(response.body);
+            return {'success': false, 'message': errorData['message'] ?? errorData['msg'] ?? 'Export failed'};
+          } catch (_) {
+            // If not JSON, return the status code and preview of the response
+            final preview = response.body.length > 100 
+                ? response.body.substring(0, 100) 
+                : response.body;
+            return {
+              'success': false, 
+              'message': 'Export failed with status ${response.statusCode}: $preview'
+            };
+          }
         }
-        return {'success': false, 'message': data['msg'] ?? 'Failed to export report'};
+      } catch (e) {
+        print('HTTP error during export: $e');
+        return {'success': false, 'message': 'Network error during export: $e'};
       }
     } catch (e) {
       print('API error exporting report: $e');
-      return {'success': false, 'message': 'Network error: $e'};
+      return {'success': false, 'message': 'Error preparing export request: $e'};
     }
   }
 
   // Helper method to extract filename from Content-Disposition header
   String? _getFilenameFromHeader(http.Response response) {
     final contentDisposition = response.headers['content-disposition'];
-    if (contentDisposition != null && contentDisposition.contains('filename=')) {
-      final filename = contentDisposition.split('filename=')[1];
-      return filename.replaceAll('"', '').replaceAll(';', '');
+    if (contentDisposition != null) {
+      // Try different formats of Content-Disposition
+      if (contentDisposition.contains('filename=')) {
+        final parts = contentDisposition.split('filename=');
+        if (parts.length > 1) {
+          final filename = parts[1].trim()
+                          .replaceAll('"', '')
+                          .replaceAll("'", '')
+                          .replaceAll(';', '');
+          return filename;
+        }
+      } else if (contentDisposition.contains('filename*=')) {
+        // Handle extended format: filename*=UTF-8''filename.ext
+        final parts = contentDisposition.split("filename*=");
+        if (parts.length > 1) {
+          final filenameEncoded = parts[1].split("''");
+          if (filenameEncoded.length > 1) {
+            return Uri.decodeComponent(filenameEncoded[1].replaceAll(';', ''));
+          }
+        }
+      }
     }
     return null;
   }

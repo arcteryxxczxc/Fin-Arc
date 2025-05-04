@@ -1,13 +1,13 @@
 import 'package:flutter/foundation.dart' hide Category;
 import '../services/category_service.dart';
-import '../models/category.dart'as model;
+import '../models/category.dart' as model;
 
 class CategoryProvider with ChangeNotifier {
   final CategoryService _categoryService = CategoryService();
   
   List<model.Category> _categories = [];
-  List<model.Category> _expenseCategories = []; // Only expense categories
-  List<model.Category> _incomeCategories = []; // Only income categories
+  List<model.Category> _expenseCategories = [];
+  List<model.Category> _incomeCategories = []; 
   bool _isLoading = false;
   String? _error;
   
@@ -36,8 +36,27 @@ class CategoryProvider with ChangeNotifier {
       if (result['success']) {
         // Convert raw data to Category objects
         List<model.Category> fetchedCategories = [];
-        for (final item in result['data']) {
-          fetchedCategories.add(model.Category.fromJson(item));
+        final data = result['data'];
+        
+        // Handle different response formats
+        if (data is List) {
+          // If data is already a list
+          for (final item in data) {
+            fetchedCategories.add(model.Category.fromJson(item));
+          }
+        } else if (data is Map) {
+          // If data is a map with categories under a key
+          if (data.containsKey('categories')) {
+            final categoryList = data['categories'];
+            if (categoryList is List) {
+              for (final item in categoryList) {
+                fetchedCategories.add(model.Category.fromJson(item));
+              }
+            }
+          } else {
+            // If it's just a map, consider it as a single category
+            fetchedCategories.add(model.Category.fromJson(Map<String, dynamic>.from(data)));
+          }
         }
         
         // Update lists

@@ -1,8 +1,8 @@
-// lib/widgets/categories/category_budget_card.dart
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../models/category.dart';
 
+/// A widget for displaying and editing a category's budget limit
 class CategoryBudgetCard extends StatelessWidget {
   final Category category;
   final Function(double) onBudgetChanged;
@@ -44,7 +44,7 @@ class CategoryBudgetCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Category header
+            // Category header with icon and name
             Row(
               children: [
                 Container(
@@ -79,7 +79,7 @@ class CategoryBudgetCard extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             
-            // Budget progress
+            // Budget progress indicator
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -102,7 +102,7 @@ class CategoryBudgetCard extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             
-            // Budget input
+            // Budget input and remaining amount
             Row(
               children: [
                 Expanded(

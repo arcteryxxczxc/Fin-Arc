@@ -12,6 +12,7 @@ import '../../routes/route_names.dart';
 import '../expenses/expense_detail_screen.dart';
 import 'category_form_screen.dart';
 
+/// Screen for viewing category details and associated expenses
 class CategoryDetailScreen extends StatefulWidget {
   final int categoryId;
   
@@ -27,7 +28,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
   bool _isLoading = true;
   String? _error;
   
-  // Date range for filtering
+  // Date range for filtering expenses
   DateTime _startDate = DateTime.now().subtract(const Duration(days: 30));
   DateTime _endDate = DateTime.now();
   
@@ -37,6 +38,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
     _loadCategoryDetails();
   }
   
+  /// Load category details and associated expenses
   Future<void> _loadCategoryDetails() async {
     setState(() {
       _isLoading = true;
@@ -85,6 +87,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
     }
   }
   
+  /// Show date range picker and refresh data with new date range
   void _showDateRangePicker() async {
     final picked = await showDateRangePicker(
       context: context,
@@ -182,6 +185,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
     );
   }
   
+  /// Build the category overview card
   Widget _buildCategoryOverview(ThemeData theme, NumberFormat currencyFormatter) {
     if (_category == null) return const SizedBox.shrink();
     
@@ -285,6 +289,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
     );
   }
   
+  /// Build a stat item for the overview card
   Widget _buildStatItem({
     required String title,
     required String value,
@@ -327,6 +332,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
     );
   }
   
+  /// Get color for budget status
   Color _getBudgetStatusColor(String? status) {
     if (status == null) return Colors.grey;
     
@@ -342,6 +348,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
     }
   }
   
+  /// Build budget progress card
   Widget _buildBudgetProgress(ThemeData theme, NumberFormat currencyFormatter) {
     if (_category == null) return const SizedBox.shrink();
     
@@ -429,6 +436,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
     );
   }
   
+  /// Build date range selector card
   Widget _buildDateRangeSelector(ThemeData theme) {
     return Card(
       elevation: 2,
@@ -470,6 +478,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
     );
   }
   
+  /// Build the list of expenses for this category
   Widget _buildExpenseList(ThemeData theme, NumberFormat currencyFormatter) {
     if (_expenses.isEmpty) {
       return Center(
@@ -491,6 +500,14 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
               style: theme.textTheme.bodyMedium,
               textAlign: TextAlign.center,
             ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.of(context).pushNamed(RouteNames.addExpense);
+              },
+              icon: const Icon(Icons.add),
+              label: const Text('Add Expense'),
+            )
           ],
         ),
       );

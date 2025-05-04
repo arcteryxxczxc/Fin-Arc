@@ -6,6 +6,7 @@ import '../../widgets/common/error_display.dart';
 import '../../widgets/layout/screen_wrapper.dart';
 import '../../routes/route_names.dart';
 
+/// Screen for displaying budget reports
 class BudgetReportScreen extends StatefulWidget {
   const BudgetReportScreen({super.key});
 
@@ -30,6 +31,7 @@ class _BudgetReportScreenState extends State<BudgetReportScreen> {
     _fetchBudgetReport();
   }
   
+  /// Fetch budget report data from the API
   Future<void> _fetchBudgetReport() async {
     if (!mounted) return;
     
@@ -67,7 +69,7 @@ class _BudgetReportScreenState extends State<BudgetReportScreen> {
     }
   }
   
-  // Navigate to previous month
+  /// Navigate to previous month
   void _previousMonth() {
     setState(() {
       _selectedDate = DateTime(_selectedDate.year, _selectedDate.month - 1, 1);
@@ -75,7 +77,7 @@ class _BudgetReportScreenState extends State<BudgetReportScreen> {
     _fetchBudgetReport();
   }
   
-  // Navigate to next month
+  /// Navigate to next month (limited to current month)
   void _nextMonth() {
     // Don't allow going to future months
     final now = DateTime.now();
@@ -89,7 +91,7 @@ class _BudgetReportScreenState extends State<BudgetReportScreen> {
     _fetchBudgetReport();
   }
   
-  // Allow user to pick a month/year
+  /// Show month picker dialog
   void _showMonthPicker(BuildContext context) {
     final now = DateTime.now();
     const firstYear = 2020; // First available year
@@ -264,6 +266,7 @@ class _BudgetReportScreenState extends State<BudgetReportScreen> {
     );
   }
   
+  /// Build month selector widget
   Widget _buildMonthSelector(ThemeData theme) {
     // Get month name and year
     final monthName = _budgetData?['month_name'] as String? ?? 
@@ -308,6 +311,7 @@ class _BudgetReportScreenState extends State<BudgetReportScreen> {
     );
   }
   
+  /// Build budget summary widget
   Widget _buildBudgetSummary(ThemeData theme, NumberFormat currencyFormatter) {
     final summary = _budgetData!['budget_summary'] as Map<String, dynamic>;
     final totalBudget = (summary['total_budget'] as num?)?.toDouble() ?? 0.0;
@@ -411,6 +415,7 @@ class _BudgetReportScreenState extends State<BudgetReportScreen> {
     );
   }
   
+  /// Build a budget stat item
   Widget _buildBudgetStatItem({
     required String title,
     required double amount,
@@ -453,6 +458,7 @@ class _BudgetReportScreenState extends State<BudgetReportScreen> {
     );
   }
   
+  /// Build list of categories with budgets
   Widget _buildBudgetCategoriesList(ThemeData theme, NumberFormat currencyFormatter) {
     final budgetCategories = _budgetData!['budget_categories'] as List<dynamic>? ?? [];
     
@@ -607,6 +613,7 @@ class _BudgetReportScreenState extends State<BudgetReportScreen> {
     );
   }
   
+  /// Build list of categories without budgets
   Widget _buildNonBudgetCategoriesList(ThemeData theme, NumberFormat currencyFormatter) {
     final nonBudgetCategories = _budgetData!['non_budget_categories'] as List<dynamic>? ?? [];
     final uncategorizedExpenses = (_budgetData!['uncategorized_expenses'] as num?)?.toDouble() ?? 0.0;

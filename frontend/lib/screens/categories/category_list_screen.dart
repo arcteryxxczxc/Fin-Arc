@@ -1,4 +1,3 @@
-// lib/screens/categories/updated_category_list_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/category_provider.dart';
@@ -12,14 +11,16 @@ import 'category_detail_screen.dart';
 import 'category_form_screen.dart';
 import 'category_budget_screen.dart';
 
-class UpdatedCategoryListScreen extends StatefulWidget {
-  const UpdatedCategoryListScreen({super.key});
+/// Main screen for category management
+/// Shows tabs for expense and income categories with sorting and filtering options
+class CategoryListScreen extends StatefulWidget {
+  const CategoryListScreen({super.key});
 
   @override
-  _UpdatedCategoryListScreenState createState() => _UpdatedCategoryListScreenState();
+  _CategoryListScreenState createState() => _CategoryListScreenState();
 }
 
-class _UpdatedCategoryListScreenState extends State<UpdatedCategoryListScreen> with SingleTickerProviderStateMixin {
+class _CategoryListScreenState extends State<CategoryListScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   bool _includeInactive = false;
   String _sortBy = 'name'; // 'name', 'budget', 'spent'
@@ -30,6 +31,7 @@ class _UpdatedCategoryListScreenState extends State<UpdatedCategoryListScreen> w
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     
+    // Fetch categories when the screen initializes
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<CategoryProvider>(context, listen: false).fetchCategories();
     });
@@ -41,7 +43,7 @@ class _UpdatedCategoryListScreenState extends State<UpdatedCategoryListScreen> w
     super.dispose();
   }
   
-  // Sort categories based on current sort settings
+  /// Sort categories based on current sort settings
   List<Category> _sortCategories(List<Category> categories) {
     switch (_sortBy) {
       case 'name':
@@ -71,6 +73,7 @@ class _UpdatedCategoryListScreenState extends State<UpdatedCategoryListScreen> w
     return categories;
   }
   
+  /// Show the sort options modal bottom sheet
   void _showSortMenu(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -130,6 +133,7 @@ class _UpdatedCategoryListScreenState extends State<UpdatedCategoryListScreen> w
     );
   }
   
+  /// Build a sort option list tile
   Widget _buildSortOption(BuildContext context, String value, String label) {
     final isSelected = _sortBy == value;
     
@@ -178,7 +182,7 @@ class _UpdatedCategoryListScreenState extends State<UpdatedCategoryListScreen> w
         appBar: AppBar(
           title: const Text('Categories'),
           actions: [
-            // Filter toggle
+            // Filter toggle for showing/hiding inactive categories
             IconButton(
               icon: Icon(_includeInactive ? Icons.visibility : Icons.visibility_off),
               onPressed: () {
@@ -189,7 +193,7 @@ class _UpdatedCategoryListScreenState extends State<UpdatedCategoryListScreen> w
               },
               tooltip: _includeInactive ? 'Hide inactive' : 'Show inactive',
             ),
-            // Budget management
+            // Budget management button
             IconButton(
               icon: const Icon(Icons.account_balance_wallet),
               onPressed: () {
@@ -201,7 +205,7 @@ class _UpdatedCategoryListScreenState extends State<UpdatedCategoryListScreen> w
               },
               tooltip: 'Manage budgets',
             ),
-            // Sort menu
+            // Sort menu button
             IconButton(
               icon: const Icon(Icons.sort),
               onPressed: () => _showSortMenu(context),
@@ -226,14 +230,14 @@ class _UpdatedCategoryListScreenState extends State<UpdatedCategoryListScreen> w
             : TabBarView(
                 controller: _tabController,
                 children: [
-                  // Expense Categories
+                  // Expense Categories Tab
                   _buildCategoryList(
                     _sortCategories([...categoryProvider.expenseCategories]),
                     theme,
                     isExpense: true,
                   ),
                   
-                  // Income Categories
+                  // Income Categories Tab
                   _buildCategoryList(
                     _sortCategories([...categoryProvider.incomeCategories]),
                     theme,
@@ -253,6 +257,7 @@ class _UpdatedCategoryListScreenState extends State<UpdatedCategoryListScreen> w
     );
   }
   
+  /// Build the list of categories for either expense or income tab
   Widget _buildCategoryList(List<Category> categories, ThemeData theme, {required bool isExpense}) {
     if (categories.isEmpty) {
       return Center(
@@ -331,6 +336,7 @@ class _UpdatedCategoryListScreenState extends State<UpdatedCategoryListScreen> w
     );
   }
   
+  /// Show dialog to add a new category based on the current tab
   void _showAddCategoryDialog(BuildContext context) {
     final currentTab = _tabController.index;
     final isExpense = currentTab == 0;
@@ -344,6 +350,7 @@ class _UpdatedCategoryListScreenState extends State<UpdatedCategoryListScreen> w
     );
   }
   
+  /// Show confirmation dialog before deleting a category
   void _showDeleteConfirmationDialog(BuildContext context, Category category) {
     showDialog(
       context: context,

@@ -1,21 +1,21 @@
-// lib/widgets/categories/category_card.dart
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../models/category.dart';
 
+/// A widget that displays a category card with details and actions
 class CategoryCard extends StatelessWidget {
   final Category category;
+  final VoidCallback onTap;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
-  final VoidCallback onTap;
   final bool showBudget;
 
   const CategoryCard({
     super.key,
     required this.category,
+    required this.onTap,
     required this.onEdit,
     required this.onDelete,
-    required this.onTap,
     this.showBudget = true,
   });
 
@@ -38,6 +38,7 @@ class CategoryCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Category header with icon and name
               Row(
                 children: [
                   // Category icon with color
@@ -148,6 +149,7 @@ class CategoryCard extends StatelessWidget {
     );
   }
   
+  /// Builds the budget progress section for expense categories
   Widget _buildBudgetProgress(Category category, ThemeData theme, NumberFormat currencyFormatter) {
     final budgetLimit = category.budgetLimit ?? 0;
     final spent = category.currentSpending ?? 0;

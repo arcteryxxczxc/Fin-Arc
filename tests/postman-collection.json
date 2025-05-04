@@ -1,0 +1,1092 @@
+{
+	"info": {
+		"_postman_id": "f82e5b71-6c95-4e4c-a507-d48e89d04c6c",
+		"name": "Fin-Arc API Tests",
+		"description": "Collection for testing Fin-Arc API endpoints",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Register User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Status code is 201 Created\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"if (pm.response.code === 201) {",
+									"    pm.test(\"Response has access_token\", function () {",
+									"        pm.expect(jsonData.access_token).to.exist;",
+									"    });",
+									"    ",
+									"    pm.test(\"Response has refresh_token\", function () {",
+									"        pm.expect(jsonData.refresh_token).to.exist;",
+									"    });",
+									"    ",
+									"    pm.test(\"Response has user information\", function () {",
+									"        pm.expect(jsonData.user).to.exist;",
+									"        pm.expect(jsonData.user.username).to.exist;",
+									"        pm.expect(jsonData.user.email).to.exist;",
+									"    });",
+									"    ",
+									"    // Save tokens to variables",
+									"    pm.collectionVariables.set(\"access_token\", jsonData.access_token);",
+									"    pm.collectionVariables.set(\"refresh_token\", jsonData.refresh_token);",
+									"    pm.collectionVariables.set(\"user_id\", jsonData.user.id);",
+									"}",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"testuser\",\n    \"email\": \"testuser@example.com\",\n    \"password\": \"Test12345!\",\n    \"first_name\": \"Test\",\n    \"last_name\": \"User\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Status code is 200 OK\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"if (pm.response.code === 200) {",
+									"    pm.test(\"Response has access_token\", function () {",
+									"        pm.expect(jsonData.access_token).to.exist;",
+									"    });",
+									"    ",
+									"    pm.test(\"Response has refresh_token\", function () {",
+									"        pm.expect(jsonData.refresh_token).to.exist;",
+									"    });",
+									"    ",
+									"    pm.test(\"Response has user information\", function () {",
+									"        pm.expect(jsonData.user).to.exist;",
+									"    });",
+									"    ",
+									"    // Save tokens to variables",
+									"    pm.collectionVariables.set(\"access_token\", jsonData.access_token);",
+									"    pm.collectionVariables.set(\"refresh_token\", jsonData.refresh_token);",
+									"    pm.collectionVariables.set(\"user_id\", jsonData.user.id);",
+									"}",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"testuser\",\n    \"password\": \"Test12345!\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get User Profile",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200 OK\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"var jsonData = pm.response.json();",
+									"",
+									"if (pm.response.code === 200) {",
+									"    pm.test(\"Response has user information\", function () {",
+									"        pm.expect(jsonData.id).to.exist;",
+									"        pm.expect(jsonData.username).to.exist;",
+									"        pm.expect(jsonData.email).to.exist;",
+									"    });",
+									"}",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/auth/profile",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"profile"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Refresh Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Status code is 200 OK\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"if (pm.response.code === 200) {",
+									"    pm.test(\"Response has new access_token\", function () {",
+									"        pm.expect(jsonData.access_token).to.exist;",
+									"    });",
+									"    ",
+									"    // Save the new access token",
+									"    pm.collectionVariables.set(\"access_token\", jsonData.access_token);",
+									"}",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{refresh_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/auth/refresh",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"refresh"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Change Password",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200 OK\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test(\"Password change successful\", function () {",
+									"        pm.expect(jsonData.message).to.include(\"successfully\");",
+									"    });",
+									"}",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"current_password\": \"Test12345!\",\n    \"new_password\": \"NewTest12345!\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/change-password",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"change-password"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Logout",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200 OK\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"if (pm.response.code === 200) {",
+									"    // Clear the tokens",
+									"    pm.collectionVariables.set(\"access_token\", \"\");",
+									"    pm.collectionVariables.set(\"refresh_token\", \"\");",
+									"}",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/auth/logout",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"logout"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Categories",
+			"item": [
+				{
+					"name": "Get Categories",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200 OK\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test(\"Response has categories array\", function () {",
+									"        pm.expect(jsonData.categories).to.be.an('array');",
+									"    });",
+									"    ",
+									"    // If there are categories, save the first one's ID",
+									"    if (jsonData.categories && jsonData.categories.length > 0) {",
+									"        pm.collectionVariables.set(\"category_id\", jsonData.categories[0].id);",
+									"    }",
+									"}",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/categories",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"categories"
+							],
+							"query": [
+								{
+									"key": "include_inactive",
+									"value": "false",
+									"disabled": true
+								},
+								{
+									"key": "only_expense",
+									"value": "true",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Category",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201 Created\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test(\"Response has category information\", function () {",
+									"        pm.expect(jsonData.category).to.exist;",
+									"        pm.expect(jsonData.category.id).to.exist;",
+									"    });",
+									"    ",
+									"    // Save the category ID",
+									"    pm.collectionVariables.set(\"category_id\", jsonData.category.id);",
+									"}",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Test Category\",\n    \"description\": \"A test category\",\n    \"color_code\": \"#FF5733\",\n    \"icon\": \"category\",\n    \"budget_limit\": 500,\n    \"budget_start_day\": 1,\n    \"is_income\": false\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/categories",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"categories"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Category Details",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200 OK\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test(\"Response has category details\", function () {",
+									"        pm.expect(jsonData.category).to.exist;",
+									"        pm.expect(jsonData.category.id).to.equal(Number(pm.collectionVariables.get(\"category_id\")));",
+									"    });",
+									"}",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/categories/{{category_id}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"categories",
+								"{{category_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Category",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200 OK\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test(\"Category updated successfully\", function () {",
+									"        pm.expect(jsonData.message).to.include(\"updated\");",
+									"        pm.expect(jsonData.category).to.exist;",
+									"    });",
+									"}",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Updated Test Category\",\n    \"description\": \"An updated test category\",\n    \"color_code\": \"#33FF57\",\n    \"budget_limit\": 1000\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/categories/{{category_id}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"categories",
+								"{{category_id}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Expenses",
+			"item": [
+				{
+					"name": "Get Expenses",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200 OK\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test(\"Response has expenses array\", function () {",
+									"        pm.expect(jsonData.expenses).to.be.an('array');",
+									"    });",
+									"    ",
+									"    // If there are expenses, save the first one's ID",
+									"    if (jsonData.expenses && jsonData.expenses.length > 0) {",
+									"        pm.collectionVariables.set(\"expense_id\", jsonData.expenses[0].id);",
+									"    }",
+									"}",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/expenses",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"expenses"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1",
+									"disabled": true
+								},
+								{
+									"key": "per_page",
+									"value": "10",
+									"disabled": true
+								},
+								{
+									"key": "category_id",
+									"value": "{{category_id}}",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Expense",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201 Created\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test(\"Response has expense information\", function () {",
+									"        pm.expect(jsonData.expense).to.exist;",
+									"        pm.expect(jsonData.expense.id).to.exist;",
+									"    });",
+									"    ",
+									"    // Save the expense ID",
+									"    pm.collectionVariables.set(\"expense_id\", jsonData.expense.id);",
+									"}",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"amount\": 75.50,\n    \"description\": \"Test expense\",\n    \"date\": \"{{$isoDate}}\",\n    \"category_id\": {{category_id}},\n    \"payment_method\": \"Credit Card\",\n    \"location\": \"Test Store\",\n    \"is_recurring\": false,\n    \"notes\": \"This is a test expense\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/expenses",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"expenses"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Expense Details",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200 OK\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test(\"Response has expense details\", function () {",
+									"        pm.expect(jsonData.expense).to.exist;",
+									"        pm.expect(jsonData.expense.id).to.equal(Number(pm.collectionVariables.get(\"expense_id\")));",
+									"    });",
+									"}",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/expenses/{{expense_id}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"expenses",
+								"{{expense_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Expense",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200 OK\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test(\"Expense updated successfully\", function () {",
+									"        pm.expect(jsonData.message).to.include(\"updated\");",
+									"        pm.expect(jsonData.expense).to.exist;",
+									"    });",
+									"}",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"amount\": 85.75,\n    \"description\": \"Updated test expense\",\n    \"notes\": \"This expense has been updated\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/expenses/{{expense_id}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"expenses",
+								"{{expense_id}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Income",
+			"item": [
+				{
+					"name": "Get Income List",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200 OK\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test(\"Response has income array\", function () {",
+									"        pm.expect(jsonData.income).to.be.an('array');",
+									"    });",
+									"    ",
+									"    // If there are income entries, save the first one's ID",
+									"    if (jsonData.income && jsonData.income.length > 0) {",
+									"        pm.collectionVariables.set(\"income_id\", jsonData.income[0].id);",
+									"    }",
+									"}",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/income",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"income"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1",
+									"disabled": true
+								},
+								{
+									"key": "per_page",
+									"value": "10",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Income",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201 Created\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test(\"Response has income information\", function () {",
+									"        pm.expect(jsonData.income).to.exist;",
+									"        pm.expect(jsonData.income.id).to.exist;",
+									"    });",
+									"    ",
+									"    // Save the income ID",
+									"    pm.collectionVariables.set(\"income_id\", jsonData.income.id);",
+									"}",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"amount\": 2500,\n    \"source\": \"Salary\",\n    \"description\": \"Monthly salary\",\n    \"date\": \"{{$isoDate}}\",\n    \"is_recurring\": true,\n    \"recurring_type\": \"monthly\",\n    \"is_taxable\": true,\n    \"tax_rate\": 20\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/income",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"income"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Income Details",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200 OK\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test(\"Response has income details\", function () {",
+									"        pm.expect(jsonData.income).to.exist;",
+									"        pm.expect(jsonData.income.id).to.equal(Number(pm.collectionVariables.get(\"income_id\")));",
+									"    });",
+									"}",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/income/{{income_id}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"income",
+								"{{income_id}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Reports",
+			"item": [
+				{
+					"name": "Get Dashboard Data",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200 OK\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test(\"Response has dashboard data\", function () {",
+									"        pm.expect(jsonData.stats).to.exist;",
+									"    });",
+									"}",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/reports/dashboard",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"reports",
+								"dashboard"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Monthly Report",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200 OK\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test(\"Response has monthly report data\", function () {",
+									"        pm.expect(jsonData.month).to.exist;",
+									"        pm.expect(jsonData.year).to.exist;",
+									"    });",
+									"}",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/reports/monthly?month={{$moment.format('M')}}&year={{$moment.format('YYYY')}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"reports",
+								"monthly"
+							],
+							"query": [
+								{
+									"key": "month",
+									"value": "{{$moment.format('M')}}"
+								},
+								{
+									"key": "year",
+									"value": "{{$moment.format('YYYY')}}"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:5000/api",
+			"type": "string"
+		},
+		{
+			"key": "access_token",
+			"value": ""
+		},
+		{
+			"key": "refresh_token",
+			"value": ""
+		},
+		{
+			"key": "user_id",
+			"value": ""
+		},
+		{
+			"key": "category_id",
+			"value": ""
+		},
+		{
+			"key": "expense_id",
+			"value": ""
+		},
+		{
+			"key": "income_id",
+			"value": ""
+		}
+	]
+}

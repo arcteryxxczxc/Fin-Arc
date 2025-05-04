@@ -1,9 +1,9 @@
-// lib/screens/categories/category_form_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/category_provider.dart';
 import '../../models/category.dart';
 
+/// Screen for adding or editing categories
 class CategoryFormScreen extends StatefulWidget {
   final Category? category;
   final bool isExpense;
@@ -30,6 +30,7 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
   bool _isIncome = false;
   bool _hasBudget = false;
   
+  // Available color options
   final List<Map<String, dynamic>> _colorOptions = [
     {'name': 'Blue', 'hex': '#4285F4'},
     {'name': 'Red', 'hex': '#EA4335'},
@@ -76,6 +77,7 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
     super.dispose();
   }
   
+  /// Validate and submit the form
   void _submitForm() async {
     if (_formKey.currentState!.validate()) {
       final categoryProvider = Provider.of<CategoryProvider>(context, listen: false);
@@ -173,6 +175,7 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
                   labelText: 'Description (Optional)',
                   border: OutlineInputBorder(),
                 ),
+                maxLines: 2,
               ),
               const SizedBox(height: 16),
               
@@ -327,8 +330,12 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
                             controller: _budgetLimitController,
                             decoration: const InputDecoration(
                               labelText: 'Budget Amount',
-                              border: OutlineInputBorder(),
                               prefixIcon: Icon(Icons.attach_money),
+                              border: OutlineInputBorder(),
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 8,
+                              ),
                             ),
                             keyboardType: const TextInputType.numberWithOptions(decimal: true),
                             validator: (value) {
@@ -427,6 +434,7 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
                       ),
                 ),
               ),
+              const SizedBox(height: 16),
             ],
           ),
         ),

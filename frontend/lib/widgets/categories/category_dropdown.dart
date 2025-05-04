@@ -1,9 +1,9 @@
-// lib/widgets/categories/category_dropdown.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/category.dart';
 import '../../providers/category_provider.dart';
 
+/// A dropdown widget for selecting categories in forms
 class CategoryDropdown extends StatefulWidget {
   final int? initialCategoryId;
   final bool isIncome;
@@ -38,6 +38,7 @@ class _CategoryDropdownState extends State<CategoryDropdown> {
     }
   }
 
+  /// Initialize selected category based on the provided ID
   void _initializeSelectedCategory() {
     if (widget.initialCategoryId != null) {
       final categoryProvider = Provider.of<CategoryProvider>(context, listen: false);

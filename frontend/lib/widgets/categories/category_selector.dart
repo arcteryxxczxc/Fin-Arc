@@ -1,11 +1,11 @@
-// lib/widgets/categories/category_selector.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/category.dart';
 import '../../providers/category_provider.dart';
 import '../common/loading_indicator.dart';
-import 'category_form_screen.dart';
+import '../../screens/categories/category_form_screen.dart';
 
+/// Used for expense and income forms to pick a category
 class CategorySelector extends StatefulWidget {
   final Category? initialCategory;
   final bool isIncome;

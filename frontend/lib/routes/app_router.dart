@@ -23,7 +23,7 @@ import '../screens/reports/budget_report_screen.dart';
 import '../screens/reports/cashflow_report_screen.dart';
 
 // Category screens
-import '../screens/categories/updated_category_list_screen.dart';
+import '../screens/categories/category_list_screen.dart';
 import '../screens/categories/category_detail_screen.dart';
 import '../screens/categories/category_form_screen.dart';
 import '../screens/categories/category_budget_screen.dart';
@@ -160,7 +160,7 @@ class AppRouter {
       case RouteNames.categoryList:
         return MaterialPageRoute(
           settings: settings,
-          builder: (_) => const UpdatedCategoryListScreen(),
+          builder: (_) => const CategoryListScreen(),
         );
 
       case RouteNames.categoryDetail:

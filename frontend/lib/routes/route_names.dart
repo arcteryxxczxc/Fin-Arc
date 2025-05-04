@@ -1,3 +1,4 @@
+// lib/routes/route_names.dart
 class RouteNames {
   // Auth
   static const String splash = '/splash';
@@ -37,8 +38,18 @@ class RouteNames {
   
   // User
   static const String profile = '/profile';
-  static const String settings = '/settings';
   static const String editProfile = '/profile/edit';
+  static const String loginHistory = '/profile/login-history';
+  
+  // Settings
+  static const String settings = '/settings';
+  static const String currencySettings = '/settings/currency';
+  static const String notificationSettings = '/settings/notifications';
+  
+  // Help & Support
+  static const String helpSupport = '/help/support';
+  static const String privacyPolicy = '/help/privacy-policy';
+  static const String termsOfService = '/help/terms-of-service';
   
   // Debug tools
   static const String apiTest = '/debug/api-test';

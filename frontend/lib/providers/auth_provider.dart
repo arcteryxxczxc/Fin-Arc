@@ -232,7 +232,7 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
     
     try {
-      final result = await _authService.getUserProfile();
+      final result = await _authService.getProfile();
       
       if (result['success']) {
         if (result.containsKey('data') && result['data'] != null) {

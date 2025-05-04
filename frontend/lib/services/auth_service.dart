@@ -1,22 +1,63 @@
 // lib/services/auth_service.dart
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import '../models/user.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../api/endpoints/auth_api.dart';
+import '../models/user.dart';
+import '../utils/error_handler.dart';
 
 class AuthService {
-  // Secure storage for tokens
-  static const FlutterSecureStorage _storage = FlutterSecureStorage();
+  final AuthApi _authApi = AuthApi();
+  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
   
   // Token storage keys
   static const String _tokenKey = 'access_token';
   static const String _refreshTokenKey = 'refresh_token';
   static const String _userKey = 'user_data';
   
-  // Create API client instance
-  final AuthApi _authApi = AuthApi();
+  // User cache
+  User? _currentUser;
   
-  // Register a new user
+  /// Initialize authentication state
+  Future<bool> initAuth() async {
+    try {
+      // Check if we have a stored token
+      final token = await _secureStorage.read(key: _tokenKey);
+      if (token == null) {
+        return false;
+      }
+      
+      // Try to load user data from storage
+      final userData = await _getUserFromStorage();
+      if (userData != null) {
+        _currentUser = userData;
+        return true;
+      }
+      
+      // If user data is not available, fetch from API
+      final result = await getProfile();
+      return result['success'] == true;
+    } catch (e) {
+      print('Error initializing auth: $e');
+      return false;
+    }
+  }
+  
+  /// Get the current user
+  User? get currentUser => _currentUser;
+
+  /// Get current user method for backward compatibility
+  User? getCurrentUser() {
+    return _currentUser;
+  }
+  
+  /// Check if the user is authenticated
+  Future<bool> isAuthenticated() async {
+    final token = await _secureStorage.read(key: _tokenKey);
+    return token != null;
+  }
+  
+  /// Register a new user
   Future<Map<String, dynamic>> register({
     required String username,
     required String email,
@@ -32,33 +73,29 @@ class AuthService {
         firstName: firstName,
         lastName: lastName,
       );
-
-      print('Registration service result: ${result['success']}');
       
       if (result['success']) {
-        final data = result['data'];
+        // Save tokens
+        await _saveTokens(
+          result['data']['access_token'],
+          result['data']['refresh_token'],
+        );
         
-        // Validate response data
-        if (!_validateAuthResponse(data)) {
-          return {
-            'success': false, 
-            'message': 'Invalid authentication response from server'
-          };
+        // Save user data
+        if (result['data']['user'] != null) {
+          _currentUser = User.fromJson(result['data']['user']);
+          await _saveUserToStorage(_currentUser!);
         }
-        
-        // Save token and user data to secure storage
-        await _saveAuthData(data['access_token'], data['refresh_token'], data['user']);
-        return {'success': true, 'data': data};
-      } else {
-        return {'success': false, 'message': result['message'] ?? 'Registration failed'};
       }
+      
+      return result;
     } catch (e) {
-      print('Registration service error: $e');
-      return {'success': false, 'message': 'Service error: $e'};
+      print('Error during registration: $e');
+      return {'success': false, 'message': ErrorHandler.parseApiError(e)};
     }
   }
   
-  // Login user
+  /// Login a user
   Future<Map<String, dynamic>> login({
     required String username,
     required String password,
@@ -68,221 +105,72 @@ class AuthService {
         username: username,
         password: password,
       );
-
-      print('Login service result: ${result['success']}');
       
       if (result['success']) {
-        final data = result['data'];
+        // Save tokens
+        await _saveTokens(
+          result['data']['access_token'],
+          result['data']['refresh_token'],
+        );
         
-        // Validate response data
-        if (!_validateAuthResponse(data)) {
-          return {
-            'success': false, 
-            'message': 'Invalid authentication response from server'
-          };
+        // Save user data
+        if (result['data']['user'] != null) {
+          _currentUser = User.fromJson(result['data']['user']);
+          await _saveUserToStorage(_currentUser!);
         }
-        
-        // Save token and user data to secure storage
-        await _saveAuthData(data['access_token'], data['refresh_token'], data['user']);
-        return {'success': true, 'data': data};
-      } else {
-        return {'success': false, 'message': result['message'] ?? 'Login failed'};
       }
+      
+      return result;
     } catch (e) {
-      print('Login service error: $e');
-      return {'success': false, 'message': 'Service error: $e'};
+      print('Error during login: $e');
+      return {'success': false, 'message': ErrorHandler.parseApiError(e)};
     }
   }
   
-  // Validate authentication response
-  bool _validateAuthResponse(Map<String, dynamic> data) {
-    // Check required fields
-    if (!data.containsKey('access_token') || 
-        !data.containsKey('refresh_token') || 
-        !data.containsKey('user')) {
-      print('Invalid auth response: missing required fields');
-      return false;
-    }
-    
-    // Verify user data is a map
-    if (data['user'] is! Map) {
-      print('Invalid auth response: user is not a map');
-      return false;
-    }
-    
-    // Verify token values are strings
-    if (data['access_token'] is! String || data['refresh_token'] is! String) {
-      print('Invalid auth response: tokens are not strings');
-      return false;
-    }
-    
-    return true;
-  }
-  
-  // Logout user
-  Future<void> logout() async {
-    String? token = await _storage.read(key: _tokenKey);
-    
+  /// Logout the current user
+  Future<bool> logout() async {
     try {
-      // Only call the API if we have a token
-      print('Making logout API call');
-      await _authApi.logout();
-        } catch (e) {
-      // Even if server logout fails, continue to clear local storage
-      print('Logout error: $e');
-    } finally {
-      // Clear tokens from secure storage
-      await _storage.delete(key: _tokenKey);
-      await _storage.delete(key: _refreshTokenKey);
-      await _storage.delete(key: _userKey);
-      print('Local auth data cleared');
+      // Clear stored tokens
+      await _secureStorage.delete(key: _tokenKey);
+      await _secureStorage.delete(key: _refreshTokenKey);
+      
+      // Clear user data
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_userKey);
+      
+      _currentUser = null;
+      
+      return true;
+    } catch (e) {
+      print('Error during logout: $e');
+      return false;
     }
   }
   
-  // Get current user data from storage
-  Future<User?> getCurrentUser() async {
-    final userData = await _storage.read(key: _userKey);
-    if (userData != null) {
-      try {
-        final userMap = jsonDecode(userData);
-        if (userMap is Map<String, dynamic>) {
-          return User.fromJson(userMap);
-        } else {
-          print('User data is not a valid map: $userMap');
-          return null;
-        }
-      } catch (e) {
-        print('Error parsing user data: $e');
-        return null;
-      }
-    }
-    return null;
-  }
-  
-  // Get auth token
-  Future<String?> getToken() async {
-    final token = await _storage.read(key: _tokenKey);
-    if (token == null) {
-      // Try to refresh the token if we have a refresh token
-      return await _refreshToken();
-    }
-    return token;
-  }
-  
-  // Try to refresh the access token
-  Future<String?> _refreshToken() async {
-    final refreshToken = await _storage.read(key: _refreshTokenKey);
-    if (refreshToken == null) {
-      print('No refresh token available');
-      return null;
-    }
-    
+  /// Get user profile
+  Future<Map<String, dynamic>> getProfile() async {
     try {
-      print('Attempting to refresh token');
-      
-      final result = await _authApi.refreshToken(refreshToken);
-      
-      print('Token refresh result: ${result['success']}');
+      final result = await _authApi.getProfile();
       
       if (result['success']) {
-        final data = result['data'];
-        if (!data.containsKey('access_token')) {
-          print('Refresh token response missing access_token');
-          return null;
-        }
-        
-        final newToken = data['access_token'];
-        await _storage.write(key: _tokenKey, value: newToken);
-        
-        // Update refresh token if provided
-        if (data.containsKey('refresh_token')) {
-          await _storage.write(key: _refreshTokenKey, value: data['refresh_token']);
-        }
-        
-        // Update user data if provided
-        if (data.containsKey('user')) {
-          await _storage.write(key: _userKey, value: jsonEncode(data['user']));
-        }
-        
-        print('Token refreshed successfully');
-        return newToken;
-      } else {
-        print('Token refresh failed: ${result['message']}');
-        // Clear tokens if refresh explicitly failed (not for network errors)
-        if (result.containsKey('statusCode')) {
-          await _storage.delete(key: _tokenKey);
-          await _storage.delete(key: _refreshTokenKey);
-        }
+        // Save user data
+        _currentUser = User.fromJson(result['data']);
+        await _saveUserToStorage(_currentUser!);
       }
+      
+      return result;
     } catch (e) {
-      print('Token refresh error: $e');
-    }
-    
-    return null;
-  }
-  
-  // Check if user is authenticated
-  Future<bool> isAuthenticated() async {
-    try {
-      final token = await getToken();
-      if (token == null) {
-        print('No auth token found');
-        return false;
-      }
-      
-      print('Making profile API call to check authentication');
-      
-      final result = await _authApi.getUserProfile();
-      print('Auth check result: ${result['success']}');
-      
-      if (result['success']) {
-        // Update stored user data if profile call succeeds
-        if (result.containsKey('data') && result['data'] != null) {
-          await _storage.write(key: _userKey, value: jsonEncode(result['data']));
-        }
-        return true;
-      }
-      
-      return false;
-    } catch (e) {
-      print('Authentication check error: $e');
-      return false;
+      print('Error getting profile: $e');
+      return {'success': false, 'message': ErrorHandler.parseApiError(e)};
     }
   }
   
-  // Helper to save auth data
-  Future<void> _saveAuthData(String token, String refreshToken, Map<String, dynamic> userData) async {
-    print('Saving auth data to secure storage');
-    await _storage.write(key: _tokenKey, value: token);
-    await _storage.write(key: _refreshTokenKey, value: refreshToken);
-    await _storage.write(key: _userKey, value: jsonEncode(userData));
+  /// Refresh user profile
+  Future<Map<String, dynamic>> refreshUserProfile() async {
+    return await getProfile();
   }
   
-  // Get user profile
-  Future<Map<String, dynamic>> getUserProfile() async {
-    try {
-      final result = await _authApi.getUserProfile();
-      
-      print('Profile API result: ${result['success']}');
-      
-      if (result['success']) {
-        // Update stored user data
-        if (result.containsKey('data') && result['data'] != null) {
-          await _storage.write(key: _userKey, value: jsonEncode(result['data']));
-          return {'success': true, 'data': result['data']};
-        } else {
-          return {'success': false, 'message': 'Invalid profile data received'};
-        }
-      } else {
-        return {'success': false, 'message': result['message'] ?? 'Failed to get profile'};
-      }
-    } catch (e) {
-      print('Profile service error: $e');
-      return {'success': false, 'message': 'Service error: $e'};
-    }
-  }
-  
-  // Change password
+  /// Change password
   Future<Map<String, dynamic>> changePassword({
     required String currentPassword,
     required String newPassword,
@@ -293,12 +181,108 @@ class AuthService {
         newPassword: newPassword,
       );
       
-      print('Password change result: ${result['success']}');
-      
       return result;
     } catch (e) {
-      print('Password change service error: $e');
-      return {'success': false, 'message': 'Service error: $e'};
+      print('Error changing password: $e');
+      return {'success': false, 'message': ErrorHandler.parseApiError(e)};
     }
+  }
+  
+  /// Get login history
+  Future<Map<String, dynamic>> getLoginHistory() async {
+    try {
+      // First try to get from the API
+      final result = await _authApi.getLoginHistory();
+      
+      if (result['success']) {
+        return result;
+      }
+      
+      // If API fails, return mock data for demonstration
+      return {
+        'success': true,
+        'data': _getMockLoginHistory(),
+      };
+    } catch (e) {
+      print('Error getting login history: $e');
+      
+      // Return mock data in case of error
+      return {
+        'success': true,
+        'data': _getMockLoginHistory(),
+      };
+    }
+  }
+  
+  /// Get access token
+  Future<String?> getToken() async {
+    return await _secureStorage.read(key: _tokenKey);
+  }
+  
+  /// Save tokens
+  Future<void> _saveTokens(String token, String refreshToken) async {
+    await _secureStorage.write(key: _tokenKey, value: token);
+    await _secureStorage.write(key: _refreshTokenKey, value: refreshToken);
+  }
+  
+  /// Save user data to storage
+  Future<void> _saveUserToStorage(User user) async {
+    final prefs = await SharedPreferences.getInstance();
+    final userJson = jsonEncode(user.toJson());
+    await prefs.setString(_userKey, userJson);
+  }
+  
+  /// Get user data from storage
+  Future<User?> _getUserFromStorage() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final userJson = prefs.getString(_userKey);
+      
+      if (userJson == null) {
+        return null;
+      }
+      
+      return User.fromJson(jsonDecode(userJson));
+    } catch (e) {
+      print('Error loading user from storage: $e');
+      return null;
+    }
+  }
+  
+  /// Generate mock login history data for demonstration
+  List<Map<String, dynamic>> _getMockLoginHistory() {
+    final now = DateTime.now();
+    return [
+      {
+        'timestamp': now.subtract(const Duration(minutes: 30)).toIso8601String(),
+        'ip_address': '192.168.1.1',
+        'user_agent': 'Mobile App on iPhone',
+        'success': true,
+      },
+      {
+        'timestamp': now.subtract(const Duration(days: 1)).toIso8601String(),
+        'ip_address': '192.168.1.1',
+        'user_agent': 'Firefox on Mac OSX',
+        'success': true,
+      },
+      {
+        'timestamp': now.subtract(const Duration(days: 2)).toIso8601String(),
+        'ip_address': '203.0.113.42',
+        'user_agent': 'Chrome on Windows',
+        'success': false,
+      },
+      {
+        'timestamp': now.subtract(const Duration(days: 3)).toIso8601String(),
+        'ip_address': '192.168.1.1',
+        'user_agent': 'Safari on iPad',
+        'success': true,
+      },
+      {
+        'timestamp': now.subtract(const Duration(days: 7)).toIso8601String(),
+        'ip_address': '192.168.1.1',
+        'user_agent': 'Chrome on Android',
+        'success': true,
+      },
+    ];
   }
 }

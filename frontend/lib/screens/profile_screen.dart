@@ -7,6 +7,10 @@ import '../providers/theme_provider.dart';
 import '../widgets/layout/screen_wrapper.dart';
 import '../routes/route_names.dart';
 import '../utils/error_handler.dart';
+import '../screens/profile/login_history_screen.dart';
+import '../screens/settings/currency_settings_screen.dart';
+import '../screens/help/help_support_screen.dart';
+import '../screens/help/privacy_policy_screen.dart';
 import 'auth/change_password_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -48,7 +52,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
     }
   }
-
+  
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
@@ -116,9 +120,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     title: 'Login History',
                     icon: Icons.history,
                     onTap: () {
-                      // For now, just show a snackbar since this feature is coming soon
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Login history feature coming soon')),
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const LoginHistoryScreen(),
+                        ),
                       );
                     },
                   ),
@@ -147,20 +152,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   _buildListTile(
                     title: 'Default Currency',
                     icon: Icons.attach_money,
-                    subtitle: 'USD',
+                    subtitle: 'Set your preferred currency',
                     onTap: () {
-                      // For now, just show a snackbar since this feature is coming soon
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Currency settings coming soon')),
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const CurrencySettingsScreen(),
+                        ),
                       );
                     },
                   ),
                   _buildListTile(
                     title: 'Notifications',
                     icon: Icons.notifications_none,
-                    subtitle: 'Enabled',
+                    subtitle: 'Manage notification settings',
                     onTap: () {
-                      // For now, just show a snackbar since this feature is coming soon
+                      // Show coming soon dialog
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Notification settings coming soon')),
                       );
@@ -186,9 +192,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     title: 'Help & Support',
                     icon: Icons.support_agent,
                     onTap: () {
-                      // For now, just show a snackbar since this feature is coming soon
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Help feature coming soon')),
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const HelpSupportScreen(),
+                        ),
                       );
                     },
                   ),
@@ -196,9 +203,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     title: 'Privacy Policy',
                     icon: Icons.privacy_tip_outlined,
                     onTap: () {
-                      // For now, just show a snackbar since this feature is coming soon
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Privacy policy coming soon')),
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const PrivacyPolicyScreen(),
+                        ),
                       );
                     },
                   ),
@@ -379,7 +387,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     required bool isPositive,
   }) {
     final formatter = NumberFormat.currency(symbol: '\$');
-    
+
     return Column(
       children: [
         Text(
@@ -497,10 +505,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           SizedBox(height: 8),
           Text(
-            'Developed by Albert Jidebayev.',
+            'Developed as part of the Finance App Project.',
           ),
         ],
       ),
     );
   }
-}
+  }

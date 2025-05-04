@@ -8,6 +8,9 @@ import '../screens/auth/register_screen.dart';
 import '../screens/auth/change_password_screen.dart';
 import '../screens/dashboard/dashboard_screen.dart';
 import '../screens/profile_screen.dart';
+import '../screens/profile/login_history_screen.dart';
+import '../screens/profile/edit_profile_screen.dart';
+import '../screens/settings/currency_settings_screen.dart';
 import '../screens/debug/api_test_screen.dart';
 import '../screens/expenses/expense_list_screen.dart';
 import '../screens/expenses/expense_detail_screen.dart';
@@ -22,15 +25,14 @@ import '../screens/reports/annual_report_screen.dart';
 import '../screens/reports/budget_report_screen.dart';
 import '../screens/reports/cashflow_report_screen.dart';
 import '../screens/reports/financial_insights_screen.dart';
+import '../screens/help/help_support_screen.dart';
+import '../screens/help/privacy_policy_screen.dart';
 
 // Category screens
 import '../screens/categories/category_list_screen.dart';
 import '../screens/categories/category_detail_screen.dart';
 import '../screens/categories/category_form_screen.dart';
 import '../screens/categories/category_budget_screen.dart';
-
-// Profile screens
-import '../screens/profile/edit_profile_screen.dart';
 
 // Routes
 import 'route_names.dart';
@@ -82,6 +84,30 @@ class AppRouter {
         return MaterialPageRoute(
           settings: settings,
           builder: (_) => const EditProfileScreen(),
+        );
+        
+      case RouteNames.loginHistory:
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => const LoginHistoryScreen(),
+        );
+        
+      case RouteNames.currencySettings:
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => const CurrencySettingsScreen(),
+        );
+        
+      case RouteNames.helpSupport:
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => const HelpSupportScreen(),
+        );
+        
+      case RouteNames.privacyPolicy:
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => const PrivacyPolicyScreen(),
         );
         
       case RouteNames.apiTest:

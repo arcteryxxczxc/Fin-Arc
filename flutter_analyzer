@@ -1,0 +1,214 @@
+flutter analyze
+Analyzing frontend...                                                   
+
+  error - The method 'getCurrentUser' isn't defined for the type 'AuthService' - lib\providers\auth_provider.dart:42:36 - undefined_method      
+  error - The method 'getCurrentUser' isn't defined for the type 'AuthService' - lib\providers\auth_provider.dart:89:36 - undefined_method      
+  error - The method 'getCurrentUser' isn't defined for the type 'AuthService' - lib\providers\auth_provider.dart:139:36 - undefined_method     
+  error - The method 'getUserProfile' isn't defined for the type 'AuthService' - lib\providers\auth_provider.dart:235:41 - undefined_method     
+warning - The value of the field '_totalItems' isn't used - lib\providers\expense_provider.dart:14:7 - unused_field
+warning - The value of the local variable 'categoryId' isn't used - lib\routes\app_router.dart:223:19 - unused_local_variable
+   info - The referenced identifier is a wildcard - lib\routes\app_router.dart:263:36 - no_wildcard_variable_uses
+   info - Invalid use of a private type in a public API - lib\screens\auth\change_password_screen.dart:11:3 -
+          library_private_types_in_public_api
+   info - Invalid use of a private type in a public API - lib\screens\auth\login_screen.dart:10:3 - library_private_types_in_public_api
+   info - Invalid use of a private type in a public API - lib\screens\auth\register_screen.dart:10:3 - library_private_types_in_public_api      
+   info - Invalid use of a private type in a public API - lib\screens\categories\category_budget_screen.dart:14:3 -
+          library_private_types_in_public_api
+   info - Unnecessary use of 'toList' in a spread - lib\screens\categories\category_budget_screen.dart:152:12 - unnecessary_to_list_in_spreads  
+   info - Invalid use of a private type in a public API - lib\screens\categories\category_detail_screen.dart:22:3 -
+          library_private_types_in_public_api
+   info - Don't use 'BuildContext's across async gaps - lib\screens\categories\category_detail_screen.dart:109:60 -
+          use_build_context_synchronously
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss -
+          lib\screens\categories\category_detail_screen.dart:553:57 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss -
+          lib\screens\categories\category_form_screen.dart:272:59 - deprecated_member_use
+   info - Invalid use of a private type in a public API - lib\screens\categories\category_list_screen.dart:20:3 -
+          library_private_types_in_public_api
+   info - Don't use 'BuildContext's across async gaps - lib\screens\categories\category_list_screen.dart:381:42 -
+          use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\screens\categories\category_list_screen.dart:385:42 -
+          use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\screens\categories\category_list_screen.dart:388:57 -
+          use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\screens\categories\category_selector.dart:94:51 - use_build_context_synchronously   
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss -
+          lib\screens\categories\category_selector.dart:154:50 - deprecated_member_use
+   info - Unnecessary use of 'toList' in a spread - lib\screens\categories\category_selector.dart:161:20 - unnecessary_to_list_in_spreads       
+   info - Don't use 'BuildContext's across async gaps - lib\screens\categories\category_selector.dart:176:53 - use_build_context_synchronously  
+   info - Invalid use of a private type in a public API - lib\screens\dashboard\dashboard_screen.dart:19:3 - library_private_types_in_public_api
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss -
+          lib\screens\dashboard\dashboard_screen.dart:386:34 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss -
+          lib\screens\dashboard\dashboard_screen.dart:553:45 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss -
+          lib\screens\dashboard\dashboard_screen.dart:566:43 - deprecated_member_use
+warning - The value of the local variable 'name' isn't used - lib\screens\dashboard\dashboard_screen.dart:732:13 - unused_local_variable
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss -
+          lib\screens\dashboard\dashboard_screen.dart:928:63 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss -
+          lib\screens\dashboard\dashboard_screen.dart:928:95 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss -
+          lib\screens\dashboard\dashboard_screen.dart:1045:41 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss -
+          lib\screens\dashboard\dashboard_screen.dart:1058:32 - deprecated_member_use
+   info - Invalid use of a private type in a public API - lib\screens\debug\api_test_screen.dart:10:3 - library_private_types_in_public_api     
+   info - Invalid use of a private type in a public API - lib\screens\expenses\add_expense_screen.dart:14:3 -
+          library_private_types_in_public_api
+   info - Don't use 'BuildContext's across async gaps - lib\screens\expenses\add_expense_screen.dart:116:66 - use_build_context_synchronously   
+   info - Don't use 'BuildContext's across async gaps - lib\screens\expenses\add_expense_screen.dart:133:28 - use_build_context_synchronously   
+   info - Invalid use of a private type in a public API - lib\screens\expenses\expense_detail_screen.dart:17:3 -
+          library_private_types_in_public_api
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss -
+          lib\screens\expenses\expense_detail_screen.dart:421:68 - deprecated_member_use
+   info - Invalid use of a private type in a public API - lib\screens\expenses\expense_list_screen.dart:20:3 -
+          library_private_types_in_public_api
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss -
+          lib\screens\expenses\expense_list_screen.dart:486:68 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss -
+          lib\screens\expenses\expense_list_screen.dart:561:54 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss -
+          lib\screens\expenses\expense_list_screen.dart:660:75 - deprecated_member_use
+   info - The imported package 'url_launcher' isn't a dependency of the importing package - lib\screens\help\help_support_screen.dart:3:8 -     
+          depend_on_referenced_packages
+   info - Parameter 'key' could be a super parameter - lib\screens\help\help_support_screen.dart:7:9 - use_super_parameters
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss -
+          lib\screens\help\help_support_screen.dart:140:55 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss -
+          lib\screens\help\help_support_screen.dart:222:51 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss -
+          lib\screens\help\help_support_screen.dart:253:33 - deprecated_member_use
+   info - The imported package 'url_launcher' isn't a dependency of the importing package - lib\screens\help\privacy_policy_screen.dart:3:8 -   
+          depend_on_referenced_packages
+   info - Parameter 'key' could be a super parameter - lib\screens\help\privacy_policy_screen.dart:6:9 - use_super_parameters
+   info - Invalid use of a private type in a public API - lib\screens\income\add_income_screen.dart:12:3 - library_private_types_in_public_api  
+   info - Invalid use of a private type in a public API - lib\screens\income\edit_income_screen.dart:17:3 - library_private_types_in_public_api 
+   info - Don't use 'BuildContext's across async gaps - lib\screens\income\edit_income_screen.dart:54:62 - use_build_context_synchronously      
+   info - Invalid use of a private type in a public API - lib\screens\income\income_detail_screen.dart:18:3 -
+          library_private_types_in_public_api
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss -
+          lib\screens\income\income_detail_screen.dart:402:68 - deprecated_member_use
+   info - Invalid use of a private type in a public API - lib\screens\income\income_list_screen.dart:19:3 - library_private_types_in_public_api 
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss -
+          lib\screens\income\income_list_screen.dart:484:68 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss -
+          lib\screens\income\income_list_screen.dart:559:54 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss -
+          lib\screens\income\income_list_screen.dart:659:74 - deprecated_member_use
+warning - Unused import: '../../utils/error_handler.dart' - lib\screens\profile\edit_profile_screen.dart:6:8 - unused_import
+   info - Invalid use of a private type in a public API - lib\screens\profile\edit_profile_screen.dart:13:3 -
+          library_private_types_in_public_api
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss -
+          lib\screens\profile\edit_profile_screen.dart:138:45 - deprecated_member_use
+   info - Parameter 'key' could be a super parameter - lib\screens\profile\login_history_screen.dart:9:9 - use_super_parameters
+   info - Invalid use of a private type in a public API - lib\screens\profile\login_history_screen.dart:12:3 -
+          library_private_types_in_public_api
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss -
+          lib\screens\profile\login_history_screen.dart:145:51 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss -
+          lib\screens\profile\login_history_screen.dart:145:81 - deprecated_member_use
+   info - Invalid use of a private type in a public API - lib\screens\profile_screen.dart:20:3 - library_private_types_in_public_api
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\profile_screen.dart:232:38 -       
+          use_build_context_synchronously
+warning - Unused import: '/utils/error_handler.dart' - lib\screens\reports\annual_report_screen.dart:9:8 - unused_import
+   info - Invalid use of a private type in a public API - lib\screens\reports\annual_report_screen.dart:15:3 -
+          library_private_types_in_public_api
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss -
+          lib\screens\reports\annual_report_screen.dart:113:54 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss -
+          lib\screens\reports\annual_report_screen.dart:308:50 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss -
+          lib\screens\reports\annual_report_screen.dart:316:56 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss -
+          lib\screens\reports\annual_report_screen.dart:366:26 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss -
+          lib\screens\reports\annual_report_screen.dart:505:51 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss -
+          lib\screens\reports\annual_report_screen.dart:723:53 - deprecated_member_use
+warning - The value of the local variable 'name' isn't used - lib\screens\reports\annual_report_screen.dart:808:13 - unused_local_variable      
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss -
+          lib\screens\reports\annual_report_screen.dart:1029:53 - deprecated_member_use
+   info - Invalid use of a private type in a public API - lib\screens\reports\budget_report_screen.dart:14:3 -
+          library_private_types_in_public_api
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss -
+          lib\screens\reports\budget_report_screen.dart:163:64 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss -
+          lib\screens\reports\budget_report_screen.dart:169:47 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss -
+          lib\screens\reports\budget_report_screen.dart:370:57 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss -
+          lib\screens\reports\budget_report_screen.dart:431:26 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss -
+          lib\screens\reports\budget_report_screen.dart:581:61 - deprecated_member_use
+   info - Invalid use of a private type in a public API - lib\screens\reports\cashflow_report_screen.dart:14:3 -
+          library_private_types_in_public_api
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss -
+          lib\screens\reports\cashflow_report_screen.dart:261:48 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss -
+          lib\screens\reports\cashflow_report_screen.dart:267:31 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss -
+          lib\screens\reports\cashflow_report_screen.dart:357:26 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss -
+          lib\screens\reports\cashflow_report_screen.dart:470:51 - deprecated_member_use
+warning - Unused import: 'package:intl/intl.dart' - lib\screens\reports\financial_insights_screen.dart:3:8 - unused_import
+   info - Invalid use of a private type in a public API - lib\screens\reports\financial_insights_screen.dart:14:3 -
+          library_private_types_in_public_api
+warning - The value of the field '_insightsData' isn't used - lib\screens\reports\financial_insights_screen.dart:22:25 - unused_field
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss -
+          lib\screens\reports\financial_insights_screen.dart:194:56 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss -
+          lib\screens\reports\financial_insights_screen.dart:281:30 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss -
+          lib\screens\reports\financial_insights_screen.dart:340:34 - deprecated_member_use
+warning - Unused import: 'package:provider/provider.dart' - lib\screens\reports\monthly_report_screen.dart:5:8 - unused_import
+warning - Unused import: '../../providers/report_provider.dart' - lib\screens\reports\monthly_report_screen.dart:7:8 - unused_import
+   info - Invalid use of a private type in a public API - lib\screens\reports\monthly_report_screen.dart:17:3 -
+          library_private_types_in_public_api
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss -
+          lib\screens\reports\monthly_report_screen.dart:231:64 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss -
+          lib\screens\reports\monthly_report_screen.dart:237:47 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss -
+          lib\screens\reports\monthly_report_screen.dart:442:26 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss -
+          lib\screens\reports\monthly_report_screen.dart:597:51 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss -
+          lib\screens\reports\monthly_report_screen.dart:659:45 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss -
+          lib\screens\reports\monthly_report_screen.dart:672:43 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss -
+          lib\screens\reports\monthly_report_screen.dart:685:44 - deprecated_member_use
+warning - The value of the local variable 'name' isn't used - lib\screens\reports\monthly_report_screen.dart:804:14 - unused_local_variable     
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss -
+          lib\screens\reports\monthly_report_screen.dart:1111:53 - deprecated_member_use
+   info - Invalid use of a private type in a public API - lib\screens\reports\reports_screen.dart:16:3 - library_private_types_in_public_api    
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss -
+          lib\screens\reports\reports_screen.dart:211:32 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss -
+          lib\screens\reports\reports_screen.dart:328:51 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss -
+          lib\screens\reports\reports_screen.dart:390:45 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss -
+          lib\screens\reports\reports_screen.dart:403:43 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss -
+          lib\screens\reports\reports_screen.dart:416:44 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss -
+          lib\screens\reports\reports_screen.dart:573:38 - deprecated_member_use
+   info - Don't use 'BuildContext's across async gaps - lib\screens\reports\reports_screen.dart:783:32 - use_build_context_synchronously        
+warning - Unused import: 'package:provider/provider.dart' - lib\screens\settings\currency_settings_screen.dart:3:8 - unused_import
+warning - Unused import: '../../providers/auth_provider.dart' - lib\screens\settings\currency_settings_screen.dart:4:8 - unused_import
+   info - Parameter 'key' could be a super parameter - lib\screens\settings\currency_settings_screen.dart:11:9 - use_super_parameters
+   info - Invalid use of a private type in a public API - lib\screens\settings\currency_settings_screen.dart:14:3 -
+          library_private_types_in_public_api
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss -
+          lib\screens\settings\currency_settings_screen.dart:215:33 - deprecated_member_use
+   info - Invalid use of a private type in a public API - lib\screens\settings\settings_screen.dart:11:3 - library_private_types_in_public_api  
+warning - Unused import: 'package:flutter/foundation.dart' - lib\state\categories\category_notifier.dart:2:8 - unused_import
+   info - Parameters ''categories', 'expenseCategories', and 'incomeCategories'' could be super parameters -
+          lib\state\categories\category_state.dart:36:9 - use_super_parameters
+   info - Parameters ''categories', 'expenseCategories', and 'incomeCategories'' could be super parameters -
+          lib\state\categories\category_state.dart:59:9 - use_super_parameters
+   info - Parameters ''categories', 'expenseCategories', and 'incomeCategories'' could be super parameters -
+          lib\state\categories\category_state.dart:73:9 - use_super_parameters
+
+125 issues found. (ran in 27.4s)

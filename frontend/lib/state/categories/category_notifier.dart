@@ -1,8 +1,8 @@
 // lib/state/category_notifier.dart
-import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart' hide Category;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../models/category.dart';
-import '../services/category_service.dart';
+import '/../models/category.dart';
+import '/../services/category_service.dart';
 import 'category_state.dart';
 
 // Category notifier that manages category state

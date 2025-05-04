@@ -1,6 +1,7 @@
 // lib/services/report_service.dart
 import 'dart:typed_data';
 import '../api/endpoints/report_api.dart';
+import '../utils/error_handler.dart';
 
 class ReportService {
   final ReportApi _reportApi = ReportApi();
@@ -11,13 +12,12 @@ class ReportService {
       final result = await _reportApi.getDashboardData();
       
       // Debug output for response format
-      print('Dashboard data response: ${result.toString().substring(0, 
-            result.toString().length > 200 ? 200 : result.toString().length)}...');
+      print('Dashboard data response: ${_truncateResponseForLog(result)}');
       
       return result;
     } catch (e) {
       print('Error getting dashboard data: $e');
-      return {'success': false, 'message': 'Service error: $e'};
+      return {'success': false, 'message': ErrorHandler.parseApiError(e)};
     }
   }
 
@@ -27,13 +27,22 @@ class ReportService {
       final result = await _reportApi.getMonthlyReport(month, year);
       
       // Debug output for response format
-      print('Monthly report response: ${result.toString().substring(0, 
-            result.toString().length > 200 ? 200 : result.toString().length)}...');
+      print('Monthly report response: ${_truncateResponseForLog(result)}');
+      
+      // Handle the specific case where the API returns data in a nested structure
+      if (result['success'] && result.containsKey('data')) {
+        if (result['data'] is Map<String, dynamic>) {
+          return {'success': true, 'data': result['data']};
+        } else {
+          print('Unexpected data format in monthly report response: ${result['data'].runtimeType}');
+          return {'success': false, 'message': 'Unexpected response format from server'};
+        }
+      }
             
       return result;
     } catch (e) {
       print('Error getting monthly report: $e');
-      return {'success': false, 'message': 'Service error: $e'};
+      return {'success': false, 'message': ErrorHandler.parseApiError(e)};
     }
   }
 
@@ -43,13 +52,22 @@ class ReportService {
       final result = await _reportApi.getAnnualReport(year);
       
       // Debug output for response format
-      print('Annual report response: ${result.toString().substring(0, 
-            result.toString().length > 200 ? 200 : result.toString().length)}...');
+      print('Annual report response: ${_truncateResponseForLog(result)}');
+      
+      // Handle the response format
+      if (result['success'] && result.containsKey('data')) {
+        if (result['data'] is Map<String, dynamic>) {
+          return {'success': true, 'data': result['data']};
+        } else {
+          print('Unexpected data format in annual report response: ${result['data'].runtimeType}');
+          return {'success': false, 'message': 'Unexpected response format from server'};
+        }
+      }
             
       return result;
     } catch (e) {
       print('Error getting annual report: $e');
-      return {'success': false, 'message': 'Service error: $e'};
+      return {'success': false, 'message': ErrorHandler.parseApiError(e)};
     }
   }
 
@@ -59,13 +77,22 @@ class ReportService {
       final result = await _reportApi.getBudgetReport(month: month, year: year);
       
       // Debug output for response format
-      print('Budget report response: ${result.toString().substring(0, 
-            result.toString().length > 200 ? 200 : result.toString().length)}...');
+      print('Budget report response: ${_truncateResponseForLog(result)}');
+      
+      // Handle the response format
+      if (result['success'] && result.containsKey('data')) {
+        if (result['data'] is Map<String, dynamic>) {
+          return {'success': true, 'data': result['data']};
+        } else {
+          print('Unexpected data format in budget report response: ${result['data'].runtimeType}');
+          return {'success': false, 'message': 'Unexpected response format from server'};
+        }
+      }
             
       return result;
     } catch (e) {
       print('Error getting budget report: $e');
-      return {'success': false, 'message': 'Service error: $e'};
+      return {'success': false, 'message': ErrorHandler.parseApiError(e)};
     }
   }
 
@@ -83,13 +110,22 @@ class ReportService {
       );
       
       // Debug output for response format
-      print('Cashflow report response: ${result.toString().substring(0, 
-            result.toString().length > 200 ? 200 : result.toString().length)}...');
+      print('Cashflow report response: ${_truncateResponseForLog(result)}');
+      
+      // Handle the response format
+      if (result['success'] && result.containsKey('data')) {
+        if (result['data'] is Map<String, dynamic>) {
+          return {'success': true, 'data': result['data']};
+        } else {
+          print('Unexpected data format in cashflow report response: ${result['data'].runtimeType}');
+          return {'success': false, 'message': 'Unexpected response format from server'};
+        }
+      }
             
       return result;
     } catch (e) {
       print('Error getting cashflow report: $e');
-      return {'success': false, 'message': 'Service error: $e'};
+      return {'success': false, 'message': ErrorHandler.parseApiError(e)};
     }
   }
 
@@ -142,7 +178,15 @@ class ReportService {
       }
     } catch (e) {
       print('Error exporting report: $e');
-      return {'success': false, 'message': 'Service error: $e'};
+      return {'success': false, 'message': ErrorHandler.parseApiError(e)};
     }
+  }
+  
+  /// Helper method to truncate long responses for logging
+  String _truncateResponseForLog(Map<String, dynamic> response) {
+    final responseStr = response.toString();
+    return responseStr.length > 300 
+        ? '${responseStr.substring(0, 300)}...'
+        : responseStr;
   }
 }

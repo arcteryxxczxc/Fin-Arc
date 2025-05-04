@@ -99,7 +99,7 @@ class AuthApi {
   }
 
   /// Get user profile
-  Future<Map<String, dynamic>> getUserProfile() async {
+  Future<Map<String, dynamic>> getProfile() async {
     try {
       final response = await _client.get(
         endpoint: 'auth/profile',
@@ -192,6 +192,21 @@ class AuthApi {
       return response;
     } catch (e) {
       print('AuthApi: Logout error: $e');
+      return {'success': false, 'message': 'Network error: $e'};
+    }
+  }
+  /// Get login history
+  Future<Map<String, dynamic>> getLoginHistory() async {
+    try {
+      // This is a hypothetical endpoint that might be available in a future API version
+      final response = await _client.get(
+        endpoint: 'auth/login-history',
+        requiresAuth: true,
+      );
+      
+      return response;
+    } catch (e) {
+      print('API error getting login history: $e');
       return {'success': false, 'message': 'Network error: $e'};
     }
   }

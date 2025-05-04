@@ -25,6 +25,7 @@ class RouteNames {
   static const String categoryDetail = '/categories/detail';
   static const String addCategory = '/categories/add';
   static const String editCategory = '/categories/edit';
+  static const String categoryBudget = '/categories/budget';
   
   // Reports
   static const String reports = '/reports';
@@ -32,10 +33,12 @@ class RouteNames {
   static const String annualReport = '/reports/annual';
   static const String budgetReport = '/reports/budget';
   static const String cashflowReport = '/reports/cashflow';
+  static const String financialInsights = '/reports/insights';
   
   // User
   static const String profile = '/profile';
   static const String settings = '/settings';
+  static const String editProfile = '/profile/edit';
   
   // Debug tools
   static const String apiTest = '/debug/api-test';

@@ -2,7 +2,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:provider/provider.dart';
 import '../../services/report_service.dart';
+import '../../providers/report_provider.dart'; // We'll create this
 import '../../widgets/common/loading_indicator.dart';
 import '../../widgets/common/error_display.dart';
 import '../../widgets/layout/screen_wrapper.dart';
@@ -94,7 +96,6 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    // Fix the currency formatter
     final currencyFormatter = NumberFormat.currency(symbol: '\$');
     
     return ScreenWrapper(
@@ -296,10 +297,13 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
               onPressed: _previousMonth,
               tooltip: 'Previous month',
             ),
-            Text(
-              '$monthName $year',
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
+            GestureDetector(
+              onTap: () => _showMonthPicker(context),
+              child: Text(
+                '$monthName $year',
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
             IconButton(
@@ -314,6 +318,20 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
   }
   
   Widget _buildMonthlySummary(ThemeData theme, NumberFormat currencyFormatter) {
+    // Check if totals exist in the report data
+    if (_reportData == null || !_reportData!.containsKey('totals')) {
+      return Card(
+        elevation: 2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: const Padding(
+          padding: EdgeInsets.all(16),
+          child: Center(
+            child: Text('No summary data available for this month'),
+          ),
+        ),
+      );
+    }
+
     final totals = _reportData!['totals'] as Map<String, dynamic>;
     final income = (totals['income'] as num).toDouble();
     final expenses = (totals['expenses'] as num).toDouble();
@@ -417,7 +435,7 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
   }
   
   Widget _buildDailyTrendsChart(ThemeData theme) {
-    final dailyData = _reportData!['daily_data'] as List<dynamic>? ?? [];
+    final dailyData = _reportData?['daily_data'] as List<dynamic>? ?? [];
     
     if (dailyData.isEmpty) {
       return Card(
@@ -688,7 +706,7 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
     
     for (final category in categories) {
       final name = category['name'] as String;
-      final color = category['color'] as String;
+      final color = category['color'] as String? ?? category['color_code'] as String? ?? '#FF0000';
       final total = (category['total'] as num).toDouble();
       final percentage = (category['percentage'] as num).toDouble();
       
@@ -758,7 +776,7 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
                 itemBuilder: (context, index) {
                   final category = categories[index];
                   final name = category['name'] as String;
-                  final color = category['color'] as String;
+                  final color = category['color'] as String? ?? category['color_code'] as String? ?? '#FF0000';
                   final total = (category['total'] as num).toDouble();
                   final percentage = (category['percentage'] as num).toDouble();
                   
@@ -766,8 +784,7 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
                   if (total <= 0) return const SizedBox.shrink();
                   
                   // Parse color from hex string
-                  final colorValue =
-                      Color(int.parse(color.replaceFirst('#', '0xFF')));
+                  final colorValue = Color(int.parse(color.replaceFirst('#', '0xFF')));
                   
                   return ListTile(
                     contentPadding: const EdgeInsets.symmetric(vertical: 4),
@@ -835,7 +852,7 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
     for (int i = 0; i < sources.length; i++) {
       final source = sources[i];
       final name = source['name'] as String;
-      final color = source['color'] as String;
+      final color = source['color'] as String? ?? source['color_code'] as String? ?? '#00FF00';
       final total = (source['total'] as num).toDouble();
       
       // Skip sources with no income
@@ -860,8 +877,7 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
               toY: total,
               color: colorValue,
               width: 20,
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(6)),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
             ),
           ],
         ),
@@ -980,7 +996,7 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
                 itemBuilder: (context, index) {
                   final source = sources[index];
                   final name = source['name'] as String;
-                  final color = source['color'] as String;
+                  final color = source['color'] as String? ?? source['color_code'] as String? ?? '#00FF00';
                   final total = (source['total'] as num).toDouble();
                   final percentage = (source['percentage'] as num).toDouble();
                   
@@ -988,8 +1004,7 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
                   if (total <= 0) return const SizedBox.shrink();
                   
                   // Parse color from hex string
-                  final colorValue =
-                      Color(int.parse(color.replaceFirst('#', '0xFF')));
+                  final colorValue = Color(int.parse(color.replaceFirst('#', '0xFF')));
                   
                   return ListTile(
                     contentPadding: const EdgeInsets.symmetric(vertical: 4),

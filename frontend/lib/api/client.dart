@@ -28,24 +28,35 @@ class ApiClient {
         }
       }
 
-      // Build URI with query parameters - FIXED URL CONSTRUCTION
+      // Build URI with query parameters
       final uri = Uri.parse('$baseUrl/$endpoint').replace(
         queryParameters: queryParams,
       );
 
-      _logApiCall('GET', uri.toString());
+      print('Making GET request to: ${uri.toString()}');
 
-      // Set up headers (removed CORS headers - they belong on the server)
+      // Set up headers
       final headers = {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
         if (requiresAuth && token != null) 'Authorization': 'Bearer $token',
       };
 
-      // Make request
-      final response = await http.get(uri, headers: headers);
+      // Make request with timeout
+      final response = await http.get(
+        uri, 
+        headers: headers
+      ).timeout(
+        const Duration(seconds: 30),
+        onTimeout: () {
+          return http.Response('{"msg": "Request timed out"}', 408);
+        }
+      );
+      
       print('GET response status: ${response.statusCode}');
-      print('GET response body: ${response.body.isNotEmpty ? response.body.substring(0, response.body.length > 100 ? 100 : response.body.length) : "empty"}');
+      if (response.body.isNotEmpty) {
+        print('GET response body preview: ${response.body.substring(0, response.body.length > 100 ? 100 : response.body.length)}...');
+      }
 
       // Handle response
       return _handleResponse(response);
@@ -72,26 +83,36 @@ class ApiClient {
         }
       }
 
-      // Build URI - FIXED URL CONSTRUCTION
+      // Build URI
       final uri = Uri.parse('$baseUrl/$endpoint');
-      _logApiCall('POST', uri.toString(), body);
+      print('Making POST request to: ${uri.toString()}');
+      if (body != null) {
+        print('POST body: ${jsonEncode(body)}');
+      }
 
-      // Set up headers (removed CORS headers)
+      // Set up headers
       final headers = {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
         if (requiresAuth && token != null) 'Authorization': 'Bearer $token',
       };
 
-      // Make request
+      // Make request with timeout
       final response = await http.post(
         uri,
         headers: headers,
         body: body != null ? jsonEncode(body) : null,
+      ).timeout(
+        const Duration(seconds: 30),
+        onTimeout: () {
+          return http.Response('{"msg": "Request timed out"}', 408);
+        }
       );
       
       print('POST response status: ${response.statusCode}');
-      print('POST response body: ${response.body.isNotEmpty ? response.body.substring(0, response.body.length > 100 ? 100 : response.body.length) : "empty"}');
+      if (response.body.isNotEmpty) {
+        print('POST response body preview: ${response.body.substring(0, response.body.length > 100 ? 100 : response.body.length)}...');
+      }
 
       // Handle response
       return _handleResponse(response);
@@ -118,26 +139,36 @@ class ApiClient {
         }
       }
 
-      // Build URI - FIXED URL CONSTRUCTION
+      // Build URI
       final uri = Uri.parse('$baseUrl/$endpoint');
-      _logApiCall('PUT', uri.toString(), body);
+      print('Making PUT request to: ${uri.toString()}');
+      if (body != null) {
+        print('PUT body: ${jsonEncode(body)}');
+      }
 
-      // Set up headers (removed CORS headers)
+      // Set up headers
       final headers = {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
         if (requiresAuth && token != null) 'Authorization': 'Bearer $token',
       };
 
-      // Make request
+      // Make request with timeout
       final response = await http.put(
         uri,
         headers: headers,
         body: body != null ? jsonEncode(body) : null,
+      ).timeout(
+        const Duration(seconds: 30),
+        onTimeout: () {
+          return http.Response('{"msg": "Request timed out"}', 408);
+        }
       );
       
       print('PUT response status: ${response.statusCode}');
-      print('PUT response body: ${response.body.isNotEmpty ? response.body.substring(0, response.body.length > 100 ? 100 : response.body.length) : "empty"}');
+      if (response.body.isNotEmpty) {
+        print('PUT response body preview: ${response.body.substring(0, response.body.length > 100 ? 100 : response.body.length)}...');
+      }
 
       // Handle response
       return _handleResponse(response);
@@ -163,22 +194,32 @@ class ApiClient {
         }
       }
 
-      // Build URI - FIXED URL CONSTRUCTION
+      // Build URI
       final uri = Uri.parse('$baseUrl/$endpoint');
-      _logApiCall('DELETE', uri.toString());
+      print('Making DELETE request to: ${uri.toString()}');
 
-      // Set up headers (removed CORS headers)
+      // Set up headers
       final headers = {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
         if (requiresAuth && token != null) 'Authorization': 'Bearer $token',
       };
 
-      // Make request
-      final response = await http.delete(uri, headers: headers);
+      // Make request with timeout
+      final response = await http.delete(
+        uri, 
+        headers: headers
+      ).timeout(
+        const Duration(seconds: 30),
+        onTimeout: () {
+          return http.Response('{"msg": "Request timed out"}', 408);
+        }
+      );
       
       print('DELETE response status: ${response.statusCode}');
-      print('DELETE response body: ${response.body.isNotEmpty ? response.body.substring(0, response.body.length > 100 ? 100 : response.body.length) : "empty"}');
+      if (response.body.isNotEmpty) {
+        print('DELETE response body preview: ${response.body.substring(0, response.body.length > 100 ? 100 : response.body.length)}...');
+      }
 
       // Handle response
       return _handleResponse(response);
@@ -204,36 +245,26 @@ class ApiClient {
       }
     }
 
-    // Build URI with query parameters - FIXED URL CONSTRUCTION
+    // Build URI with query parameters
     final uri = Uri.parse('$baseUrl/$endpoint').replace(
       queryParameters: queryParams,
     );
 
-    _logApiCall('GET RAW', uri.toString());
+    print('Making raw GET request to: ${uri.toString()}');
 
-    // Set up headers (removed CORS headers)
+    // Set up headers
     final headers = {
       'Accept': '*/*',
       if (requiresAuth && token != null) 'Authorization': 'Bearer $token',
     };
 
     // Make request and return raw response
-    return await http.get(uri, headers: headers);
-  }
-
-  /// Log API call details for debugging
-  void _logApiCall(String method, String url, [dynamic body]) {
-    print('------ API CALL ------');
-    print('Method: $method');
-    print('URL: $url');
-    if (body != null) {
-      try {
-        print('Body: ${jsonEncode(body)}');
-      } catch (e) {
-        print('Body: [Could not encode body]');
+    return await http.get(uri, headers: headers).timeout(
+      const Duration(seconds: 60), // Longer timeout for file downloads
+      onTimeout: () {
+        return http.Response('Request timed out', 408);
       }
-    }
-    print('----------------------');
+    );
   }
 
   /// Handle HTTP response and parse JSON
@@ -264,6 +295,22 @@ class ApiClient {
 
       // Parse JSON response
       final data = jsonDecode(response.body);
+      
+      // If data is null, return empty object
+      if (data == null) {
+        return {
+          'success': response.statusCode >= 200 && response.statusCode < 300,
+          'data': {},
+        };
+      }
+      
+      // If the response is a list, wrap it in a map
+      if (data is List) {
+        return {
+          'success': true,
+          'data': data,
+        };
+      }
       
       // Check if response is successful
       if (response.statusCode >= 200 && response.statusCode < 300) {
@@ -347,11 +394,10 @@ class ApiClient {
     }
     
     try {
-      print('Attempting to refresh token directly from ApiClient');
+      print('Attempting to refresh token');
       
       // Fixed URL for refresh endpoint
       final uri = Uri.parse('$baseUrl/auth/refresh');
-      _logApiCall('POST', uri.toString());
       
       final response = await http.post(
         uri,
@@ -386,7 +432,7 @@ class ApiClient {
         await _storage.delete(key: _refreshTokenKey);
       }
     } catch (e) {
-      print('Token refresh error in ApiClient: $e');
+      print('Token refresh error: $e');
     }
     
     return null;

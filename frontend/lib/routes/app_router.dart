@@ -21,12 +21,16 @@ import '../screens/reports/monthly_report_screen.dart';
 import '../screens/reports/annual_report_screen.dart';
 import '../screens/reports/budget_report_screen.dart';
 import '../screens/reports/cashflow_report_screen.dart';
+import '../screens/reports/financial_insights_screen.dart';
 
 // Category screens
 import '../screens/categories/category_list_screen.dart';
 import '../screens/categories/category_detail_screen.dart';
 import '../screens/categories/category_form_screen.dart';
 import '../screens/categories/category_budget_screen.dart';
+
+// Profile screens
+import '../screens/profile/edit_profile_screen.dart';
 
 // Routes
 import 'route_names.dart';
@@ -74,6 +78,12 @@ class AppRouter {
           builder: (_) => const ProfileScreen(),
         );
         
+      case RouteNames.editProfile:
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => const EditProfileScreen(),
+        );
+        
       case RouteNames.apiTest:
         return MaterialPageRoute(
           settings: settings,
@@ -108,6 +118,12 @@ class AppRouter {
         return MaterialPageRoute(
           settings: settings,
           builder: (_) => const CashflowReportScreen(),
+        );
+        
+      case RouteNames.financialInsights:
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => const FinancialInsightsScreen(),
         );
 
       case RouteNames.expenseList:
@@ -156,7 +172,7 @@ class AppRouter {
           builder: (_) => EditIncomeScreen(incomeId: incomeId),
         );
 
-      // Category Routes - NEW
+      // Category Routes
       case RouteNames.categoryList:
         return MaterialPageRoute(
           settings: settings,
@@ -185,8 +201,8 @@ class AppRouter {
           builder: (_) => CategoryFormScreen(category: category),
         );
 
-      // Category budget management - NEW
-      case '/categories/budget':
+      // Category budget management
+      case RouteNames.categoryBudget:
         return MaterialPageRoute(
           settings: settings,
           builder: (_) => const CategoryBudgetScreen(),

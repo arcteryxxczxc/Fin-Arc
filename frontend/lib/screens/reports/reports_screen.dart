@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../widgets/layout/screen_wrapper.dart';
 import '../../services/report_service.dart';
+import '../../utils/export_handler.dart';
 import '../../widgets/common/loading_indicator.dart';
 import '../../widgets/common/error_display.dart';
 import '../../routes/route_names.dart';
@@ -17,6 +18,7 @@ class ReportsScreen extends StatefulWidget {
 
 class _ReportsScreenState extends State<ReportsScreen> {
   final ReportService _reportService = ReportService();
+  final ExportHandler _exportHandler = ExportHandler();
   
   bool _isLoading = false;
   String? _error;
@@ -149,7 +151,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                             icon: Icons.lightbulb_outline,
                             color: Colors.amber,
                             onTap: () {
-                              _showComingSoonDialog(context, 'Financial Insights');
+                              _showFinancialInsightsScreen(context);
                             },
                           ),
                         ],
@@ -241,10 +243,30 @@ class _ReportsScreenState extends State<ReportsScreen> {
   }
   
   Widget _buildTrendChart(ThemeData theme) {
+    if (_overviewData == null || !_overviewData!.containsKey('trend')) {
+      return const Card(
+        elevation: 2,
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: Center(
+            child: Text('No trend data available'),
+          ),
+        ),
+      );
+    }
+
     final trend = _overviewData!['trend'] as List<dynamic>;
     
     if (trend.isEmpty) {
-      return const SizedBox.shrink();
+      return const Card(
+        elevation: 2,
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: Center(
+            child: Text('No trend data available'),
+          ),
+        ),
+      );
     }
     
     // Extract data for the chart
@@ -451,7 +473,16 @@ class _ReportsScreenState extends State<ReportsScreen> {
   }
   
   Widget _buildStatCards(ThemeData theme, NumberFormat currencyFormatter) {
+    if (_overviewData == null || !_overviewData!.containsKey('stats')) {
+      return const SizedBox.shrink();
+    }
+
     final stats = _overviewData!['stats'] as Map<String, dynamic>;
+    
+    if (!stats.containsKey('month')) {
+      return const SizedBox.shrink();
+    }
+
     final monthStats = stats['month'] as Map<String, dynamic>;
     
     final income = (monthStats['income'] as num).toDouble();
@@ -583,6 +614,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
     );
   }
   
+  // Show export data dialog
   void _showExportDialog(BuildContext context) {
     final theme = Theme.of(context);
     
@@ -716,6 +748,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
       final endDate = DateFormat('yyyy-MM-dd').format(picked.end);
       
       // Show loading indicator
+      // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Row(
@@ -737,16 +770,16 @@ class _ReportsScreenState extends State<ReportsScreen> {
       );
       
       try {
-        // Call export API based on type
-        final result = await _reportService.exportReport(
+        // Call export API through export handler
+        final success = await _exportHandler.exportReport(
           reportType: exportType,
+          reportName: title,
           startDate: startDate,
           endDate: endDate,
         );
         
-        if (result['success']) {
-          // Here we would handle the downloaded file
-          // For now, just show a success message
+        // ignore: use_build_context_synchronously
+        if (success) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('$title data exported successfully'),
@@ -754,14 +787,16 @@ class _ReportsScreenState extends State<ReportsScreen> {
             ),
           );
         } else {
+          // ignore: use_build_context_synchronously
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(result['message'] ?? 'Export failed'),
+            const SnackBar(
+              content: Text('Failed to export data. Try again later.'),
               backgroundColor: Colors.red,
             ),
           );
         }
       } catch (e) {
+        // ignore: use_build_context_synchronously
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to export data: $e'),
@@ -772,19 +807,8 @@ class _ReportsScreenState extends State<ReportsScreen> {
     }
   }
   
-  void _showComingSoonDialog(BuildContext context, String feature) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Coming Soon'),
-        content: Text('The $feature feature is coming soon! Stay tuned for updates.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
+  // Financial insights screen
+  void _showFinancialInsightsScreen(BuildContext context) {
+    Navigator.of(context).pushNamed(RouteNames.financialInsights);
   }
 }

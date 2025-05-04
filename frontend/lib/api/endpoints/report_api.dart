@@ -17,6 +17,7 @@ class ReportApi {
 
       return response;
     } catch (e) {
+      print('API error getting dashboard data: $e');
       return {'success': false, 'message': 'Network error: $e'};
     }
   }
@@ -36,6 +37,7 @@ class ReportApi {
 
       return response;
     } catch (e) {
+      print('API error getting monthly report: $e');
       return {'success': false, 'message': 'Network error: $e'};
     }
   }
@@ -54,6 +56,7 @@ class ReportApi {
 
       return response;
     } catch (e) {
+      print('API error getting annual report: $e');
       return {'success': false, 'message': 'Network error: $e'};
     }
   }
@@ -72,6 +75,7 @@ class ReportApi {
 
       return response;
     } catch (e) {
+      print('API error getting budget report: $e');
       return {'success': false, 'message': 'Network error: $e'};
     }
   }
@@ -97,6 +101,7 @@ class ReportApi {
 
       return response;
     } catch (e) {
+      print('API error getting cashflow report: $e');
       return {'success': false, 'message': 'Network error: $e'};
     }
   }
@@ -135,6 +140,7 @@ class ReportApi {
         return {'success': false, 'message': data['msg'] ?? 'Failed to export report'};
       }
     } catch (e) {
+      print('API error exporting report: $e');
       return {'success': false, 'message': 'Network error: $e'};
     }
   }

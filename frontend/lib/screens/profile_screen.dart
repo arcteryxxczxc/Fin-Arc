@@ -98,10 +98,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     title: 'Edit Profile',
                     icon: Icons.edit,
                     onTap: () {
-                      // For now, just show a snackbar since this feature is coming soon
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Edit profile feature coming soon')),
-                      );
+                      Navigator.of(context).pushNamed(RouteNames.editProfile);
                     },
                   ),
                   _buildListTile(

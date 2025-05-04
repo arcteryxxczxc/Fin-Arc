@@ -39,6 +39,10 @@ class FinArcBottomNavigation extends StatelessWidget {
           icon: Icon(Icons.bar_chart),
           label: 'Reports',
         ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.person),
+          label: 'Profile',
+        ),
       ],
     );
   }
@@ -68,6 +72,8 @@ class FinArcBottomNavigation extends StatelessWidget {
       case RouteNames.budgetReport:
       case RouteNames.cashflowReport:
         return 4;
+      case RouteNames.profile:
+        return 5;
       default:
         return 0;
     }
